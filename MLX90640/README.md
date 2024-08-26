@@ -4,10 +4,6 @@
 
 ![MLX90640 on bread board](MLX90640-XIAO-ESP32.jpg)
 
-## Demo
-
-[![MLX90640 Thermography Camera by Arduino UNO R4](MLX90640-demo.jpg)](https://youtu.be/sfqiSglsp9Y "MLX90640 Thermography Camera by Arduino UNO R4 - YouTube")
-
 ## Required resources
 
 - [**Far infrared thermal sensor array (32x24 RES)**]  
