@@ -2,6 +2,8 @@
 
 ## Wiring
 
+[Wiring at cirkitdesigner.com](https://app.cirkitdesigner.com/project/837fd6ec-a7d8-4381-a41f-4b953adefee0 "Cirkit Designer IDE")
+
 ![MLX90640 on bread board](MLX90640-XIAO-ESP32.jpg)
 
 ## Required resources
