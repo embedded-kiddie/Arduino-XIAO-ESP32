@@ -6,21 +6,12 @@
 
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
-#if 0
-// 1.3 inch ... TFT_RST must be D9
-#define DEVICE_WIDTH    240
-#define DEVICE_HEIGHT   240
-#define DEVICE_ORIGIN   2
-#define PIXEL_SIZE      7
-#define INVERT_DISPLAY  true
-#else
 // 2.4 inch ... "RESET" on breakout board can be connected to "RESET" or +3.3V on UNO R4 instead of D9.
 #define DEVICE_WIDTH    240
 #define DEVICE_HEIGHT   320
 #define DEVICE_ORIGIN   1
 #define PIXEL_SIZE      7
 #define INVERT_DISPLAY  false
-#endif
 
 // Font size for setTextSize(2)
 #define FONT_WIDTH    12 // [px] (Device coordinate system)
@@ -80,12 +71,15 @@ void TFT_Printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   tft.print(buf);
 }
 
+extern bool touch_loop(void);
+extern bool touch_setup(void);
+extern bool sd_loop(void);
+
 void setup() {
   Serial.begin(115200);
-#if defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_UNOR4_MINIMA)
-  while (!Serial);
-  delay(1000); // It requires at least 600 ms to complete Serial initialization.
-#endif
+  while (!Serial) {
+    delay(10);
+  }
 
   // Initialize ST7789
   tft.init(DEVICE_WIDTH, DEVICE_HEIGHT, SPI_MODE);
@@ -93,9 +87,7 @@ void setup() {
   tft.invertDisplay(INVERT_DISPLAY);
   tft.setTextColor(ST77XX_WHITE);
   tft.setTextSize(2);
-#if defined (ARDUINO_XIAO_ESP32S3)
   tft.setSPISpeed(80000000);
-#endif
   ClearScreen();
  
   // Draw color bar
@@ -124,25 +116,26 @@ void setup() {
   Serial.print(mlx.serialNumber[0], HEX);
   Serial.print(mlx.serialNumber[1], HEX);
   Serial.println(mlx.serialNumber[2], HEX);
-  
+
+  // MLX90640
   mlx.setMode(MLX90640_CHESS);
   mlx.setResolution(MLX90640_ADC_18BIT);
+//mlx.setRefreshRate(MLX90640_8_HZ); // 8 FPS
+  mlx.setRefreshRate(MLX90640_16_HZ); // 16 FPS
 
-#if defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_UNOR4_MINIMA)
+  // I2C Clock
+//Wire.setClock(400000); // 400 KHz (Sm)
+  Wire.setClock(1000000); // 1 MHz (Fm+)
 
-  mlx.setRefreshRate(MLX90640_4_HZ); // 4 FPS
-  Wire.setClock(400000); // 400 KHz
-
-#elif defined(ARDUINO_XIAO_ESP32S3)
-
-//mlx.setRefreshRate(MLX90640_16_HZ); // unstable
-  mlx.setRefreshRate(MLX90640_8_HZ);  // 8 FPS
-  Wire.setClock(400000); // 400 KHz
-
-#endif
+  // Touch Screen
+  touch_setup();
 }
 
 void loop() {
+  if (touch_loop()) {
+    sd_loop();
+  }
+
   uint32_t timestamp = millis();
   if (mlx.getFrame(frame) != 0) {
     TFT_Printf(DEVICE_WIDTH / 2 - FONT_WIDTH * 3, DEVICE_WIDTH / 2 - FONT_HEIGHT * 3, "Failed");
