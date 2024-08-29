@@ -77,17 +77,14 @@ extern bool sd_loop(void);
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial) {
-    delay(10);
-  }
 
   // Initialize ST7789
   tft.init(DEVICE_WIDTH, DEVICE_HEIGHT, SPI_MODE);
+  tft.setSPISpeed(80000000);
   tft.setRotation(DEVICE_ORIGIN);
   tft.invertDisplay(INVERT_DISPLAY);
   tft.setTextColor(ST77XX_WHITE);
   tft.setTextSize(2);
-  tft.setSPISpeed(80000000);
   ClearScreen();
  
   // Draw color bar
