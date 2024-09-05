@@ -1,3 +1,4 @@
+// https://github.com/espressif/arduino-esp32/tree/master/libraries/SD/examples/SD_Test
 /*
  * pin 1 - not used          |  Micro SD card     |
  * pin 2 - CS (SS)           |                   /
@@ -42,15 +43,6 @@
 #include "SD.h"
 #include "SPI.h"
 #include "spi_assign.h"
-
-/*
-Uncomment and set up if you want to use custom pins for the SPI communication
-*/
-#define REASSIGN_PINS
-int sck   = TFT_SCLK;
-int miso  = TFT_MISO;
-int mosi  = TFT_MOSI;
-int cs    = SD_CS;
 
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
   Serial.printf("Listing directory: %s\n", dirname);
@@ -208,26 +200,19 @@ void testFileIO(fs::FS &fs, const char *path) {
   file.close();
 }
 
-void setup() {
-  Serial.begin(115200);
-  while (!Serial) {
-    delay(10);
+bool sd_loop() {
+  // REASSIGN_PINS
+  SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
+  if (! SD.begin(SD_CS)) {
+    Serial.println("Card Mount Failed");
+    return false;
   }
 
-#ifdef REASSIGN_PINS
-  SPI.begin(sck, miso, mosi, cs);
-  if (!SD.begin(cs)) {
-#else
-  if (!SD.begin()) {
-#endif
-    Serial.println("Card Mount Failed");
-    return;
-  }
   uint8_t cardType = SD.cardType();
 
   if (cardType == CARD_NONE) {
     Serial.println("No SD card attached");
-    return;
+    return false;
   }
 
   Serial.print("SD Card Type: ");
@@ -244,7 +229,7 @@ void setup() {
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
 
-#if 0
+#if 1
   listDir(SD, "/", 0);
   createDir(SD, "/mydir");
   listDir(SD, "/", 0);
@@ -265,6 +250,7 @@ void setup() {
   Serial.printf("Total bytes: %d\n", SD.totalBytes());
   Serial.printf("Size of used bytes: %d\n", SD.usedBytes());
 #endif
-}
 
-void loop() {}
+  SD.end();
+  return true;
+}

@@ -101,6 +101,10 @@ void setup() {
   TFT_Printf(FONT_WIDTH *  8, y, "%3.1f", (float)(MINTEMP + MAXTEMP) / 2.0f);
   TFT_Printf(FONT_WIDTH * 17, y, "%d", MAXTEMP);
 
+  y = PIXEL_SIZE * 24 + FONT_HEIGHT * 3;
+  TFT_Printf(FONT_WIDTH *  6, y, "FPS");
+  TFT_Printf(FONT_WIDTH * 16, y, "'C");
+
   delay(100);
 
   Serial.println("Adafruit MLX90640 Camera");
@@ -141,30 +145,32 @@ void loop() {
     return;
   }
 
-  int colorTemp;
   for (uint8_t h = 0; h < 24; h++) {
     for (uint8_t w = 0; w < 32; w++) {
       float t = frame[h * 32 + w];
-      //Serial.print(t, 1); Serial.print(", ");
-
       t = min((int)t, MAXTEMP);
       t = max((int)t, MINTEMP); 
            
       uint8_t colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
       colorIndex = constrain(colorIndex, 0, 255);
 
-      //draw the pixels!
+#if 0
+      // Back view
       tft.fillRect(PIXEL_SIZE * w, PIXEL_SIZE * h, PIXEL_SIZE, PIXEL_SIZE, camColors[colorIndex]);
+#else
+      // Front view
+      tft.fillRect(PIXEL_SIZE * (31 - w), PIXEL_SIZE * h, PIXEL_SIZE, PIXEL_SIZE, camColors[colorIndex]);
+#endif
     }
   }
 
   // Ambient temperature
-  float v = mlx.getTa(false);
+  float v = mlx.getTa(false) + 0.05f;
   if (v > 0) {
-    TFT_Printf(FONT_WIDTH * 12, PIXEL_SIZE * 24 + FONT_HEIGHT * 3, "%4.1f'C", v);  // false = no new frame capture
+    TFT_Printf(FONT_WIDTH * 12, PIXEL_SIZE * 24 + FONT_HEIGHT * 3, "%4.1f", v);
   }
 
   // FPS
-  v = 2000.0f / (float)(millis() - timestamp); // 2 frames per display
-  TFT_Printf(FONT_WIDTH, PIXEL_SIZE * 24 + FONT_HEIGHT * 3, "%4.2f FPS", v);
+  v = 2000.0f / (float)(millis() - timestamp) + 0.05f; // 2 frames per display
+  TFT_Printf(FONT_WIDTH, PIXEL_SIZE * 24 + FONT_HEIGHT * 3, "%4.1f", v);
 }
