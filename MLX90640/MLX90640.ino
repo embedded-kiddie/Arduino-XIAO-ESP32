@@ -24,7 +24,7 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 #define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
 
 // Definitoins for Interpolation
-#define USE_INTERPOLATION false
+#define USE_INTERPOLATION true
 
 #if     USE_INTERPOLATION
 #define INTERPOLATE_SCALE 2
