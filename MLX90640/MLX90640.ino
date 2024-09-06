@@ -36,8 +36,8 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
 #define INTERPOLATED_ROWS (MLX90640_ROWS * INTERPOLATE_SCALE)
 #define INTERPOLATED_COLS (MLX90640_COLS * INTERPOLATE_SCALE)
-void interpolate_image(float *src, uint8_t src_rows, uint8_t src_cols, 
-                       float *dst, uint8_t dst_rows, uint8_t dst_cols);
+void interpolate_image(float *src, int src_rows, int src_cols, 
+                       float *dst, int dst_rows, int dst_cols);
 
 // Global variables
 Adafruit_MLX90640 mlx;
@@ -169,8 +169,8 @@ void loop() {
   interpolate_image(src, MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATED_ROWS, INTERPOLATED_COLS);
 #endif
 
-  for (uint8_t h = 0; h < INTERPOLATED_ROWS; h++) {
-    for (uint8_t w = 0; w < INTERPOLATED_COLS; w++) {
+  for (int h = 0; h < INTERPOLATED_ROWS; h++) {
+    for (int w = 0; w < INTERPOLATED_COLS; w++) {
 #if USE_INTERPOLATION
       float t = dst[h * INTERPOLATED_COLS + w];
 #else
@@ -179,7 +179,7 @@ void loop() {
       t = min((int)t, MAXTEMP);
       t = max((int)t, MINTEMP); 
            
-      uint8_t colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
+      int colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
       colorIndex = constrain(colorIndex, 0, 255);
 
 #if 0

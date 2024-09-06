@@ -1,6 +1,13 @@
 #include <Arduino.h>
 
-inline float get_point(float *p, uint8_t rows, uint8_t cols, int8_t x, int8_t y) {
+inline float get_point(float *p, int rows, int cols, int x, int y) __attribute__((always_inline));
+inline void  set_point(float *p, int rows, int cols, int x, int y, float f) __attribute__((always_inline));
+inline void  get_adjacents_1d(float *src, float *dst, int rows, int cols, int x, int y) __attribute__((always_inline));
+inline void  get_adjacents_2d(float *src, float *dst, int rows, int cols, int x, int y) __attribute__((always_inline));
+inline float cubicInterpolate(float p[], float x) __attribute__((always_inline));
+inline float bicubicInterpolate(float p[], float x, float y) __attribute__((always_inline));
+
+float get_point(float *p, int rows, int cols, int x, int y) {
   if (x < 0) { x = 0; }
   if (y < 0) { y = 0; }
   if (x >= cols) { x = cols - 1; }
@@ -8,14 +15,14 @@ inline float get_point(float *p, uint8_t rows, uint8_t cols, int8_t x, int8_t y)
   return p[y * cols + x];
 }
 
-inline void set_point(float *p, uint8_t rows, uint8_t cols, int8_t x, int8_t y, float f) {
+void set_point(float *p, int rows, int cols, int x, int y, float f) {
   if ((x < 0) || (x >= cols)) { return; }
   if ((y < 0) || (y >= rows)) { return; }
   p[y * cols + x] = f;
 }
 
 // src is rows*cols and dst is a 4-point array passed in already allocated!
-void get_adjacents_1d(float *src, float *dst, uint8_t rows, uint8_t cols, int8_t x, int8_t y) {
+void get_adjacents_1d(float *src, float *dst, int rows, int cols, int x, int y) {
   // Serial.print("("); Serial.print(x); Serial.print(", "); Serial.print(y);
   // Serial.println(")");
   // pick two items to the left
@@ -27,12 +34,12 @@ void get_adjacents_1d(float *src, float *dst, uint8_t rows, uint8_t cols, int8_t
 }
 
 // src is rows*cols and dst is a 16-point array passed in already allocated!
-void get_adjacents_2d(float *src, float *dst, uint8_t rows, uint8_t cols, int8_t x, int8_t y) {
+void get_adjacents_2d(float *src, float *dst, int rows, int cols, int x, int y) {
   // Serial.print("("); Serial.print(x); Serial.print(", "); Serial.print(y);
   // Serial.println(")");
-  for (int8_t delta_y = -1; delta_y < 3; delta_y++) { // -1, 0, 1, 2
+  for (int delta_y = -1; delta_y < 3; delta_y++) { // -1, 0, 1, 2
     float *row = dst + 4 * (delta_y + 1); // index into each chunk of 4
-    for (int8_t delta_x = -1; delta_x < 3; delta_x++) { // -1, 0, 1, 2
+    for (int delta_x = -1; delta_x < 3; delta_x++) { // -1, 0, 1, 2
       row[delta_x + 1] = get_point(src, rows, cols, x + delta_x, y + delta_y);
     }
   }
@@ -67,15 +74,15 @@ float bicubicInterpolate(float p[], float x, float y) {
 
 // src is a grid src_rows * src_cols
 // dst is a pre-allocated grid, dst_rows*dst_cols
-void interpolate_image(float *src, uint8_t src_rows, uint8_t src_cols,
-                       float *dst, uint8_t dst_rows, uint8_t dst_cols) {
+void interpolate_image(float *src, int src_rows, int src_cols,
+                       float *dst, int dst_rows, int dst_cols) {
   float mu_x = (src_cols - 1.0) / (dst_cols - 1.0);
   float mu_y = (src_rows - 1.0) / (dst_rows - 1.0);
 
   float adjacents[16]; // matrix for storing adjacents
 
-  for (uint8_t y_idx = 0; y_idx < dst_rows; y_idx++) {
-    for (uint8_t x_idx = 0; x_idx < dst_cols; x_idx++) {
+  for (int y_idx = 0; y_idx < dst_rows; y_idx++) {
+    for (int x_idx = 0; x_idx < dst_cols; x_idx++) {
       float x = x_idx * mu_x;
       float y = y_idx * mu_y;
       // Serial.print("("); Serial.print(y_idx); Serial.print(", ");
@@ -85,7 +92,7 @@ void interpolate_image(float *src, uint8_t src_rows, uint8_t src_cols,
       get_adjacents_2d(src, adjacents, src_rows, src_cols, x, y);
       /*
       Serial.print("[");
-      for (uint8_t i=0; i<16; i++) {
+      for (int i=0; i<16; i++) {
         Serial.print(adjacents[i]); Serial.print(", ");
       }
       Serial.println("]");
