@@ -5,30 +5,46 @@
 #include "spi_assign.h"
 
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
+#define ClearScreen() tft.fillScreen(ST77XX_BLACK)
 
 // 2.4 inch ... "RESET" on breakout board can be connected to "RESET" or +3.3V on UNO R4 instead of D9.
 #define DEVICE_WIDTH    240
 #define DEVICE_HEIGHT   320
 #define DEVICE_ORIGIN   1
-#define PIXEL_SIZE      7
 #define INVERT_DISPLAY  false
 
 // Font size for setTextSize(2)
 #define FONT_WIDTH    12 // [px] (Device coordinate system)
 #define FONT_HEIGHT   16 // [px] (Device coordinate system)
 
-#define ClearScreen() tft.fillScreen(ST77XX_BLACK)
+#define MLX90640_ROWS 24
+#define MLX90640_COLS 32
 
+#define MINTEMP 20  // Low range of the sensor (this will be blue on the screen)
+#define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
+
+// Definitoins for Interpolation
+#define USE_INTERPOLATION false
+
+#if     USE_INTERPOLATION
+#define INTERPOLATE_SCALE 2
+#define BOX_SIZE          4
+#else
+#define INTERPOLATE_SCALE 1
+#define BOX_SIZE          7
+#endif
+
+#define INTERPOLATED_ROWS (MLX90640_ROWS * INTERPOLATE_SCALE)
+#define INTERPOLATED_COLS (MLX90640_COLS * INTERPOLATE_SCALE)
+void interpolate_image(float *src, uint8_t src_rows, uint8_t src_cols, 
+                       float *dst, uint8_t dst_rows, uint8_t dst_cols);
+
+// Global variables
 Adafruit_MLX90640 mlx;
-float frame[32*24]; // buffer for full frame of temperatures
+float src[MLX90640_ROWS     * MLX90640_COLS    ];
+float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
 
-//low range of the sensor (this will be blue on the screen)
-#define MINTEMP 20
-
-//high range of the sensor (this will be red on the screen)
-#define MAXTEMP 35
-
-//the colors we will be using
+// The colors we will be using
 const uint16_t camColors[] = {0x480F,
 0x400F,0x400F,0x400F,0x4010,0x3810,0x3810,0x3810,0x3810,0x3010,0x3010,
 0x3010,0x2810,0x2810,0x2810,0x2810,0x2010,0x2010,0x2010,0x1810,0x1810,
@@ -84,26 +100,27 @@ void setup() {
   tft.setRotation(DEVICE_ORIGIN);
   tft.invertDisplay(INVERT_DISPLAY);
   tft.setTextColor(ST77XX_WHITE);
-  tft.setTextSize(2);
   ClearScreen();
  
   // Draw color bar
   const int n = sizeof(camColors) / sizeof(camColors[0]);
-  const int w = PIXEL_SIZE * 32;
-  int       y = PIXEL_SIZE * 24 + 3;
+  const int w = BOX_SIZE * INTERPOLATED_COLS;
+  int       y = BOX_SIZE * INTERPOLATED_ROWS + 3;
   for (int i = 0; i < n; i++) {
     int x = map(i, 0, n, 0, w);
     tft.fillRect(x, y, 1, FONT_HEIGHT - 4, camColors[i]);
   }
 
   y += FONT_HEIGHT;
-  TFT_Printf(FONT_WIDTH *  0, y, "%d", MINTEMP);
-  TFT_Printf(FONT_WIDTH *  8, y, "%3.1f", (float)(MINTEMP + MAXTEMP) / 2.0f);
-  TFT_Printf(FONT_WIDTH * 17, y, "%d", MAXTEMP);
+  tft.setTextSize(2);
+  TFT_Printf(0,                      y, "%d", MINTEMP);
+  TFT_Printf(w / 2 - FONT_WIDTH * 2, y, "%3.1f", (float)(MINTEMP + MAXTEMP) / 2.0f);
+  TFT_Printf(w     - FONT_WIDTH * 2, y, "%d", MAXTEMP);
 
-  y = PIXEL_SIZE * 24 + FONT_HEIGHT * 3;
-  TFT_Printf(FONT_WIDTH *  6, y, "FPS");
-  TFT_Printf(FONT_WIDTH * 16, y, "'C");
+  tft.setTextSize(1);
+  TFT_Printf(260 + FONT_WIDTH * 4, FONT_HEIGHT / 2,         "Hz");
+  TFT_Printf(260 + FONT_WIDTH * 4, FONT_HEIGHT / 2 * 3 + 2, "'C");
+  tft.setTextSize(2);
 
   delay(100);
 
@@ -120,9 +137,12 @@ void setup() {
 
   // MLX90640
   mlx.setMode(MLX90640_CHESS);
+//mlx.setResolution(MLX90640_ADC_16BIT);
   mlx.setResolution(MLX90640_ADC_18BIT);
+//mlx.setResolution(MLX90640_ADC_19BIT);
 //mlx.setRefreshRate(MLX90640_8_HZ); // 8 FPS
   mlx.setRefreshRate(MLX90640_16_HZ); // 16 FPS
+//mlx.setRefreshRate(MLX90640_32_HZ); // 32 FPS
 
   // I2C Clock
 //Wire.setClock(400000); // 400 KHz (Sm)
@@ -138,16 +158,24 @@ void loop() {
   }
 
   uint32_t timestamp = millis();
-  if (mlx.getFrame(frame) != 0) {
+  if (mlx.getFrame(src) != 0) {
     TFT_Printf(DEVICE_WIDTH / 2 - FONT_WIDTH * 3, DEVICE_WIDTH / 2 - FONT_HEIGHT * 3, "Failed");
     Serial.println("Failed");
     delay(1000); // false = no new frame capture
     return;
   }
 
-  for (uint8_t h = 0; h < 24; h++) {
-    for (uint8_t w = 0; w < 32; w++) {
-      float t = frame[h * 32 + w];
+#if USE_INTERPOLATION
+  interpolate_image(src, MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATED_ROWS, INTERPOLATED_COLS);
+#endif
+
+  for (uint8_t h = 0; h < INTERPOLATED_ROWS; h++) {
+    for (uint8_t w = 0; w < INTERPOLATED_COLS; w++) {
+#if USE_INTERPOLATION
+      float t = dst[h * INTERPOLATED_COLS + w];
+#else
+      float t = src[h * INTERPOLATED_COLS + w];
+#endif
       t = min((int)t, MAXTEMP);
       t = max((int)t, MINTEMP); 
            
@@ -156,21 +184,21 @@ void loop() {
 
 #if 0
       // Back view
-      tft.fillRect(PIXEL_SIZE * w, PIXEL_SIZE * h, PIXEL_SIZE, PIXEL_SIZE, camColors[colorIndex]);
+      tft.fillRect(BOX_SIZE * w, BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]);
 #else
       // Front view
-      tft.fillRect(PIXEL_SIZE * (31 - w), PIXEL_SIZE * h, PIXEL_SIZE, PIXEL_SIZE, camColors[colorIndex]);
+      tft.fillRect(BOX_SIZE * (INTERPOLATED_COLS - 1 - w), BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]);
 #endif
     }
   }
 
-  // Ambient temperature
-  float v = mlx.getTa(false) + 0.05f;
-  if (v > 0) {
-    TFT_Printf(FONT_WIDTH * 12, PIXEL_SIZE * 24 + FONT_HEIGHT * 3, "%4.1f", v);
-  }
-
   // FPS
-  v = 2000.0f / (float)(millis() - timestamp) + 0.05f; // 2 frames per display
-  TFT_Printf(FONT_WIDTH, PIXEL_SIZE * 24 + FONT_HEIGHT * 3, "%4.1f", v);
+  float v = 2000.0f / (float)(millis() - timestamp) + 0.05f; // 2 frames per display
+  TFT_Printf(260, 0, "%4.1f", v);
+
+  // Ambient temperature
+  v = mlx.getTa(false) + 0.05f;
+  if (0.0f < v && v < 100.0f) {
+    TFT_Printf(260, FONT_HEIGHT + 3, "%4.1f", v);
+  }
 }
