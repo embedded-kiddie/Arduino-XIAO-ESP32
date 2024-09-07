@@ -89,7 +89,7 @@ void interpolate_image(float *src, int src_rows, int src_cols,
       // Serial.print(x_idx); Serial.print(") = "); Serial.print("(");
       // Serial.print(y); Serial.print(", "); Serial.print(x); Serial.print(")");
       //get_adjacents_1d(src, adjacents, src_rows, src_cols, x, y);
-      get_adjacents_2d(src, adjacents, src_rows, src_cols, x, y);
+      get_adjacents_2d(src, adjacents, src_rows, src_cols, (int)x, (int)y);
       /*
       Serial.print("[");
       for (int i=0; i<16; i++) {

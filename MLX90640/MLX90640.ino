@@ -31,7 +31,7 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 #define BOX_SIZE          4
 #else
 #define INTERPOLATE_SCALE 1
-#define BOX_SIZE          7
+#define BOX_SIZE          8
 #endif
 
 #define INTERPOLATED_ROWS (MLX90640_ROWS * INTERPOLATE_SCALE)
