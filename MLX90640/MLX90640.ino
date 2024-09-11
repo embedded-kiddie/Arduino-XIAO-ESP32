@@ -1,24 +1,35 @@
+#include <SPI.h>
 #include <Adafruit_MLX90640.h>
+#include "spi_assign.h"
+#include "colors.h"
+
+#if 1
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
-#include <SPI.h>
-#include "spi_assign.h"
-
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
-#define ClearScreen() tft.fillScreen(ST77XX_BLACK)
+#define TFT_ORIGIN  1
+#define TFT_INVERT  false
+#define TFT_INIT()  { tft.init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE); tft.setSPISpeed(SPI_FREQUENCY); touch_setup(); }
+#else
+#include <LovyanGFX.hpp>
+#include "LGFX_XIAO_ESP32S3_ST7789.hpp"
+LGFX_XIAO_ESP32S3_ST7789 tft;
+lgfx::touch_point_t tp;
+#define TFT_ORIGIN  3
+#define TFT_INVERT  false
+#define TFT_INIT()  { tft.init(); }
+#endif
+
+#define ClearScreen() tft.fillScreen(BLACK)
 
 // 2.4 inch ... "RESET" on breakout board can be connected to "RESET" or +3.3V on UNO R4 instead of D9.
-#define DEVICE_WIDTH    240
-#define DEVICE_HEIGHT   320
-#define DEVICE_ORIGIN   1
-#define INVERT_DISPLAY  false
 
 // Font size for setTextSize(2)
 #define FONT_WIDTH    12 // [px] (Device coordinate system)
 #define FONT_HEIGHT   16 // [px] (Device coordinate system)
 
-#define MLX90640_ROWS 24
 #define MLX90640_COLS 32
+#define MLX90640_ROWS 24
 
 #define MINTEMP 20  // Low range of the sensor (this will be blue on the screen)
 #define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
@@ -34,10 +45,8 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 #define BOX_SIZE          8
 #endif
 
-#define INTERPOLATED_ROWS (MLX90640_ROWS * INTERPOLATE_SCALE)
 #define INTERPOLATED_COLS (MLX90640_COLS * INTERPOLATE_SCALE)
-void interpolate_image(float *src, int src_rows, int src_cols, 
-                       float *dst, int dst_rows, int dst_cols);
+#define INTERPOLATED_ROWS (MLX90640_ROWS * INTERPOLATE_SCALE)
 
 // Global variables
 Adafruit_MLX90640 mlx;
@@ -73,6 +82,8 @@ const uint16_t camColors[] = {0x480F,
 0xF1E0,0xF1C0,0xF1A0,0xF180,0xF160,0xF140,0xF100,0xF0E0,0xF0C0,0xF0A0,
 0xF080,0xF060,0xF040,0xF020,0xF800,};
 
+#include "Interpolation.h"
+
 void TFT_Printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   int len = 0;
   char buf[16];
@@ -82,24 +93,24 @@ void TFT_Printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   len = vsnprintf(buf, sizeof(buf), fmt, arg_ptr);
   va_end(arg_ptr);
 
-  tft.fillRect(x, y, len * FONT_WIDTH, FONT_HEIGHT, ST77XX_BLACK);
+  tft.fillRect(x, y, len * FONT_WIDTH, FONT_HEIGHT, BLACK);
   tft.setCursor(x, y);
   tft.print(buf);
 }
 
-extern bool touch_loop(void);
 extern bool touch_setup(void);
+extern bool touch_loop(void);
+extern void sd_setup(void);
 extern bool sd_loop(void);
 
 void setup() {
   Serial.begin(115200);
 
   // Initialize ST7789
-  tft.init(DEVICE_WIDTH, DEVICE_HEIGHT, SPI_MODE);
-  tft.setSPISpeed(80000000);
-  tft.setRotation(DEVICE_ORIGIN);
-  tft.invertDisplay(INVERT_DISPLAY);
-  tft.setTextColor(ST77XX_WHITE);
+  TFT_INIT();
+  tft.setRotation(TFT_ORIGIN);
+  tft.invertDisplay(TFT_INVERT);
+  tft.setTextColor(WHITE);
   ClearScreen();
  
   // Draw color bar
@@ -148,18 +159,24 @@ void setup() {
 //Wire.setClock(400000); // 400 KHz (Sm)
   Wire.setClock(1000000); // 1 MHz (Fm+)
 
-  // Touch Screen
-  touch_setup();
+  // Interpolation
+  setup_interpolate(INTERPOLATED_ROWS, INTERPOLATED_COLS, INTERPOLATE_SCALE);
 }
 
 void loop() {
+#if defined(_ADAFRUIT_GFX_H)
   if (touch_loop()) {
     sd_loop();
   }
+#else
+  if (tft.getTouch(&tp)) {
+    sd_loop();
+  }
+#endif
 
   uint32_t timestamp = millis();
   if (mlx.getFrame(src) != 0) {
-    TFT_Printf(DEVICE_WIDTH / 2 - FONT_WIDTH * 3, DEVICE_WIDTH / 2 - FONT_HEIGHT * 3, "Failed");
+    TFT_Printf(TFT_WIDTH / 2 - FONT_WIDTH * 3, TFT_HEIGHT / 2 - FONT_HEIGHT * 5, "Failed");
     Serial.println("Failed");
     delay(1000); // false = no new frame capture
     return;
@@ -169,6 +186,7 @@ void loop() {
   interpolate_image(src, MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATED_ROWS, INTERPOLATED_COLS);
 #endif
 
+#if 1
   for (int h = 0; h < INTERPOLATED_ROWS; h++) {
     for (int w = 0; w < INTERPOLATED_COLS; w++) {
 #if USE_INTERPOLATION
@@ -178,19 +196,24 @@ void loop() {
 #endif
       t = min((int)t, MAXTEMP);
       t = max((int)t, MINTEMP); 
-           
+
       int colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
       colorIndex = constrain(colorIndex, 0, 255);
 
 #if 0
-      // Back view
+      // Selfie
       tft.fillRect(BOX_SIZE * w, BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]);
 #else
-      // Front view
+      // Front
+#if BOX_SIZE == 1
+      tft.drawPixel(INTERPOLATED_COLS - 1 - w, h, camColors[colorIndex]);
+#else
       tft.fillRect(BOX_SIZE * (INTERPOLATED_COLS - 1 - w), BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]);
+#endif
 #endif
     }
   }
+#endif
 
   // FPS
   float v = 2000.0f / (float)(millis() - timestamp) + 0.05f; // 2 frames per display
@@ -201,4 +224,6 @@ void loop() {
   if (0.0f < v && v < 100.0f) {
     TFT_Printf(260, FONT_HEIGHT + 3, "%4.1f", v);
   }
+
+  delay(33);
 }

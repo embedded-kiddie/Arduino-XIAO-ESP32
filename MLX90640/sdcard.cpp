@@ -39,9 +39,9 @@
  * https://github.com/espressif/arduino-esp32/tree/master/libraries/SD
  */
 
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
+#include <FS.h>
+#include <SD.h>
+#include <SPI.h>
 #include "spi_assign.h"
 
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
@@ -200,17 +200,26 @@ void testFileIO(fs::FS &fs, const char *path) {
   file.close();
 }
 
-bool sd_loop() {
-  // REASSIGN_PINS
+void sd_setup(void) {
+  // Initialize SD card interface
   SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
-  if (! SD.begin(SD_CS)) {
-    Serial.println("Card Mount Failed");
-    return false;
-  }
+}
 
-  uint8_t cardType = SD.cardType();
+bool sd_loop(void) {
+  sd_setup();
 
-  if (cardType == CARD_NONE) {
+  uint8_t cardType = 0;
+
+  do {
+    if (++cardType > 2) {
+      Serial.println("Card Mount Failed");
+      return false;
+    }
+    SD.end();
+    delay(1000);
+  } while (!SD.begin(SD_CS, SPI, SPI_READ_FREQUENCY));
+
+  if ((cardType = SD.cardType()) == CARD_NONE) {
     Serial.println("No SD card attached");
     return false;
   }
