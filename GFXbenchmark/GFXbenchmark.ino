@@ -49,7 +49,7 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IP
 void setup_gfx(void) {
   // Init Display
 #if defined (ARDUINO_XIAO_ESP32S3)
-  if (!GFX_EXEC(begin(80000000))) /* specify data bus speed */
+  if (!GFX_EXEC(begin(SPI_FREQUENCY))) /* specify data bus speed */
 #else
   if (!GFX_EXEC(begin())
 #endif
