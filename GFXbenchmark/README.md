@@ -1,4 +1,4 @@
-# Revisiting Graphics Libraries Benchmark
+# Revisiting Benchmarks of Graphics Library
 
 The original benchmark is in [moononournation/Arduino_GFX][12] on 2021 Jun 16
 
@@ -31,7 +31,7 @@ The original benchmark is in [moononournation/Arduino_GFX][12] on 2021 Jun 16
   - SPI Frequency: 80MHz
 - Tested on: September 12, 2024
 
-## Libraries version
+## Library versions
 
 - [adafruit/Adafruit-GFX-Library][10] ([1.11.10][11])
 - [moononournation/Arduino_GFX][12] ([1.4.9][13])
