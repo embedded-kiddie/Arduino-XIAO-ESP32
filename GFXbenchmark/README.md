@@ -1,6 +1,6 @@
 # Revisiting Graphics Libraries Benchmark
 
-The original benchmark is in moononournation/Arduino_GFX at 2021 Jun 16
+The original benchmark is in [moononournation/Arduino_GFX][12] on 2021 Jun 16
 
 | Benchmark          | Adafruit_GFX | Arduino_GFX |  Lovyan_GFX |  TFT_eSPI |
 | ------------------ | ------------:| -----------:| -----------:| ---------:|
