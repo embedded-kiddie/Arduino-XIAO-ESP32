@@ -3,7 +3,7 @@
 #include "spi_assign.h"
 #include "colors.h"
 
-#if 1
+#if 0
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
@@ -13,8 +13,7 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 #else
 #include <LovyanGFX.hpp>
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
-LGFX_XIAO_ESP32S3_ST7789 tft;
-lgfx::touch_point_t tp;
+LGFX tft;
 #define TFT_ORIGIN  3
 #define TFT_INVERT  false
 #define TFT_INIT()  { tft.init(); }
@@ -159,6 +158,11 @@ void setup() {
 //Wire.setClock(400000); // 400 KHz (Sm)
   Wire.setClock(1000000); // 1 MHz (Fm+)
 
+#ifdef LGFX_USE_V1
+  uint16_t cal[8] = {319, 384, 3866, 355, 277, 3729, 3832, 3785};
+  tft.setTouchCalibrate(cal);
+#endif
+
   // Interpolation
   setup_interpolate(INTERPOLATED_ROWS, INTERPOLATED_COLS, INTERPOLATE_SCALE);
 }
@@ -169,8 +173,10 @@ void loop() {
     sd_loop();
   }
 #else
-  if (tft.getTouch(&tp)) {
-    sd_loop();
+  int32_t x, y;
+  if (tft.getTouch(&x, &y)) {
+    Serial.println("x = " + String(x) + ", y = " + String(y));
+    //sd_loop();
   }
 #endif
 

@@ -1,4 +1,3 @@
-
 #ifndef _SPI_ASSIGN_H_
 
 #define TFT_WIDTH  240 // ST7789 240 x 240 and 240 x 320
@@ -23,9 +22,9 @@
 #define TOUCH_IRQ     2
 #define SPI_MODE      SPI_MODE3 // SPI_MODE2 or SPI_MODE3
 
-#define SPI_FREQUENCY 
-#define SPI_READ_FREQUENCY
-#define SPI_TOUCH_FREQUENCY
+#define SPI_FREQUENCY       40000000  // 40 MHz
+#define SPI_READ_FREQUENCY  25000000
+#define SPI_TOUCH_FREQUENCY   250000  // 250 KHz
 
 #elif defined(ARDUINO_XIAO_ESP32S3)
 // Seeed Studio XIAO ESP32-S3
@@ -40,9 +39,9 @@
 #define SD_CS         D6
 #define SPI_MODE      SPI_MODE3 // SPI_MODE3
 
-#define SPI_FREQUENCY       80000000
+#define SPI_FREQUENCY       80000000  // 80 MHz
 #define SPI_READ_FREQUENCY  25000000
-#define SPI_TOUCH_FREQUENCY  2500000
+#define SPI_TOUCH_FREQUENCY   250000 // 250 KHz
 
 #else
 #warning "must specify board type"

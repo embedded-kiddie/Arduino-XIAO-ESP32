@@ -18,7 +18,7 @@
 
 
 /// 独自の設定を行うクラスを、LGFX_Deviceから派生して作成します。
-class LGFX_XIAO_ESP32S3_ST7789 : public lgfx::LGFX_Device
+class LGFX : public lgfx::LGFX_Device
 {
 /*
  クラス名は"LGFX"から別の名前に変更しても構いません。
@@ -82,7 +82,7 @@ public:
 
   // コンストラクタを作成し、ここで各種設定を行います。
   // クラス名を変更した場合はコンストラクタも同じ名前を指定してください。
-  LGFX_XIAO_ESP32S3_ST7789(void)
+  LGFX(void)
   {
     { // バス制御の設定を行います。
       auto cfg = _bus_instance.config();    // バス設定用の構造体を取得します。
@@ -153,7 +153,7 @@ public:
       cfg.invert           = false;  // パネルの明暗が反転してしまう場合 trueに設定
       cfg.rgb_order        = false;  // パネルの赤と青が入れ替わってしまう場合 trueに設定
       cfg.dlen_16bit       = false;  // 16bitパラレルやSPIでデータ長を16bit単位で送信するパネルの場合 trueに設定
-      cfg.bus_shared       =  true;  // SDカードとバスを共有している場合 trueに設定(drawJpgFile等でバス制御を行います)
+      cfg.bus_shared       = false; // true;  // SDカードとバスを共有している場合 trueに設定(drawJpgFile等でバス制御を行います)
 
 // 以下はST7735やILI9163のようにピクセル数が可変のドライバで表示がずれる場合にのみ設定してください。
 //    cfg.memory_width     =   240;  // ドライバICがサポートしている最大の幅

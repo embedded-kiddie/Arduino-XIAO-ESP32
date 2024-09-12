@@ -71,7 +71,7 @@ void setup_gfx(void) {
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
 #include "colors.h"
 
-LGFX_XIAO_ESP32S3_ST7789 lcd;
+LGFX lcd;
 
 #define GFX_EXEC(x) lcd.x
 #define GFX_TITLE   F("Lovyan GFX PDQ")
