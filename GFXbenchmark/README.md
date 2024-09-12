@@ -38,9 +38,9 @@ The original benchmark is in [moononournation/Arduino_GFX][12] on 2021 Jun 16
 - [lovyan03/LovyanGFX][14] ([1.1.16][15])
 - [Bodmer/TFT_eSPI][16] ([V2.5.43][17])
 
-### Error by TFT_eSPI with ESP32C3／ESP32S3
+## Error by TFT_eSPI with ESP32C3／ESP32S3
 
-#### Issue
+### Issue
 
 The following exception occurs in `tft.init()`.
 
@@ -74,7 +74,7 @@ load:0x403cc700,len:0x2fd0
 entry 0x403c98ac
 ```
 
-#### Workaround
+### Workaround
 
 Enable the following in `User_Setup.h`.
 
@@ -85,7 +85,7 @@ Enable the following in `User_Setup.h`.
 #define USE_HSPI_PORT
 ```
 
-#### Related GitHub issues
+### Related GitHub issues
 
 - [Guru Meditation Error on tft.begin() (ESP32-S3 dev module) #3289][18]
 - [library not working with espressif32 esp32-s3 Arduino core > 2.0.14 #3329][19]
