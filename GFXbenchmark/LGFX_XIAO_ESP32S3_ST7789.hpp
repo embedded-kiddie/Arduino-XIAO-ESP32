@@ -93,14 +93,14 @@ public:
       cfg.spi_mode = SPI_MODE; //0;             // SPI通信モードを設定 (0 ~ 3)
       cfg.freq_write = SPI_FREQUENCY; //40000000;    // 送信時のSPIクロック (最大80MHz, 80MHzを整数で割った値に丸められます)
       cfg.freq_read  = SPI_READ_FREQUENCY; //16000000;    // 受信時のSPIクロック
-      cfg.spi_3wire  = true;        // 受信をMOSIピンで行う場合はtrueを設定
+      cfg.spi_3wire  = false; //true;        // 受信をMOSIピンで行う場合はtrueを設定
       cfg.use_lock   = true;        // トランザクションロックを使用する場合はtrueを設定
       cfg.dma_channel = SPI_DMA_CH_AUTO; // 使用するDMAチャンネルを設定 (0=DMA不使用 / 1=1ch / 2=ch / SPI_DMA_CH_AUTO=自動設定)
       // ※ ESP-IDFバージョンアップに伴い、DMAチャンネルはSPI_DMA_CH_AUTO(自動設定)が推奨になりました。1ch,2chの指定は非推奨になります。
-      cfg.pin_sclk = D8; //18;            // SPIのSCLKピン番号を設定
-      cfg.pin_mosi = D10; //23;            // SPIのMOSIピン番号を設定
-      cfg.pin_miso = D9; //19;            // SPIのMISOピン番号を設定 (-1 = disable)
-      cfg.pin_dc   = D0; //27;            // SPIのD/Cピン番号を設定  (-1 = disable)
+      cfg.pin_sclk = TFT_SCLK; //18;            // SPIのSCLKピン番号を設定
+      cfg.pin_mosi = TFT_MOSI; //23;            // SPIのMOSIピン番号を設定
+      cfg.pin_miso = TFT_MISO; //19;            // SPIのMISOピン番号を設定 (-1 = disable)
+      cfg.pin_dc   = TFT_DC; //27;            // SPIのD/Cピン番号を設定  (-1 = disable)
      // SDカードと共通のSPIバスを使う場合、MISOは省略せず必ず設定してください。
 //*/
 /*

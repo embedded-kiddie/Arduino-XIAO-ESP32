@@ -97,10 +97,10 @@ public:
       cfg.use_lock   = true;        // トランザクションロックを使用する場合はtrueを設定
       cfg.dma_channel = SPI_DMA_CH_AUTO; // 使用するDMAチャンネルを設定 (0=DMA不使用 / 1=1ch / 2=ch / SPI_DMA_CH_AUTO=自動設定)
       // ※ ESP-IDFバージョンアップに伴い、DMAチャンネルはSPI_DMA_CH_AUTO(自動設定)が推奨になりました。1ch,2chの指定は非推奨になります。
-      cfg.pin_sclk = D8; //18;            // SPIのSCLKピン番号を設定
-      cfg.pin_mosi = D10; //23;            // SPIのMOSIピン番号を設定
-      cfg.pin_miso = D9; //19;            // SPIのMISOピン番号を設定 (-1 = disable)
-      cfg.pin_dc   = D0; //27;            // SPIのD/Cピン番号を設定  (-1 = disable)
+      cfg.pin_sclk = TFT_SCLK; //18;            // SPIのSCLKピン番号を設定
+      cfg.pin_mosi = TFT_MOSI; //23;            // SPIのMOSIピン番号を設定
+      cfg.pin_miso = TFT_MISO; //19;            // SPIのMISOピン番号を設定 (-1 = disable)
+      cfg.pin_dc   = TFT_DC; //27;            // SPIのD/Cピン番号を設定  (-1 = disable)
      // SDカードと共通のSPIバスを使う場合、MISOは省略せず必ず設定してください。
 //*/
 /*
@@ -153,7 +153,7 @@ public:
       cfg.invert           = false;  // パネルの明暗が反転してしまう場合 trueに設定
       cfg.rgb_order        = false;  // パネルの赤と青が入れ替わってしまう場合 trueに設定
       cfg.dlen_16bit       = false;  // 16bitパラレルやSPIでデータ長を16bit単位で送信するパネルの場合 trueに設定
-      cfg.bus_shared       = false; // true;  // SDカードとバスを共有している場合 trueに設定(drawJpgFile等でバス制御を行います)
+      cfg.bus_shared       =  true;  // SDカードとバスを共有している場合 trueに設定(drawJpgFile等でバス制御を行います)
 
 // 以下はST7735やILI9163のようにピクセル数が可変のドライバで表示がずれる場合にのみ設定してください。
 //    cfg.memory_width     =   240;  // ドライバICがサポートしている最大の幅

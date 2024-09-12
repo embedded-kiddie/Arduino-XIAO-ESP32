@@ -1,4 +1,4 @@
-# Revisiting Benchmarks of Graphics Library
+# Updating Benchmarks of Graphics Library
 
 The original benchmark is in [moononournation/Arduino_GFX][12] on 2021 Jun 16
 
