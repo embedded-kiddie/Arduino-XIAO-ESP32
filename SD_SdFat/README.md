@@ -1,6 +1,9 @@
 # Compatible library functions of SD and SdFat
 
-This sketch is based on [espressif/arduino-esp32/libraries/SD/examples/SD_Test][1] and [greiman/SdFat/examples/][2].
+This sketch is based on the following sketches.
+
+- [espressif/arduino-esp32/libraries/SD/examples/SD_Test][1]
+- [greiman/SdFat/examples/][2].
 
 ## Functions
 
