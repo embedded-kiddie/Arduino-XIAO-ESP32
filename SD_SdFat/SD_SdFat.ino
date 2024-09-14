@@ -254,11 +254,24 @@ void setup() {
 
 #if USE_SDFAT
 
-  uint8_t cardType = SD.vol()->fatType();
-  Serial.println("SD Card Type: " + String(cardType));
+  Serial.print("SD Card type: ");
+  switch (SD.card()->type()) {
+    case SD_CARD_TYPE_SD1:  Serial.println("SD1");       break;
+    case SD_CARD_TYPE_SD2:  Serial.println("SD2");       break;
+    case SD_CARD_TYPE_SDHC: Serial.println("SDHC/SDXC"); break;
+    default:                Serial.println("unknown");   break;
+  }
+
+  Serial.print("SD Fat type: ");
+  switch (SD.vol()->fatType()) {
+    case FAT_TYPE_EXFAT: Serial.println("exFat"); break;
+    case FAT_TYPE_FAT32: Serial.println("FAT32"); break;
+    case FAT_TYPE_FAT16: Serial.println("FAT16"); break;
+    case FAT_TYPE_FAT12: Serial.println("FAT12"); break;
+  }
 
   uint32_t cardSize = SD.card()->sectorCount() * 0.000512 + 0.5;
-  Serial.println("SD Card Size: " + String(cardSize) + "MB");
+  Serial.printf("SD Card Size: %dMB\n", cardSize);
 
 #else
 
@@ -283,7 +296,7 @@ void setup() {
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
 
-#endif
+#endif // USE_SDFAT
 
   listDir(SD, "/", 0);
   createDir(SD, "/mydir");
