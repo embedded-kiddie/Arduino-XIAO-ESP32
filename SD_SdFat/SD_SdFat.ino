@@ -39,7 +39,7 @@
  */
 #include "spi_assign.h"
 
-#define USE_SDFAT false
+#define USE_SDFAT true
 
 #if USE_SDFAT
 
@@ -299,7 +299,7 @@ void setup() {
   testFileIO(SD, "/test.txt");
 
 #if USE_SDFAT
-  Serial.printf("Cluster size: %d\n", SD.vol()->bytesPerCluster());
+  Serial.printf("Free space: %dMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
   SD.ls(LS_R | LS_DATE | LS_SIZE);
 #else
   Serial.printf("Number of sectors: %d\n", SD.numSectors());
@@ -308,6 +308,7 @@ void setup() {
   Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
 #endif
 
+  SD.end();
   Serial.println("done.");
 }
 
