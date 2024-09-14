@@ -1,6 +1,6 @@
 # Compatible library functions of SD and SdFat
 
-This sketch is based on [libraries/SD/examples/SD_Test][1].
+This sketch is based on [espressif/arduino-esp32/libraries/SD/examples/SD_Test][1] and [greiman/SdFat/examples/][2].
 
 ## Functions
 
@@ -23,3 +23,5 @@ This sketch is based on [libraries/SD/examples/SD_Test][1].
 - `void deleteFile(FS_TYPE &fs, const char *path)`
 
 [1]: https://github.com/espressif/arduino-esp32/tree/master/libraries/SD/examples/SD_Test "arduino-esp32/libraries/SD/examples/SD_Test at master · espressif/arduino-esp32"
+
+[2]: https://github.com/greiman/SdFat/tree/master/examples "SdFat/examples at master · greiman/SdFat"
