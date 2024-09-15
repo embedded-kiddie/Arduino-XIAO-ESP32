@@ -29,9 +29,6 @@ void setup_gfx(void) {
 #if defined (ARDUINO_XIAO_ESP32S3)
   GFX_EXEC(setSPISpeed(SPI_FREQUENCY));
 #endif
-
-  extern void sd_setup(void);
-  sd_setup();
 }
 
 #elif 1
@@ -60,9 +57,6 @@ void setup_gfx(void) {
   }
 
   GFX_EXEC(invertDisplay(true));
-
-  extern void sd_setup(void);
-  sd_setup();
 }
 
 #elif 1
@@ -136,6 +130,11 @@ void setup()
   setup_gfx();
   touch_setup();
 
+#ifdef GFX_BL
+  pinMode(GFX_BL, OUTPUT);
+  digitalWrite(GFX_BL, HIGH);
+#endif
+
   w = GFX_EXEC(width());
   h = GFX_EXEC(height());
   n = min(w, h);
@@ -150,11 +149,6 @@ void setup()
   tsb = ((w <= 272) || (h <= 220)) ? 1 : 2;                                    // text size B
   tsc = ((w <= 220) || (h <= 220)) ? 1 : 2;                                    // text size C
   ds = (w <= 160) ? 9 : ((w <= 280) ? 10 : 12);                                // digit size
-
-#ifdef GFX_BL
-  pinMode(GFX_BL, OUTPUT);
-  digitalWrite(GFX_BL, HIGH);
-#endif
 }
 
 static inline uint32_t micros_start() __attribute__((always_inline));

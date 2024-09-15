@@ -4,22 +4,87 @@
 #include "colors.h"
 
 #if 0
+
+/*=============================================================
+ * Adafruit GFX Library
+ * https://github.com/adafruit/Adafruit-GFX-Library
+ *=============================================================*/
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
+#include <SPI.h>
+#include "colors.h"
+
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
-#define TFT_ORIGIN  1
-#define TFT_INVERT  false
-#define TFT_INIT()  { tft.init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE); tft.setSPISpeed(SPI_FREQUENCY); touch_setup(); }
+
+#define GFX_EXEC(x) tft.x
+
+void setup_gfx(void) {
+  GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
+  GFX_EXEC(setRotation(1));
+  GFX_EXEC(invertDisplay(false));
+
+#if defined (ARDUINO_XIAO_ESP32S3)
+  GFX_EXEC(setSPISpeed(SPI_FREQUENCY));
+#endif
+}
+
+#elif 1
+
+/*=============================================================
+ * Arduino GFX Library
+ * https://github.com/moononournation/Arduino_GFX
+ *=============================================================*/
+#include <Arduino_GFX_Library.h>
+
+Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC /* DC */, TFT_CS /* CS */, TFT_SCLK /* SCK */, TFT_MOSI /* MOSI */, TFT_MISO /* MISO */);
+Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
+
+#define GFX_EXEC(x) gfx->x
+
+void setup_gfx(void) {
+  // Init Display
+#if defined (ARDUINO_XIAO_ESP32S3)
+  if (!GFX_EXEC(begin(SPI_FREQUENCY))) /* specify data bus speed */
 #else
+  if (!GFX_EXEC(begin())
+#endif
+  {
+    Serial.println("gfx->begin() failed!");
+  }
+
+  GFX_EXEC(invertDisplay(true));
+}
+
+#else
+
+/*=============================================================
+ * LovyanGFX Library
+ * https://github.com/lovyan03/LovyanGFX
+ *=============================================================*/
 #include <LovyanGFX.hpp>
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
-LGFX tft;
-#define TFT_ORIGIN  3
-#define TFT_INVERT  false
-#define TFT_INIT()  { tft.init(); }
+#include "colors.h"
+
+LGFX lcd;
+
+#define GFX_EXEC(x) lcd.x
+
+void setup_gfx(void) {
+  GFX_EXEC(init());
+  GFX_EXEC(setRotation(3));
+  GFX_EXEC(setColorDepth(16));
+  GFX_EXEC(invertDisplay(false));
+}
+
 #endif
 
-#define ClearScreen() tft.fillScreen(BLACK)
+/*=============================================================
+ * Touch library
+ * This should be included after GFX_EXEC() definition
+ *=============================================================*/
+#include "touch.hpp"
+
+#define ClearScreen() GFX_EXEC(fillScreen(BLACK))
 
 // 2.4 inch ... "RESET" on breakout board can be connected to "RESET" or +3.3V on UNO R4 instead of D9.
 
@@ -81,7 +146,7 @@ const uint16_t camColors[] = {0x480F,
 0xF1E0,0xF1C0,0xF1A0,0xF180,0xF160,0xF140,0xF100,0xF0E0,0xF0C0,0xF0A0,
 0xF080,0xF060,0xF040,0xF020,0xF800,};
 
-#include "Interpolation.h"
+#include "Interpolation.hpp"
 
 void TFT_Printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   int len = 0;
@@ -92,9 +157,9 @@ void TFT_Printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   len = vsnprintf(buf, sizeof(buf), fmt, arg_ptr);
   va_end(arg_ptr);
 
-  tft.fillRect(x, y, len * FONT_WIDTH, FONT_HEIGHT, BLACK);
-  tft.setCursor(x, y);
-  tft.print(buf);
+  GFX_EXEC(fillRect(x, y, len * FONT_WIDTH, FONT_HEIGHT, BLACK));
+  GFX_EXEC(setCursor(x, y));
+  GFX_EXEC(print(buf));
 }
 
 extern bool touch_setup(void);
@@ -106,31 +171,31 @@ void setup() {
   Serial.begin(115200);
 
   // Initialize ST7789
-  TFT_INIT();
-  tft.setRotation(TFT_ORIGIN);
-  tft.invertDisplay(TFT_INVERT);
-  tft.setTextColor(WHITE);
-  ClearScreen();
+  setup_gfx();
+  touch_setup();
+  sd_setup();
  
   // Draw color bar
+  ClearScreen();
   const int n = sizeof(camColors) / sizeof(camColors[0]);
   const int w = BOX_SIZE * INTERPOLATED_COLS;
   int       y = BOX_SIZE * INTERPOLATED_ROWS + 3;
   for (int i = 0; i < n; i++) {
     int x = map(i, 0, n, 0, w);
-    tft.fillRect(x, y, 1, FONT_HEIGHT - 4, camColors[i]);
+    GFX_EXEC(fillRect(x, y, 1, FONT_HEIGHT - 4, camColors[i]));
   }
 
   y += FONT_HEIGHT;
-  tft.setTextSize(2);
+  GFX_EXEC(setTextSize(2));
+  GFX_EXEC(setTextColor(WHITE));
   TFT_Printf(0,                      y, "%d", MINTEMP);
   TFT_Printf(w / 2 - FONT_WIDTH * 2, y, "%3.1f", (float)(MINTEMP + MAXTEMP) / 2.0f);
   TFT_Printf(w     - FONT_WIDTH * 2, y, "%d", MAXTEMP);
 
-  tft.setTextSize(1);
+  GFX_EXEC(setTextSize(1));
   TFT_Printf(260 + FONT_WIDTH * 4, FONT_HEIGHT / 2,         "Hz");
   TFT_Printf(260 + FONT_WIDTH * 4, FONT_HEIGHT / 2 * 3 + 2, "'C");
-  tft.setTextSize(2);
+  GFX_EXEC(setTextSize(2));
 
   delay(100);
 
@@ -160,7 +225,7 @@ void setup() {
 
 #ifdef LGFX_USE_V1
   uint16_t cal[8] = {319, 384, 3866, 355, 277, 3729, 3832, 3785};
-  tft.setTouchCalibrate(cal);
+  GFX_EXEC(setTouchCalibrate(cal));
 #endif
 
   // Interpolation
@@ -168,17 +233,9 @@ void setup() {
 }
 
 void loop() {
-#if defined(_ADAFRUIT_GFX_H)
   if (touch_loop()) {
     sd_loop();
   }
-#else
-  int32_t x, y;
-  if (tft.getTouch(&x, &y)) {
-    Serial.println("x = " + String(x) + ", y = " + String(y));
-    //sd_loop();
-  }
-#endif
 
   uint32_t timestamp = millis();
   if (mlx.getFrame(src) != 0) {
@@ -208,13 +265,13 @@ void loop() {
 
 #if 0
       // Selfie
-      tft.fillRect(BOX_SIZE * w, BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]);
+      GFX_EXEC(fillRect(BOX_SIZE * w, BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
 #else
       // Front
 #if BOX_SIZE == 1
-      tft.drawPixel(INTERPOLATED_COLS - 1 - w, h, camColors[colorIndex]);
+      GFX_EXEC(drawPixel(INTERPOLATED_COLS - 1 - w, h, camColors[colorIndex]));
 #else
-      tft.fillRect(BOX_SIZE * (INTERPOLATED_COLS - 1 - w), BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]);
+      GFX_EXEC(fillRect(BOX_SIZE * (INTERPOLATED_COLS - 1 - w), BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
 #endif
 #endif
     }

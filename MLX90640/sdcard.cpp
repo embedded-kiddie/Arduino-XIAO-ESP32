@@ -1,4 +1,3 @@
-// https://github.com/espressif/arduino-esp32/tree/master/libraries/SD/examples/SD_Test
 /*
  * pin 1 - not used          |  Micro SD card     |
  * pin 2 - CS (SS)           |                   /
@@ -38,13 +37,40 @@
  * For more info see file README.md in this library or on URL:
  * https://github.com/espressif/arduino-esp32/tree/master/libraries/SD
  */
-
-#include <FS.h>
-#include <SD.h>
-#include <SPI.h>
+#include <Arduino.h>
 #include "spi_assign.h"
 
-void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
+#define USE_SDFAT false
+
+#if USE_SDFAT
+
+#define DISABLE_FS_H_WARNING
+#include "SdFat.h"
+
+#undef  FILE_APPEND
+#define FILE_APPEND (O_RDWR | O_CREAT | O_AT_END)
+#undef  FILE_WRITE
+#define FILE_WRITE  (O_RDWR | O_CREAT | O_TRUNC)
+
+// SHARED_SPI makes SD very slow, while DEDICATED_SPI causes GFX libraries to stop working.
+#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SD_SCK_MHZ(24))
+typedef FsFile  File;
+#define FS_TYPE SdFs
+SdFs SD;
+
+#else
+
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
+#define FS_TYPE  fs::FS
+#define SD_CONFIG SD_CS //, SPI, SPI_READ_FREQUENCY
+#endif
+
+// Uncomment and set up if you want to use custom pins for the SPI communication
+// #define REASSIGN_PINS
+
+void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels) {
   Serial.printf("Listing directory: %s\n", dirname);
 
   File root = fs.open(dirname);
@@ -57,17 +83,32 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
     return;
   }
 
+  char buf[16];
   File file = root.openNextFile();
   while (file) {
     if (file.isDirectory()) {
       Serial.print("  DIR : ");
+#if USE_SDFAT
+      file.getName(buf, sizeof(buf));
+      Serial.println(buf);
+#else
       Serial.println(file.name());
+#endif
       if (levels) {
+#if USE_SDFAT
+        listDir(fs, buf, levels - 1);
+#else
         listDir(fs, file.path(), levels - 1);
+#endif
       }
     } else {
       Serial.print("  FILE: ");
+#if USE_SDFAT
+      file.getName(buf, sizeof(buf));
+      Serial.print(buf);
+#else
       Serial.print(file.name());
+#endif
       Serial.print("  SIZE: ");
       Serial.println(file.size());
     }
@@ -75,8 +116,8 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
   }
 }
 
-void createDir(fs::FS &fs, const char *path) {
-  Serial.printf("Creating Dir: %s\n", path);
+void createDir(FS_TYPE &fs, const char *path) {
+  Serial.printf("Creating dir: %s\n", path);
   if (fs.mkdir(path)) {
     Serial.println("Dir created");
   } else {
@@ -84,8 +125,8 @@ void createDir(fs::FS &fs, const char *path) {
   }
 }
 
-void removeDir(fs::FS &fs, const char *path) {
-  Serial.printf("Removing Dir: %s\n", path);
+void removeDir(FS_TYPE &fs, const char *path) {
+  Serial.printf("Removing dir: %s\n", path);
   if (fs.rmdir(path)) {
     Serial.println("Dir removed");
   } else {
@@ -93,12 +134,12 @@ void removeDir(fs::FS &fs, const char *path) {
   }
 }
 
-void readFile(fs::FS &fs, const char *path) {
+void readFile(FS_TYPE &fs, const char *path) {
   Serial.printf("Reading file: %s\n", path);
 
   File file = fs.open(path);
   if (!file) {
-    Serial.println("Failed to open file " + String(path) + " for reading");
+    Serial.println("Failed to open file for reading");
     return;
   }
 
@@ -109,12 +150,12 @@ void readFile(fs::FS &fs, const char *path) {
   file.close();
 }
 
-void writeFile(fs::FS &fs, const char *path, const char *message) {
+void writeFile(FS_TYPE &fs, const char *path, const char *message) {
   Serial.printf("Writing file: %s\n", path);
 
   File file = fs.open(path, FILE_WRITE);
   if (!file) {
-    Serial.println("Failed to open file " + String(path) + " for writing");
+    Serial.println("Failed to open file for writing");
     return;
   }
   if (file.print(message)) {
@@ -125,12 +166,12 @@ void writeFile(fs::FS &fs, const char *path, const char *message) {
   file.close();
 }
 
-void appendFile(fs::FS &fs, const char *path, const char *message) {
+void appendFile(FS_TYPE &fs, const char *path, const char *message) {
   Serial.printf("Appending to file: %s\n", path);
 
   File file = fs.open(path, FILE_APPEND);
   if (!file) {
-    Serial.println("Failed to open file " + String(path) + " for appending");
+    Serial.println("Failed to open file for appending");
     return;
   }
   if (file.print(message)) {
@@ -141,7 +182,7 @@ void appendFile(fs::FS &fs, const char *path, const char *message) {
   file.close();
 }
 
-void renameFile(fs::FS &fs, const char *path1, const char *path2) {
+void renameFile(FS_TYPE &fs, const char *path1, const char *path2) {
   Serial.printf("Renaming file %s to %s\n", path1, path2);
   if (fs.rename(path1, path2)) {
     Serial.println("File renamed");
@@ -150,7 +191,7 @@ void renameFile(fs::FS &fs, const char *path1, const char *path2) {
   }
 }
 
-void deleteFile(fs::FS &fs, const char *path) {
+void deleteFile(FS_TYPE &fs, const char *path) {
   Serial.printf("Deleting file: %s\n", path);
   if (fs.remove(path)) {
     Serial.println("File deleted");
@@ -159,7 +200,7 @@ void deleteFile(fs::FS &fs, const char *path) {
   }
 }
 
-void testFileIO(fs::FS &fs, const char *path) {
+void testFileIO(FS_TYPE &fs, const char *path) {
   File file = fs.open(path);
   static uint8_t buf[512];
   size_t len = 0;
@@ -181,12 +222,12 @@ void testFileIO(fs::FS &fs, const char *path) {
     Serial.printf("%u bytes read for %lu ms\n", flen, end);
     file.close();
   } else {
-    Serial.println("Failed to open file " + String(path) + " for reading");
+    Serial.println("Failed to open file for reading");
   }
 
   file = fs.open(path, FILE_WRITE);
   if (!file) {
-    Serial.println("Failed to open file " + String(path) + " for writing");
+    Serial.println("Failed to open file for writing");
     return;
   }
 
@@ -201,30 +242,55 @@ void testFileIO(fs::FS &fs, const char *path) {
 }
 
 void sd_setup(void) {
+#ifdef REASSIGN_PINS
   // Initialize SD card interface
   SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
+#endif
 }
 
 bool sd_loop(void) {
   sd_setup();
 
-  uint8_t cardType = 0;
-
-  do {
-    if (++cardType > 2) {
-      Serial.println("Card Mount Failed");
+  uint8_t retry = 0;
+  while (!SD.begin(SD_CONFIG)) {
+    if (++retry >= 2) {
+      Serial.println("Card mount failed");
       return false;
     }
-    SD.end();
     delay(1000);
-  } while (!SD.begin(SD_CS, SPI, SPI_READ_FREQUENCY));
+  }
 
-  if ((cardType = SD.cardType()) == CARD_NONE) {
+#if USE_SDFAT
+
+  Serial.print("SD card type: ");
+  switch (SD.card()->type()) {
+    case SD_CARD_TYPE_SD1:  Serial.println("SD1");       break;
+    case SD_CARD_TYPE_SD2:  Serial.println("SD2");       break;
+    case SD_CARD_TYPE_SDHC: Serial.println("SDHC/SDXC"); break;
+    default:                Serial.println("unknown");   break;
+  }
+
+  Serial.print("FS type: ");
+  switch (SD.vol()->fatType()) {
+    case FAT_TYPE_EXFAT: Serial.println("exFat"); break;
+    case FAT_TYPE_FAT32: Serial.println("FAT32"); break;
+    case FAT_TYPE_FAT16: Serial.println("FAT16"); break;
+    case FAT_TYPE_FAT12: Serial.println("FAT12"); break;
+  }
+
+  uint32_t cardSize = SD.card()->sectorCount() * 0.000512 + 0.5;
+  Serial.printf("SD card Size: %dMB\n", cardSize);
+
+#else
+
+  uint8_t cardType = SD.cardType();
+
+  if (cardType == CARD_NONE) {
     Serial.println("No SD card attached");
     return false;
   }
 
-  Serial.print("SD Card Type: ");
+  Serial.print("SD card Type: ");
   if (cardType == CARD_MMC) {
     Serial.println("MMC");
   } else if (cardType == CARD_SD) {
@@ -236,9 +302,10 @@ bool sd_loop(void) {
   }
 
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n", cardSize);
+  Serial.printf("SD card size: %lluMB\n", cardSize);
 
-#if 1
+#endif // USE_SDFAT
+
   listDir(SD, "/", 0);
   createDir(SD, "/mydir");
   listDir(SD, "/", 0);
@@ -251,15 +318,18 @@ bool sd_loop(void) {
   renameFile(SD, "/hello.txt", "/foo.txt");
   readFile(SD, "/foo.txt");
   testFileIO(SD, "/test.txt");
-  Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
-  Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
+
+#if USE_SDFAT
+  Serial.printf("Free space: %dMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
+  SD.ls(LS_R | LS_DATE | LS_SIZE);
 #else
   Serial.printf("Number of sectors: %d\n", SD.numSectors());
   Serial.printf("Size of sector: %d\n", SD.sectorSize());
-  Serial.printf("Total bytes: %d\n", SD.totalBytes());
-  Serial.printf("Size of used bytes: %d\n", SD.usedBytes());
+  Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
+  Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
 #endif
 
-  SD.end();
+//SD.end(); --> Activating this line will cause some GFX libraries to stop working.
+  Serial.println("done.");
   return true;
 }

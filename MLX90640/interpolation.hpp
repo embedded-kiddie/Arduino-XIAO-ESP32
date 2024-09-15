@@ -129,8 +129,7 @@ void interpolate_image(float *src, const int src_rows, const int src_cols,
       int colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
       colorIndex = constrain(colorIndex, 0, 255);
 
-      extern Adafruit_ST7789 tft;
-      tft.fillRect(BOX_SIZE * (dst_cols - 1 - x_idx), BOX_SIZE * y_idx, BOX_SIZE, BOX_SIZE, camColors[colorIndex]);
+      GFX_EXEC(fillRect(BOX_SIZE * (dst_cols - 1 - x_idx), BOX_SIZE * y_idx, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
 #endif
     }
   }
@@ -172,8 +171,7 @@ void interpolate_image(float *src, const int src_rows, const int src_cols, float
       int colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
       colorIndex = constrain(colorIndex, 0, 255);
 
-      extern Adafruit_ST7789 tft;
-      tft.fillRect(BOX_SIZE * (dst_cols - 1 - x), BOX_SIZE * y, BOX_SIZE, BOX_SIZE, camColors[colorIndex]);
+      GFX_EXEC(fillRect(BOX_SIZE * (dst_cols - 1 - x), BOX_SIZE * y, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
 #endif
     }
   }

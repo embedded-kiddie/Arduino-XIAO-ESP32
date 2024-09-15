@@ -3,6 +3,7 @@
 
   See end of file for original header text and MIT license info.
 */
+#include "spi_assign.h"
 
 #if 0
 
@@ -13,7 +14,6 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include <SPI.h>
-#include "spi_assign.h"
 #include "colors.h"
 
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
@@ -28,7 +28,7 @@ void setup_gfx(void) {
 
 #if defined (ARDUINO_XIAO_ESP32S3)
   GFX_EXEC(setSPISpeed(SPI_FREQUENCY));
-#endif  
+#endif
 }
 
 #elif 0
@@ -38,7 +38,6 @@ void setup_gfx(void) {
  * https://github.com/moononournation/Arduino_GFX
  *=============================================================*/
 #include <Arduino_GFX_Library.h>
-#include "spi_assign.h"
 
 Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC /* DC */, TFT_CS /* CS */, TFT_SCLK /* SCK */, TFT_MOSI /* MOSI */, TFT_MISO /* MISO */);
 Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
@@ -67,7 +66,6 @@ void setup_gfx(void) {
  * https://github.com/lovyan03/LovyanGFX
  *=============================================================*/
 #include <LovyanGFX.hpp>
-#include "spi_assign.h"
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
 #include "colors.h"
 
@@ -125,6 +123,11 @@ void setup()
 
   setup_gfx();
 
+#ifdef GFX_BL
+  pinMode(GFX_BL, OUTPUT);
+  digitalWrite(GFX_BL, HIGH);
+#endif
+
   w = GFX_EXEC(width());
   h = GFX_EXEC(height());
   n = min(w, h);
@@ -139,11 +142,6 @@ void setup()
   tsb = ((w <= 272) || (h <= 220)) ? 1 : 2;                                    // text size B
   tsc = ((w <= 220) || (h <= 220)) ? 1 : 2;                                    // text size C
   ds = (w <= 160) ? 9 : ((w <= 280) ? 10 : 12);                                // digit size
-
-#ifdef GFX_BL
-  pinMode(GFX_BL, OUTPUT);
-  digitalWrite(GFX_BL, HIGH);
-#endif
 }
 
 static inline uint32_t micros_start() __attribute__((always_inline));
