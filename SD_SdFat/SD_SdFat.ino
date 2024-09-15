@@ -37,12 +37,14 @@
  * For more info see file README.md in this library or on URL:
  * https://github.com/espressif/arduino-esp32/tree/master/libraries/SD
  */
+#include <Arduino.h>
 #include "spi_assign.h"
 
 #define USE_SDFAT true
 
 #if USE_SDFAT
 
+#define DISABLE_FS_H_WARNING
 #include "SdFat.h"
 
 #undef  FILE_APPEND
@@ -50,8 +52,10 @@
 #undef  FILE_WRITE
 #define FILE_WRITE  (O_RDWR | O_CREAT | O_TRUNC)
 
-#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* or DEDICATED_SPI */, SD_SCK_MHZ(24))
-#define FS_TYPE  SdFs
+// SHARED_SPI makes SPI very slow, while DEDICATED_SPI causes some GFX libraries to stop working.
+#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SD_SCK_MHZ(24))
+typedef FsFile  File;
+#define FS_TYPE SdFs
 SdFs SD;
 
 #else
@@ -113,7 +117,7 @@ void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels) {
 }
 
 void createDir(FS_TYPE &fs, const char *path) {
-  Serial.printf("Creating Dir: %s\n", path);
+  Serial.printf("Creating dir: %s\n", path);
   if (fs.mkdir(path)) {
     Serial.println("Dir created");
   } else {
@@ -122,7 +126,7 @@ void createDir(FS_TYPE &fs, const char *path) {
 }
 
 void removeDir(FS_TYPE &fs, const char *path) {
-  Serial.printf("Removing Dir: %s\n", path);
+  Serial.printf("Removing dir: %s\n", path);
   if (fs.rmdir(path)) {
     Serial.println("Dir removed");
   } else {
@@ -237,24 +241,31 @@ void testFileIO(FS_TYPE &fs, const char *path) {
   file.close();
 }
 
-void setup() {
-  Serial.begin(115200);
-  while (!Serial) {
-    delay(10);
-  }
-
+void sd_setup(void) {
 #ifdef REASSIGN_PINS
+  // Initialize SD card interface
   SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
 #endif
+}
 
-  if (!SD.begin(SD_CONFIG)) {
-    Serial.println("Card Mount Failed");
-    return;
+void setup() {
+  Serial.begin(115200);
+  while (!Serial);
+
+  sd_setup();
+
+  uint8_t retry = 0;
+  while (!SD.begin(SD_CONFIG)) {
+    if (++retry >= 2) {
+      Serial.println("Card mount failed");
+      return;
+    }
+    delay(1000);
   }
 
 #if USE_SDFAT
 
-  Serial.print("SD Card type: ");
+  Serial.print("SD card type: ");
   switch (SD.card()->type()) {
     case SD_CARD_TYPE_SD1:  Serial.println("SD1");       break;
     case SD_CARD_TYPE_SD2:  Serial.println("SD2");       break;
@@ -262,7 +273,7 @@ void setup() {
     default:                Serial.println("unknown");   break;
   }
 
-  Serial.print("SD Fat type: ");
+  Serial.print("FS type: ");
   switch (SD.vol()->fatType()) {
     case FAT_TYPE_EXFAT: Serial.println("exFat"); break;
     case FAT_TYPE_FAT32: Serial.println("FAT32"); break;
@@ -271,7 +282,7 @@ void setup() {
   }
 
   uint32_t cardSize = SD.card()->sectorCount() * 0.000512 + 0.5;
-  Serial.printf("SD Card Size: %dMB\n", cardSize);
+  Serial.printf("SD card Size: %dMB\n", cardSize);
 
 #else
 
@@ -282,7 +293,7 @@ void setup() {
     return;
   }
 
-  Serial.print("SD Card Type: ");
+  Serial.print("SD card Type: ");
   if (cardType == CARD_MMC) {
     Serial.println("MMC");
   } else if (cardType == CARD_SD) {
@@ -294,7 +305,7 @@ void setup() {
   }
 
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n", cardSize);
+  Serial.printf("SD card size: %lluMB\n", cardSize);
 
 #endif // USE_SDFAT
 
@@ -321,7 +332,7 @@ void setup() {
   Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
 #endif
 
-  SD.end();
+//SD.end(); --> Activating this line will cause some GFX libraries to stop working.
   Serial.println("done.");
 }
 
