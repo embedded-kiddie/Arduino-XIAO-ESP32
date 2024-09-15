@@ -52,7 +52,7 @@
 #undef  FILE_WRITE
 #define FILE_WRITE  (O_RDWR | O_CREAT | O_TRUNC)
 
-// SHARED_SPI makes SPI very slow, while DEDICATED_SPI causes GFX libraries to stop working.
+// SHARED_SPI makes SD very slow, while DEDICATED_SPI causes GFX libraries to stop working.
 #define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SD_SCK_MHZ(24))
 typedef FsFile  File;
 #define FS_TYPE SdFs
