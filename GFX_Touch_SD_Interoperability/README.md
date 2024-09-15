@@ -24,6 +24,7 @@
 - [moononournation/Arduino_GFX][12] ([1.4.9][13])
 - [lovyan03/LovyanGFX][14] ([1.1.16][15])
 - [Bodmer/TFT_eSPI][16] ([V2.5.43][17])
+- [PaulStoffregen/XPT2046_Touchscreen][18] ([v1.4][19])
 
 [1]: https://www.arduino.cc/en/software "Software｜Arduino"
 
@@ -43,3 +44,6 @@
 
 [16]: https://github.com/Bodmer/TFT_eSPI "Bodmer/TFT_eSPI: Arduino and PlatformIO IDE compatible TFT library optimised for the Raspberry Pi Pico (RP2040), STM32, ESP8266 and ESP32 that supports different driver chips"
 [17]: https://github.com/Bodmer/TFT_eSPI/releases/tag/V2.5.43 "Release Bug fixes · Bodmer/TFT_eSPI"
+
+[18]: https://github.com/PaulStoffregen/XPT2046_Touchscreen "PaulStoffregen/XPT2046_Touchscreen: Touchscreen Arduino Library for XPT2046 Touch Controller Chip"
+[19]: https://github.com/PaulStoffregen/XPT2046_Touchscreen/releases/tag/v1.4 "Release Version 1.4 · PaulStoffregen/XPT2046_Touchscreen"
