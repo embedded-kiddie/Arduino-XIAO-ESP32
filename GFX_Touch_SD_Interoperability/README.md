@@ -1,4 +1,4 @@
-# Interoperability with Graphics and SD Libraries
+# Interoperability with GFX and SD Libraries
 
 | GFX library         | Touch library       | SD (standard) | SdFat (SHARED) | SdFat (DEDICATED) |
 | ------------------- | ------------------- |:-------------:|:--------------:|:-----------------:|
