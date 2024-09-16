@@ -75,7 +75,7 @@ float bicubicInterpolate(float p[], float x, float y) {
 static float table_ratio_x[INTERPOLATED_COLS][2];
 static float table_ratio_y[INTERPOLATED_ROWS][2];
 
-void setup_interpolate(const int dst_rows, const int dst_cols, int scale) {
+void interpolate_setup(const int dst_rows, const int dst_cols, int scale) {
   float ratio = (float)scale;
 
   for (int x = 0; x < dst_cols; x++) {

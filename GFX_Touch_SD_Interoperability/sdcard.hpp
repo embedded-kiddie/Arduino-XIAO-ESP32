@@ -245,15 +245,15 @@ void testFileIO(FS_TYPE &fs, const char *path) {
   file.close();
 }
 
-void sd_setup(void) {
+void sdcard_setup(void) {
 #ifdef REASSIGN_PINS
   // Initialize SD card interface
   SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
 #endif
 }
 
-bool sd_loop(void) {
-  sd_setup();
+bool sdcard_save(void) {
+  sdcard_setup();
 
   uint8_t retry = 0;
   while (!SD.begin(SD_CONFIG)) {

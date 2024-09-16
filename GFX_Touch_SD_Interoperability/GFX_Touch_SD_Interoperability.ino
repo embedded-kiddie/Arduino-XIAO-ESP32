@@ -20,8 +20,9 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
 #define GFX_EXEC(x) tft.x
 #define GFX_TITLE   F("Adafruit GFX PDQ")
+#define GFX_FILE    F("bmAdafruit_GFX")
 
-void setup_gfx(void) {
+void gfx_setup(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
   GFX_EXEC(setRotation(2));
   GFX_EXEC(invertDisplay(false));
@@ -44,8 +45,9 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IP
 
 #define GFX_EXEC(x) gfx->x
 #define GFX_TITLE   F("Arduino GFX PDQ")
+#define GFX_FILE    F("bmArduino_GFX")
 
-void setup_gfx(void) {
+void gfx_setup(void) {
   // Init Display
 #if defined (ARDUINO_XIAO_ESP32S3)
   if (!GFX_EXEC(begin(SPI_FREQUENCY))) /* specify data bus speed */
@@ -74,8 +76,9 @@ LGFX lcd;
 
 #define GFX_EXEC(x) lcd.x
 #define GFX_TITLE   F("Lovyan GFX PDQ")
+#define GFX_FILE    F("bmLovyanGFX")
 
-void setup_gfx(void) {
+void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(setRotation(0));
   GFX_EXEC(setColorDepth(16));
@@ -96,8 +99,9 @@ TFT_eSPI tft = TFT_eSPI();
 
 #define GFX_EXEC(x) tft.x
 #define GFX_TITLE   F("TFT_eSPI GFX PDQ")
+#define GFX_FILE    F("bmTFT_eSPI")
 
-void setup_gfx(void) {
+void gfx_setup(void) {
   tft.init();
 }
 
@@ -134,8 +138,9 @@ void setup()
   GFX_EXTRA_PRE_INIT();
 #endif
 
-  setup_gfx();
+  gfx_setup();
   touch_setup();
+  sdcard_setup();
 
 #ifdef GFX_BL
   pinMode(GFX_BL, OUTPUT);
@@ -283,11 +288,14 @@ void loop(void)
   GFX_EXEC(flush());
 #endif
 
+  /*=============================================================
+  * SD Card library
+  * ToDo: Save image to the SD card.
+  *=============================================================*/
   uint32_t start = millis();
   while (millis() - start < 10 * 1000L) {
-    if (touch_loop()) {
-      extern bool sd_loop();
-      if (sd_loop()) {
+    if (touch_check()) {
+      if (sdcard_save()) {
         return;
       };
     }

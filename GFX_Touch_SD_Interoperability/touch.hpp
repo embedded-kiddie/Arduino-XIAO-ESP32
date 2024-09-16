@@ -19,7 +19,7 @@ bool touch_setup() {
   }
 }
 
-bool touch_loop() {
+bool touch_check() {
   if (ts.touched()) {
     TS_Point p = ts.getPoint();
     Serial.print("Pressure = ");
@@ -42,7 +42,7 @@ bool touch_setup() {
   return true;
 }
 
-bool touch_loop() {
+bool touch_check() {
   uint16_t x, y;
   if (GFX_EXEC(getTouch(&x, &y))) {
     Serial.println("x = " + String(x) + ", y = " + String(y));

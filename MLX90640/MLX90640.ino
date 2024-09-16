@@ -18,7 +18,7 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 #define GFX_EXEC(x) tft.x
 #define ADJUSTMENT_DELAY  42  // 13.6 FPS
 
-void setup_gfx(void) {
+void gfx_setup(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
   GFX_EXEC(setRotation(1));
   GFX_EXEC(invertDisplay(false));
@@ -42,7 +42,7 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IP
 #define GFX_EXEC(x) gfx->x
 #define ADJUSTMENT_DELAY  82  // 18.6 FPS
 
-void setup_gfx(void) {
+void gfx_setup(void) {
   // Init Display
 #if defined (ARDUINO_XIAO_ESP32S3)
   if (!GFX_EXEC(begin(SPI_FREQUENCY))) /* specify data bus speed */
@@ -73,7 +73,7 @@ LGFX lcd;
 #define GFX_EXEC(x) lcd.x
 #define ADJUSTMENT_DELAY  20  // SPI2_HOST: 20 (18.6 FPS), SPI3_HOST: 35 (21.8 FPS)
 
-void setup_gfx(void) {
+void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(setRotation(3));
   GFX_EXEC(setColorDepth(16));
@@ -96,7 +96,7 @@ TFT_eSPI tft = TFT_eSPI();
 #define GFX_EXEC(x) tft.x
 #define ADJUSTMENT_DELAY  55  // 16.0 FPS
 
-void setup_gfx(void) {
+void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(setRotation(3));
 }
@@ -177,9 +177,9 @@ const uint16_t camColors[] = {0x480F,
 0xF1E0,0xF1C0,0xF1A0,0xF180,0xF160,0xF140,0xF100,0xF0E0,0xF0C0,0xF0A0,
 0xF080,0xF060,0xF040,0xF020,0xF800,};
 
-#include "Interpolation.hpp"
+#include "interpolation.hpp"
 
-void TFT_Printf(uint16_t x, uint16_t y, const char* fmt, ...) {
+void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   int len = 0;
   char buf[16];
 
@@ -193,18 +193,13 @@ void TFT_Printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   GFX_EXEC(print(buf));
 }
 
-extern bool touch_setup(void);
-extern bool touch_loop(void);
-extern void sd_setup(void);
-extern bool sd_loop(void);
-
 void setup() {
   Serial.begin(115200);
 
   // Initialize ST7789
-  setup_gfx();
+  gfx_setup();
   touch_setup();
-  sd_setup();
+  sdcard_setup();
  
   // Draw color bar
   ClearScreen();
@@ -219,13 +214,13 @@ void setup() {
   y += FONT_HEIGHT;
   GFX_EXEC(setTextSize(2));
   GFX_EXEC(setTextColor(WHITE));
-  TFT_Printf(0,                      y, "%d", MINTEMP);
-  TFT_Printf(w / 2 - FONT_WIDTH * 2, y, "%3.1f", (float)(MINTEMP + MAXTEMP) / 2.0f);
-  TFT_Printf(w     - FONT_WIDTH * 2, y, "%d", MAXTEMP);
+  gfx_printf(0,                      y, "%d", MINTEMP);
+  gfx_printf(w / 2 - FONT_WIDTH * 2, y, "%3.1f", (float)(MINTEMP + MAXTEMP) / 2.0f);
+  gfx_printf(w     - FONT_WIDTH * 2, y, "%d", MAXTEMP);
 
   GFX_EXEC(setTextSize(1));
-  TFT_Printf(260 + FONT_WIDTH * 4, FONT_HEIGHT / 2,         "Hz");
-  TFT_Printf(260 + FONT_WIDTH * 4, FONT_HEIGHT / 2 * 3 + 2, "'C");
+  gfx_printf(260 + FONT_WIDTH * 4, FONT_HEIGHT / 2,         "Hz");
+  gfx_printf(260 + FONT_WIDTH * 4, FONT_HEIGHT / 2 * 3 + 2, "'C");
   GFX_EXEC(setTextSize(2));
 
   delay(100);
@@ -250,7 +245,7 @@ void setup() {
   mlx.setRefreshRate(MLX90640_16_HZ); // 16 FPS
 //mlx.setRefreshRate(MLX90640_32_HZ); // 32 FPS
 
-  // I2C Clock
+  // I2C Clock for MLX90640
 //Wire.setClock(400000); // 400 KHz (Sm)
   Wire.setClock(1000000); // 1 MHz (Fm+)
 
@@ -260,17 +255,13 @@ void setup() {
 #endif
 
   // Interpolation
-  setup_interpolate(INTERPOLATED_ROWS, INTERPOLATED_COLS, INTERPOLATE_SCALE);
+  interpolate_setup(INTERPOLATED_ROWS, INTERPOLATED_COLS, INTERPOLATE_SCALE);
 }
 
 void loop() {
-  if (touch_loop()) {
-    sd_loop();
-  }
-
   uint32_t timestamp = millis();
   if (mlx.getFrame(src) != 0) {
-    TFT_Printf(TFT_WIDTH / 2 - FONT_WIDTH * 3, TFT_HEIGHT / 2 - FONT_HEIGHT * 5, "Failed");
+    gfx_printf(TFT_WIDTH / 2 - FONT_WIDTH * 3, TFT_HEIGHT / 2 - FONT_HEIGHT * 5, "Failed");
     Serial.println("Failed");
     delay(1000); // false = no new frame capture
     return;
@@ -311,12 +302,20 @@ void loop() {
 
   // FPS
   float v = 2000.0f / (float)(millis() - timestamp) + 0.05f; // 2 frames per display
-  TFT_Printf(260, 0, "%4.1f", v);
+  gfx_printf(260, 0, "%4.1f", v);
 
   // Ambient temperature
   v = mlx.getTa(false) + 0.05f;
   if (0.0f < v && v < 100.0f) {
-    TFT_Printf(260, FONT_HEIGHT + 3, "%4.1f", v);
+    gfx_printf(260, FONT_HEIGHT + 3, "%4.1f", v);
+  }
+
+  /*=============================================================
+  * SD Card library
+  * ToDo: Save image to the SD card.
+  *=============================================================*/
+  if (touch_check()) {
+    sdcard_save();
   }
 
   delay(ADJUSTMENT_DELAY);
