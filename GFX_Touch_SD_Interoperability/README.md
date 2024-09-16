@@ -4,8 +4,8 @@
 | ------------------- | ------------------- |:-------------:|:--------------:|:-----------------:|
 | Adafruit_GFX        | XPT2046_Touchscreen | OK            | OK             | NG                |
 | Arduino_GFX_Library | XPT2046_Touchscreen | OK            | OK             | NG                |
-| LovyanGFX           | ←                   | [OK][^1]      | NG             | NG                |
-| TFT_eSPI            | ←                   | [OK][^2]      | NG             | NG                |
+| LovyanGFX           | ←                   | OK [^1]       | NG             | NG                |
+| TFT_eSPI            | ←                   | OK [^2]       | NG             | NG                |
 
 ## Figures
 
