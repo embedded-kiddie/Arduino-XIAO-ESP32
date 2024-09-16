@@ -64,7 +64,11 @@ SdFs SD;
 #include "SD.h"
 #include "SPI.h"
 #define FS_TYPE  fs::FS
+#ifdef _TFT_eSPIH_
+#define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()), SPI_READ_FREQUENCY
+#else
 #define SD_CONFIG SD_CS //, SPI, SPI_READ_FREQUENCY
+#endif
 #endif
 
 // Uncomment and set up if you want to use custom pins for the SPI communication

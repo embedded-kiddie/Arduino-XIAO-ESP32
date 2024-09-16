@@ -1,7 +1,6 @@
 #include <SPI.h>
 #include <Adafruit_MLX90640.h>
 #include "spi_assign.h"
-#include "colors.h"
 
 #if 0
 
@@ -17,6 +16,7 @@
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
 #define GFX_EXEC(x) tft.x
+#define ADJUSTMENT_DELAY  42  // 13.6 FPS
 
 void setup_gfx(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
@@ -40,6 +40,7 @@ Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC /* DC */, TFT_CS /* CS */, TF
 Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
 
 #define GFX_EXEC(x) gfx->x
+#define ADJUSTMENT_DELAY  82  // 18.6 FPS
 
 void setup_gfx(void) {
   // Init Display
@@ -52,10 +53,12 @@ void setup_gfx(void) {
     Serial.println("gfx->begin() failed!");
   }
 
+  SPI.setDataMode(SPI_MODE);
+  GFX_EXEC(setRotation(3));
   GFX_EXEC(invertDisplay(true));
 }
 
-#else
+#elif 0
 
 /*=============================================================
  * LovyanGFX Library
@@ -68,12 +71,34 @@ void setup_gfx(void) {
 LGFX lcd;
 
 #define GFX_EXEC(x) lcd.x
+#define ADJUSTMENT_DELAY  20  // SPI2_HOST: 20 (18.6 FPS), SPI3_HOST: 35 (21.8 FPS)
 
 void setup_gfx(void) {
   GFX_EXEC(init());
   GFX_EXEC(setRotation(3));
   GFX_EXEC(setColorDepth(16));
   GFX_EXEC(invertDisplay(false));
+}
+
+#else
+
+/*=============================================================
+ * TFT_eSPI Library
+ * https://github.com/Bodmer/TFT_eSPI
+ *=============================================================*/
+#include "SPI.h"
+#include "TFT_eSPI.h"
+#include "colors.h"
+
+// Use hardware SPI
+TFT_eSPI tft = TFT_eSPI();
+
+#define GFX_EXEC(x) tft.x
+#define ADJUSTMENT_DELAY  55  // 16.0 FPS
+
+void setup_gfx(void) {
+  GFX_EXEC(init());
+  GFX_EXEC(setRotation(3));
 }
 
 #endif
@@ -83,6 +108,12 @@ void setup_gfx(void) {
  * This should be included after GFX_EXEC() definition
  *=============================================================*/
 #include "touch.hpp"
+
+/*=============================================================
+ * SD Card library
+ * This should be included after GFX_EXEC() definition
+ *=============================================================*/
+#include "sdcard.hpp"
 
 #define ClearScreen() GFX_EXEC(fillScreen(BLACK))
 
@@ -288,5 +319,5 @@ void loop() {
     TFT_Printf(260, FONT_HEIGHT + 3, "%4.1f", v);
   }
 
-  delay(33);
+  delay(ADJUSTMENT_DELAY);
 }

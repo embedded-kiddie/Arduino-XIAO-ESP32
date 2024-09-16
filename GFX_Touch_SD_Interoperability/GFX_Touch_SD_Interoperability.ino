@@ -31,7 +31,7 @@ void setup_gfx(void) {
 #endif
 }
 
-#elif 1
+#elif 0
 
 /*=============================================================
  * Arduino GFX Library
@@ -56,6 +56,7 @@ void setup_gfx(void) {
     Serial.println("gfx->begin() failed!");
   }
 
+  SPI.setDataMode(SPI_MODE);
   GFX_EXEC(invertDisplay(true));
 }
 
@@ -107,6 +108,12 @@ void setup_gfx(void) {
  * This should be included after GFX_EXEC() definition
  *=============================================================*/
 #include "touch.hpp"
+
+/*=============================================================
+ * SD Card library
+ * This should be included after GFX_EXEC() definition
+ *=============================================================*/
+#include "sdcard.hpp"
 
 #ifdef ESP32
 #undef F
@@ -277,7 +284,7 @@ void loop(void)
 #endif
 
   uint32_t start = millis();
-  while (millis() - start < 60 * 1000L) {
+  while (millis() - start < 10 * 1000L) {
     if (touch_loop()) {
       extern bool sd_loop();
       if (sd_loop()) {

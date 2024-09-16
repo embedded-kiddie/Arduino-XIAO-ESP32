@@ -56,6 +56,7 @@ void setup_gfx(void) {
     Serial.println("gfx->begin() failed!");
   }
 
+  SPI.setDataMode(SPI_MODE);
   GFX_EXEC(invertDisplay(true));
 }
 

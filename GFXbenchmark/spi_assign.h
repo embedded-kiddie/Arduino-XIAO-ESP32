@@ -31,13 +31,14 @@
 #define TFT_SCLK      D8
 #define TFT_MISO      D9
 #define TFT_MOSI      D10
-#define TFT_CS        D2    // (-1)  // dummy
-#define TFT_RST       D1    // Or set to -1 and connect to Arduino RESET pin
+#define TFT_CS        D2
+#define TFT_RST       D1
 #define TFT_DC        D0
 #define TOUCH_CS      D3
 #define TOUCH_IRQ     D7
 #define SD_CS         D6
-#define SPI_MODE      SPI_MODE3 // SPI_MODE3
+#define SPI_MODE      SPI_MODE3 // SPI_MODE2 or SPI_MODE3
+#define SPI_HOST      SPI2_HOST // LovyanGFX only
 
 #define SPI_FREQUENCY       80000000  // 80 MHz
 #define SPI_READ_FREQUENCY  25000000

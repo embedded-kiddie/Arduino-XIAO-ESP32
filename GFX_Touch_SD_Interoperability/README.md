@@ -4,8 +4,8 @@
 | ------------------- | ------------------- |:-------------:|:--------------:|:-----------------:|
 | Adafruit_GFX        | XPT2046_Touchscreen | OK            | OK             | NG                |
 | Arduino_GFX_Library | XPT2046_Touchscreen | OK            | OK             | NG                |
-| LovyanGFX           | ←                   | NG            | NG             | NG                |
-| TFT_eSPI            | ←                   | NG            | NG             | NG                |
+| LovyanGFX           | ←                   | [OK][^1]      | NG             | NG                |
+| TFT_eSPI            | ←                   | [OK][^2]      | NG             | NG                |
 
 ## Figures
 
@@ -25,6 +25,10 @@
 - [lovyan03/LovyanGFX][14] ([1.1.16][15])
 - [Bodmer/TFT_eSPI][16] ([V2.5.43][17])
 - [PaulStoffregen/XPT2046_Touchscreen][18] ([v1.4][19])
+
+[^1]: Select host of SPI bus as `SPI2_HOST`.
+
+[^2]: Specify the 2nd parameter in `SD.begin()` as `tft.getSPIinstance()`.
 
 [1]: https://www.arduino.cc/en/software "Software｜Arduino"
 
