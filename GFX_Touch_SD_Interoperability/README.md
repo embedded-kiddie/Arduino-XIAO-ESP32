@@ -2,8 +2,8 @@
 
 | GFX library         | Touch library       | SD (standard) | SdFat (SHARED) | SdFat (DEDICATED) |
 | ------------------- | ------------------- |:-------------:|:--------------:|:-----------------:|
-| Adafruit_GFX        | XPT2046_Touchscreen | OK            | OK             | NG                |
-| Arduino_GFX_Library | XPT2046_Touchscreen | OK            | OK             | NG                |
+| Adafruit_GFX        | XPT2046_Touchscreen | OK            | OK [^3]        | NG                |
+| Arduino_GFX_Library | XPT2046_Touchscreen | OK            | OK [^3]        | NG                |
 | LovyanGFX           | ←                   | OK [^1]       | NG             | NG                |
 | TFT_eSPI            | ←                   | OK [^2]       | NG             | NG                |
 
@@ -29,6 +29,8 @@
 [^1]: Select host of SPI bus as `SPI2_HOST`.
 
 [^2]: Specify the 2nd parameter in `SD.begin()` as `tft.getSPIinstance()`.
+
+[^3]: Reading and writing to the SD card is several times slower than SD (standard).
 
 [1]: https://www.arduino.cc/en/software "Software｜Arduino"
 
