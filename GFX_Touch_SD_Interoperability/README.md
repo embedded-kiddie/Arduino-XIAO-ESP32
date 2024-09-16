@@ -26,6 +26,11 @@
 - [Bodmer/TFT_eSPI][16] ([V2.5.43][17])
 - [PaulStoffregen/XPT2046_Touchscreen][18] ([v1.4][19])
 
+## Related discussions and issues
+
+- [Display freezes when saving images to SD card #616][20]
+- [Display freezes when saving images to SD card #617][21]
+
 [^1]: Reading and writing to the SD card is several times slower than SD (standard).
 
 [^2]: Select host of SPI bus as `SPI2_HOST`.
@@ -53,3 +58,6 @@
 
 [18]: https://github.com/PaulStoffregen/XPT2046_Touchscreen "PaulStoffregen/XPT2046_Touchscreen: Touchscreen Arduino Library for XPT2046 Touch Controller Chip"
 [19]: https://github.com/PaulStoffregen/XPT2046_Touchscreen/releases/tag/v1.4 "Release Version 1.4 · PaulStoffregen/XPT2046_Touchscreen"
+
+[20]: https://github.com/lovyan03/LovyanGFX/discussions/616 "Display freezes when saving images to SD card · lovyan03/LovyanGFX · Discussion #616"
+[21]: https://github.com/lovyan03/LovyanGFX/issues/617 "Display freezes when saving images to SD card · Issue #617 · lovyan03/LovyanGFX"
