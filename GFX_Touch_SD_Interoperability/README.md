@@ -32,7 +32,7 @@
 - [Display freezes when saving images to SD card #616][22]
 - [Display freezes when saving images to SD card #617][23]
 
-[^1]: Reading and writing to the SD card is several times slower than SD by SP-IDF.
+[^1]: Reading and writing to the SD card is several times slower than SD by ESP-IDF.
 
 [^2]: In ESP-IDF v5.1, `sdspi_host.h` for ESP32S3 configures `SDSPI_DEFAULT_HOST` as `SPI2_HOST`. Therefore the host for SPI bus should be selected as`SPI2_HOST`.
 
