@@ -220,10 +220,10 @@ void setup() {
   gfx_printf(w     - FONT_WIDTH * 2, y, "%d", MAXTEMP);
 
   GFX_EXEC(setTextSize(1));
-  gfx_printf(260, LINE_HEIGHT * 0.0, "FPS [Hz]");
-  gfx_printf(260, LINE_HEIGHT * 1.5, "Input [ms]");
-  gfx_printf(260, LINE_HEIGHT * 3.0, "Output[ms]");
-  gfx_printf(260, LINE_HEIGHT * 4.5, "Sensor['C]");
+  gfx_printf(260, LINE_HEIGHT * 0.0, "Sensor['C]");
+  gfx_printf(260, LINE_HEIGHT * 1.5, "FPS [Hz]");
+  gfx_printf(260, LINE_HEIGHT * 3.0, "Input [ms]");
+  gfx_printf(260, LINE_HEIGHT * 4.5, "Output[ms]");
   GFX_EXEC(setTextSize(2));
 
   delay(100);
@@ -305,21 +305,21 @@ void loop() {
 
   uint32_t drawTime = millis();
 
-  // FPS
-  float v = 2000.0f / (float)(drawTime - startTime) + 0.05f; // 2 frames per display
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%4.1f", v);
-
-  // MLX
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4d", mlxTime - startTime);
-
-  // DRW
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", drawTime - mlxTime);
-
   // Ambient temperature
-  v = mlx.getTa(false) + 0.05f;
+  float v = mlx.getTa(false) + 0.05f;
   if (0.0f < v && v < 100.0f) {
-    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4.1f", v);
+    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%4.1f", v);
   }
+
+  // FPS
+  v = 2000.0f / (float)(drawTime - startTime) + 0.05f; // 2 frames per display
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
+
+  // MLX90640
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", mlxTime - startTime);
+
+  // Interpolation
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", drawTime - mlxTime);
 
   /*=============================================================
   * SD Card library
