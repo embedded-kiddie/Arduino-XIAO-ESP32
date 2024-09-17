@@ -1,11 +1,11 @@
 # Interoperability with GFX and SD Libraries
 
-| GFX library         | Touch library       | SD            | SdFat (SHARED) | SdFat (DEDICATED) |
-| ------------------- | ------------------- | ------------- | -------------- | ----------------- |
-| Adafruit_GFX        | XPT2046_Touchscreen | OK            | OK [^1]        | NG                |
-| Arduino_GFX_Library | XPT2046_Touchscreen | OK            | OK [^1]        | NG                |
-| LovyanGFX           | ←                  | OK [^2]       | NG             | NG                |
-| TFT_eSPI            | ←                  | OK [^3]       | NG             | NG                |
+| GFX library         | Touch library       | SD (standard) | SdFat `SHARED_SPI` | SdFat `DEDICATED_SPI` |
+| ------------------- | ------------------- | ------------- | ------------------ | --------------------- |
+| Adafruit_GFX        | XPT2046_Touchscreen | OK            | OK [^1]            | NG                    |
+| Arduino_GFX_Library | XPT2046_Touchscreen | OK            | OK [^1]            | NG                    |
+| LovyanGFX           | <--                 | OK [^2]       | NG                 | NG                    |
+| TFT_eSPI            | <--                 | OK [^3]       | NG                 | NG                    |
 
 ## Figures
 
