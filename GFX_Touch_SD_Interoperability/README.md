@@ -1,11 +1,11 @@
 # Interoperability with GFX and SD Libraries
 
-| GFX library         | Touch library       | SD (`ESP-IDF`) | SdFat `SHARED_SPI` | SdFat `DEDICATED_SPI` |
-| ------------------- | ------------------- | -------------- | ------------------ | --------------------- |
-| Adafruit_GFX        | XPT2046_Touchscreen | OK             | OK [^1]            | NG                    |
-| Arduino_GFX_Library | XPT2046_Touchscreen | OK             | OK [^1]            | NG                    |
-| LovyanGFX           | <--                 | OK [^2]        | NG                 | NG                    |
-| TFT_eSPI            | <--                 | OK [^3]        | NG                 | NG                    |
+| GFX library         | Touch library       | SD by ESP-IDF | SdFat `SHARED_SPI` | SdFat `DEDICATED_SPI` |
+| ------------------- | ------------------- | ------------- | ------------------ | --------------------- |
+| Adafruit_GFX        | XPT2046_Touchscreen | OK            | OK [^1]            | NG                    |
+| Arduino_GFX_Library | XPT2046_Touchscreen | OK            | OK [^1]            | NG                    |
+| LovyanGFX           | <--                 | OK [^2]       | NG                 | NG                    |
+| TFT_eSPI            | <--                 | OK [^3]       | NG                 | NG                    |
 
 ## Figures
 
@@ -32,7 +32,7 @@
 - [Display freezes when saving images to SD card #616][22]
 - [Display freezes when saving images to SD card #617][23]
 
-[^1]: Reading and writing to the SD card is several times slower than SD (`ESP-IDF`).
+[^1]: Reading and writing to the SD card is several times slower than SD by SP-IDF.
 
 [^2]: In ESP-IDF v5.1, `sdspi_host.h` for ESP32S3 configures `SDSPI_DEFAULT_HOST` as `SPI2_HOST`. Therefore the host for SPI bus should be selected as`SPI2_HOST`.
 
