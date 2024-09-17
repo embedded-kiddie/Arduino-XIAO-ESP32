@@ -41,7 +41,7 @@
 #define SPI_HOST      SPI2_HOST // LovyanGFX only
 
 #define SPI_FREQUENCY       80000000  // 80 MHz
-#define SPI_READ_FREQUENCY  25000000
+#define SPI_READ_FREQUENCY  20000000  // 20 MHz
 #define SPI_TOUCH_FREQUENCY   250000 // 250 KHz
 
 #else
