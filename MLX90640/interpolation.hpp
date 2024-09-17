@@ -72,24 +72,9 @@ float bicubicInterpolate(float p[], float x, float y) {
   return cubicInterpolate(arr, y);
 }
 
-static float table_ratio_x[INTERPOLATED_COLS][2];
-static float table_ratio_y[INTERPOLATED_ROWS][2];
-
-void interpolate_setup(const int dst_rows, const int dst_cols, int scale) {
-  float ratio = (float)scale;
-
-  for (int x = 0; x < dst_cols; x++) {
-    table_ratio_x[x][0] = (float)(x % scale) / ratio;
-    table_ratio_x[x][1] = 1.0f - table_ratio_x[x][0];
-  }
-
-  for (int y = 0; y < dst_rows; y++) {
-    table_ratio_y[y][0] = (float)(y % scale) / ratio;
-    table_ratio_y[y][1] = 1.0f - table_ratio_y[y][0];
-  }
-}
-
 #if 0
+
+void interpolate_setup(const int dst_rows, const int dst_cols, int scale) {}
 
 // src is a grid src_rows * src_cols
 // dst is a pre-allocated grid, dst_rows*dst_cols
@@ -137,6 +122,23 @@ void interpolate_image(float *src, const int src_rows, const int src_cols,
 
 #else
 
+static float table_ratio_x[INTERPOLATED_COLS][2];
+static float table_ratio_y[INTERPOLATED_ROWS][2];
+
+void interpolate_setup(const int dst_rows, const int dst_cols, int scale) {
+  float ratio = (float)scale;
+
+  for (int x = 0; x < dst_cols; x++) {
+    table_ratio_x[x][0] = (float)(x % scale) / ratio;
+    table_ratio_x[x][1] = 1.0f - table_ratio_x[x][0];
+  }
+
+  for (int y = 0; y < dst_rows; y++) {
+    table_ratio_y[y][0] = (float)(y % scale) / ratio;
+    table_ratio_y[y][1] = 1.0f - table_ratio_y[y][0];
+  }
+}
+
 void interpolate_image(float *src, const int src_rows, const int src_cols, float *dst, const int dst_rows, const int dst_cols) {
   int X, Y;
   int scale = dst_rows / src_rows;
@@ -147,17 +149,17 @@ void interpolate_image(float *src, const int src_rows, const int src_cols, float
   // Bilinear interpolation
   for (int y = 0; y < dst_rows; y++) {
     Y = y / scale;
-    y_ratio_lo = (float)(y % scale) / ratio;
-    y_ratio_hi = 1.0f - y_ratio_lo;
-//  y_ratio_lo = table_ratio_y[y][0];
-//  y_ratio_hi = table_ratio_y[y][1];
+//  y_ratio_lo = (float)(y % scale) / ratio;
+//  y_ratio_hi = 1.0f - y_ratio_lo;
+    y_ratio_lo = table_ratio_y[y][0];
+    y_ratio_hi = table_ratio_y[y][1];
 
     for (int x = 0; x < dst_cols; x++) {
       X = x / scale;
-      x_ratio_lo = (float)(x % scale) / ratio;
-      x_ratio_hi = 1.0f - x_ratio_lo;
-//    x_ratio_lo = table_ratio_x[x][0];
-//    x_ratio_hi = table_ratio_x[x][1];
+//    x_ratio_lo = (float)(x % scale) / ratio;
+//    x_ratio_hi = 1.0f - x_ratio_lo;
+      x_ratio_lo = table_ratio_x[x][0];
+      x_ratio_hi = table_ratio_x[x][1];
 
       float t = y_ratio_hi * (x_ratio_hi * get_point(src, src_rows, src_cols, X, Y    ) + x_ratio_lo * get_point(src, src_rows, src_cols, X + 1, Y    )) +
                 y_ratio_lo * (x_ratio_hi * get_point(src, src_rows, src_cols, X, Y + 1) + x_ratio_lo * get_point(src, src_rows, src_cols, X + 1, Y + 1));

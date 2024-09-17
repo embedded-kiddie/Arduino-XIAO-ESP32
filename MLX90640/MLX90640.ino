@@ -28,7 +28,7 @@ void gfx_setup(void) {
 #endif
 }
 
-#elif 1
+#elif 0
 
 /*=============================================================
  * Arduino GFX Library
@@ -58,7 +58,7 @@ void gfx_setup(void) {
   GFX_EXEC(invertDisplay(true));
 }
 
-#elif 0
+#elif 1
 
 /*=============================================================
  * LovyanGFX Library
@@ -71,7 +71,7 @@ void gfx_setup(void) {
 LGFX lcd;
 
 #define GFX_EXEC(x) lcd.x
-#define ADJUSTMENT_DELAY  20  // SPI2_HOST: 20 (18.6 FPS), SPI3_HOST: 35 (21.8 FPS)
+#define ADJUSTMENT_DELAY  20  // SPI2_HOST: 20 (18.9 FPS), SPI3_HOST: 35 (21.8 FPS)
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -122,6 +122,7 @@ void gfx_setup(void) {
 // Font size for setTextSize(2)
 #define FONT_WIDTH    12 // [px] (Device coordinate system)
 #define FONT_HEIGHT   16 // [px] (Device coordinate system)
+#define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
 
 #define MLX90640_COLS 32
 #define MLX90640_ROWS 24
@@ -219,8 +220,10 @@ void setup() {
   gfx_printf(w     - FONT_WIDTH * 2, y, "%d", MAXTEMP);
 
   GFX_EXEC(setTextSize(1));
-  gfx_printf(260 + FONT_WIDTH * 4, FONT_HEIGHT / 2,         "Hz");
-  gfx_printf(260 + FONT_WIDTH * 4, FONT_HEIGHT / 2 * 3 + 2, "'C");
+  gfx_printf(260, LINE_HEIGHT * 0.0, "FPS [Hz]");
+  gfx_printf(260, LINE_HEIGHT * 1.5, "Input [ms]");
+  gfx_printf(260, LINE_HEIGHT * 3.0, "Output[ms]");
+  gfx_printf(260, LINE_HEIGHT * 4.5, "Sensor['C]");
   GFX_EXEC(setTextSize(2));
 
   delay(100);
@@ -259,7 +262,7 @@ void setup() {
 }
 
 void loop() {
-  uint32_t timestamp = millis();
+  uint32_t startTime = millis();
   if (mlx.getFrame(src) != 0) {
     gfx_printf(TFT_WIDTH / 2 - FONT_WIDTH * 3, TFT_HEIGHT / 2 - FONT_HEIGHT * 5, "Failed");
     Serial.println("Failed");
@@ -267,11 +270,12 @@ void loop() {
     return;
   }
 
+  uint32_t mlxTime = millis();
+
 #if USE_INTERPOLATION
   interpolate_image(src, MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATED_ROWS, INTERPOLATED_COLS);
 #endif
 
-#if 1
   for (int h = 0; h < INTERPOLATED_ROWS; h++) {
     for (int w = 0; w < INTERPOLATED_COLS; w++) {
 #if USE_INTERPOLATION
@@ -293,21 +297,28 @@ void loop() {
 #if BOX_SIZE == 1
       GFX_EXEC(drawPixel(INTERPOLATED_COLS - 1 - w, h, camColors[colorIndex]));
 #else
-      GFX_EXEC(fillRect(BOX_SIZE * (INTERPOLATED_COLS - 1 - w), BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
+      GFX_EXEC(fillRect((INTERPOLATED_COLS - 1 - w) * BOX_SIZE, h * BOX_SIZE, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
 #endif
 #endif
     }
   }
-#endif
+
+  uint32_t drawTime = millis();
 
   // FPS
-  float v = 2000.0f / (float)(millis() - timestamp) + 0.05f; // 2 frames per display
-  gfx_printf(260, 0, "%4.1f", v);
+  float v = 2000.0f / (float)(drawTime - startTime) + 0.05f; // 2 frames per display
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%4.1f", v);
+
+  // MLX
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4d", mlxTime - startTime);
+
+  // DRW
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", drawTime - mlxTime);
 
   // Ambient temperature
   v = mlx.getTa(false) + 0.05f;
   if (0.0f < v && v < 100.0f) {
-    gfx_printf(260, FONT_HEIGHT + 3, "%4.1f", v);
+    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4.1f", v);
   }
 
   /*=============================================================
