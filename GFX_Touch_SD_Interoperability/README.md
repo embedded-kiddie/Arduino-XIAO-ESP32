@@ -34,7 +34,17 @@
 
 [^1]: Reading and writing to the SD card is several times slower than SD (standard).
 
-[^2]: Select host of SPI bus as `SPI2_HOST`.
+[^2]: In ESP-IDF v5.1, `sdspi_host.h` for ESP32S3 is defined as follows:  
+```c++
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
+#define SDSPI_DEFAULT_HOST HSPI_HOST
+#define SDSPI_DEFAULT_DMA  SDSPI_DEFAULT_HOST
+#else
+#define SDSPI_DEFAULT_HOST SPI2_HOST
+#define SDSPI_DEFAULT_DMA  SPI_DMA_CH_AUTO
+#endif
+```
+Therefore, select `SPI2_HOST` as the host for the SPI bus.
 
 [^3]: Specify the 2nd parameter in `SD.begin()` as `tft.getSPIinstance()`.
 
