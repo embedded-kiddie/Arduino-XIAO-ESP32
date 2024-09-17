@@ -1,6 +1,6 @@
 # Interoperability with GFX and SD Libraries
 
-| GFX library         | Touch library       | SD (standard) | SdFat (SHARED) | SdFat (DEDICATED) |
+| GFX library         | Touch library       | SD            | SdFat (SHARED) | SdFat (DEDICATED) |
 | ------------------- | ------------------- |:-------------:|:--------------:|:-----------------:|
 | Adafruit_GFX        | XPT2046_Touchscreen | OK            | OK [^1]        | NG                |
 | Arduino_GFX_Library | XPT2046_Touchscreen | OK            | OK [^1]        | NG                |
@@ -25,11 +25,12 @@
 - [lovyan03/LovyanGFX][14] ([1.1.16][15])
 - [Bodmer/TFT_eSPI][16] ([V2.5.43][17])
 - [PaulStoffregen/XPT2046_Touchscreen][18] ([v1.4][19])
+- [greiman/SdFat][20] ([2.2.3][21])
 
 ## Related discussions and issues
 
-- [Display freezes when saving images to SD card #616][20]
-- [Display freezes when saving images to SD card #617][21]
+- [Display freezes when saving images to SD card #616][22]
+- [Display freezes when saving images to SD card #617][23]
 
 [^1]: Reading and writing to the SD card is several times slower than SD (standard).
 
@@ -59,5 +60,8 @@
 [18]: https://github.com/PaulStoffregen/XPT2046_Touchscreen "PaulStoffregen/XPT2046_Touchscreen: Touchscreen Arduino Library for XPT2046 Touch Controller Chip"
 [19]: https://github.com/PaulStoffregen/XPT2046_Touchscreen/releases/tag/v1.4 "Release Version 1.4 · PaulStoffregen/XPT2046_Touchscreen"
 
-[20]: https://github.com/lovyan03/LovyanGFX/discussions/616 "Display freezes when saving images to SD card · lovyan03/LovyanGFX · Discussion #616"
-[21]: https://github.com/lovyan03/LovyanGFX/issues/617 "Display freezes when saving images to SD card · Issue #617 · lovyan03/LovyanGFX"
+[20]: https://github.com/greiman/SdFat "greiman/SdFat: Arduino FAT16/FAT32 exFAT Library"
+[21]: https://github.com/greiman/SdFat/releases/tag/2.2.3 "Release Add Move Constructor and bug fixes. · greiman/SdFat"
+
+[22]: https://github.com/lovyan03/LovyanGFX/discussions/616 "Display freezes when saving images to SD card · lovyan03/LovyanGFX · Discussion #616"
+[23]: https://github.com/lovyan03/LovyanGFX/issues/617 "Display freezes when saving images to SD card · Issue #617 · lovyan03/LovyanGFX"
