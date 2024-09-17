@@ -62,7 +62,7 @@ void gfx_setup(void) {
   GFX_EXEC(invertDisplay(true));
 }
 
-#elif 1
+#elif 0
 
 /*=============================================================
  * LovyanGFX Library

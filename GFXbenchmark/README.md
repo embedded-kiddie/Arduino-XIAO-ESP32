@@ -76,13 +76,13 @@ entry 0x403c98ac
 
 ### Workaround
 
-Enable the following in `User_Setup.h`.
+Enable the `USE_HSPI_PORT` or `USE_FSPI_PORT` in `User_Setup.h` as follows:
 
 ```c++
 // The ESP32 has 2 free SPI ports i.e. VSPI and HSPI, the VSPI is the default.
 // If the VSPI port is in use and pins are not accessible (e.g. TTGO T-Beam)
 // then uncomment the following line:
-#define USE_HSPI_PORT
+#define USE_HSPI_PORT // or USE_FSPI_PORT
 ```
 
 ### Related GitHub issues

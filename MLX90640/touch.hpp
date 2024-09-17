@@ -39,6 +39,12 @@ bool touch_check() {
 #else // LovyanGFX || TFT_eSPI
 
 bool touch_setup() {
+#ifdef LGFX_USE_V1
+  // LovyanGFX
+  uint16_t cal[8] = {319, 384, 3866, 355, 277, 3729, 3832, 3785};
+  GFX_EXEC(setTouchCalibrate(cal));
+#endif
+
   return true;
 }
 

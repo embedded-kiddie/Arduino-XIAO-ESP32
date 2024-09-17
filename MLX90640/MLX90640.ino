@@ -252,11 +252,6 @@ void setup() {
 //Wire.setClock(400000); // 400 KHz (Sm)
   Wire.setClock(1000000); // 1 MHz (Fm+)
 
-#ifdef LGFX_USE_V1
-  uint16_t cal[8] = {319, 384, 3866, 355, 277, 3729, 3832, 3785};
-  GFX_EXEC(setTouchCalibrate(cal));
-#endif
-
   // Interpolation
   interpolate_setup(INTERPOLATED_ROWS, INTERPOLATED_COLS, INTERPOLATE_SCALE);
 }
