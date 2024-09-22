@@ -341,6 +341,7 @@ inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
 }
 
 #ifdef _ADAFRUIT_GFX_H
+
 /* create snapshot of 3.5" TFT and save to file in bitmap format
  * https://forum.arduino.cc/t/create-snapshot-of-3-5-tft-and-save-to-file-in-bitmap-format/391367/7
 */
@@ -355,12 +356,14 @@ uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
     r = GFX_EXEC(spiRead());
     g = GFX_EXEC(spiRead());
     b = GFX_EXEC(spiRead());
-    GFX_EXEC(endWrite());    // needed for low-level methods. CS idle
+    GFX_EXEC(endWrite());   // needed for low-level methods. CS idle
 
-    return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3);
+    return RGB565(r, g, b); // defined in colors.h
 }
+
 #endif // _ADAFRUIT_GFX_H
 
+// At present, only LovyanGFX can capture the screen using readPixel() or readRect()
 bool SaveBMP24(FS_TYPE &fs, const char *path) {
   uint16_t rgb;
   uint8_t r, g, b;
