@@ -29,7 +29,7 @@
 
 ## Screen capture
 
-At present, only LovyanGFX can capture the screen using `readPixel()` or `readRect()`.
+At present, only LovyanGFX can capture the screen using readPixel() or readRect() by lowering `cfg.freq_read` to around 4MHz.
 
 ![LovyanGFX](benchmark_LovyanGFX.png)
 
