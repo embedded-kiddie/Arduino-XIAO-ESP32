@@ -31,7 +31,7 @@
 
 At present, only LovyanGFX can capture the screen using `readPixel()` or `readRect()`.
 
-![LovyanGFX](benchmark_LovyanGFX.bmp)
+![LovyanGFX](benchmark_LovyanGFX.png)
 
 ## Related discussions and issues
 
