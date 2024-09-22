@@ -5,6 +5,11 @@
 */
 #include "spi_assign.h"
 
+#ifdef ESP32
+#undef F
+#define F(s) (s)
+#endif
+
 #if 0
 
 /*=============================================================
@@ -119,16 +124,16 @@ void gfx_setup(void) {
  *=============================================================*/
 #include "sdcard.hpp"
 
-#ifdef ESP32
-#undef F
-#define F(s) (s)
-#endif
-
+/*=============================================================
+ * Globals for benchmark
+ *=============================================================*/
 int32_t w, h, n, n1, cx, cy, cx1, cy1, cn, cn1;
 uint8_t tsa, tsb, tsc, ds;
 
-void setup()
-{
+/*=============================================================
+ * setup() and loop()
+ *=============================================================*/
+void setup() {
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
   // while(!Serial);
@@ -163,14 +168,12 @@ void setup()
   ds = (w <= 160) ? 9 : ((w <= 280) ? 10 : 12);                                // digit size
 }
 
-void loop(void)
-{
+void loop(void) {
   void DoBenchmark();
   DoBenchmark();
 
  /*=============================================================
-  * SD Card library
-  * ToDo: Save image to the SD card.
+  * Capture the screen when it is touched
   *=============================================================*/
   uint32_t start = millis();
   while (millis() - start < 10 * 1000L) {
@@ -185,11 +188,9 @@ void loop(void)
  * cf. https://github.com/moononournation/Arduino_GFX/
  *=============================================================*/
 static inline uint32_t micros_start() __attribute__((always_inline));
-static inline uint32_t micros_start()
-{
+static inline uint32_t micros_start() {
   uint8_t oms = millis();
-  while ((uint8_t)millis() == oms)
-    ;
+  while ((uint8_t)millis() == oms);
   return micros();
 }
 
