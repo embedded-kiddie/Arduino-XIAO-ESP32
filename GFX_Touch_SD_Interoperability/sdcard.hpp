@@ -257,7 +257,7 @@ void testFileIO(FS_TYPE &fs, const char *path) {
   file.close();
 }
 
-bool BasicTest(void) {
+bool BasicFileIOTest(void) {
 #if USE_SDFAT
 
   Serial.print("SD card type: ");
@@ -448,7 +448,7 @@ void sdcard_setup(void) {
 #endif
 }
 
-bool sdcard_save(void) {
+bool sdcard_save(const char *base_name) {
   sdcard_setup();
 
   uint8_t retry = 0;
@@ -464,10 +464,13 @@ bool sdcard_save(void) {
 
 #if SCREEN_CAPTURE
   listDir(SD, "/", 0);
-  SaveBMP24(SD, "/test.bmp");
+
+  String path = String("/") + String(base_name) + String(".bmp");
+  SaveBMP24(SD, path.c_str());
+
   listDir(SD, "/", 0);
 #else
-  BasicTest();
+  BasicFileIOTest();
 #endif
 
 //SD.end(); --> Activating this line will cause some GFX libraries to stop working.

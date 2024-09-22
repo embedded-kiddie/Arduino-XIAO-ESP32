@@ -20,7 +20,7 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
 #define GFX_EXEC(x) tft.x
 #define GFX_TITLE   F("Adafruit GFX PDQ")
-#define GFX_FILE    F("benchmark_Adafruit_GFX")
+#define GFX_FILE    "benchmark_Adafruit_GFX"
 
 void gfx_setup(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
@@ -45,7 +45,7 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IP
 
 #define GFX_EXEC(x) gfx->x
 #define GFX_TITLE   F("Arduino GFX PDQ")
-#define GFX_FILE    F("benchmark_Arduino_GFX")
+#define GFX_FILE    "benchmark_Arduino_GFX"
 
 void gfx_setup(void) {
   // Init Display
@@ -76,7 +76,7 @@ LGFX lcd;
 
 #define GFX_EXEC(x) lcd.x
 #define GFX_TITLE   F("Lovyan GFX PDQ")
-#define GFX_FILE    F("benchmark_LovyanGFX")
+#define GFX_FILE    "benchmark_LovyanGFX"
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -99,7 +99,7 @@ TFT_eSPI tft = TFT_eSPI();
 
 #define GFX_EXEC(x) tft.x
 #define GFX_TITLE   F("TFT_eSPI GFX PDQ")
-#define GFX_FILE    F("benchmark_TFT_eSPI")
+#define GFX_FILE    "benchmark_TFT_eSPI"
 
 void gfx_setup(void) {
   tft.init();
@@ -132,7 +132,7 @@ void setup()
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
   // while(!Serial);
-  Serial.println("Arduino_GFX PDQgraphicstest example!");
+  Serial.println(String(GFX_TITLE) + String(F("graphicstest example!")));
 
 #ifdef GFX_EXTRA_PRE_INIT
   GFX_EXTRA_PRE_INIT();
@@ -163,6 +163,25 @@ void setup()
   ds = (w <= 160) ? 9 : ((w <= 280) ? 10 : 12);                                // digit size
 }
 
+void loop(void)
+{
+  void DoBenchmark();
+  DoBenchmark();
+
+  /*=============================================================
+  * SD Card library
+  * ToDo: Save image to the SD card.
+  *=============================================================*/
+  uint32_t start = millis();
+  while (millis() - start < 10 * 1000L) {
+    if (touch_check()) {
+      if (sdcard_save(GFX_FILE)) {
+        return;
+      };
+    }
+  }
+}
+
 static inline uint32_t micros_start() __attribute__((always_inline));
 static inline uint32_t micros_start()
 {
@@ -172,8 +191,7 @@ static inline uint32_t micros_start()
   return micros();
 }
 
-void loop(void)
-{
+void DoBenchmark(void) {
   Serial.println(F("Benchmark\tmicro-secs"));
 
   int32_t usecFillScreen = testFillScreen();
@@ -287,19 +305,6 @@ void loop(void)
 #ifdef CANVAS
   GFX_EXEC(flush());
 #endif
-
-  /*=============================================================
-  * SD Card library
-  * ToDo: Save image to the SD card.
-  *=============================================================*/
-  uint32_t start = millis();
-  while (millis() - start < 10 * 1000L) {
-    if (touch_check()) {
-      if (sdcard_save()) {
-        return;
-      };
-    }
-  }
 }
 
 #ifdef ESP32
