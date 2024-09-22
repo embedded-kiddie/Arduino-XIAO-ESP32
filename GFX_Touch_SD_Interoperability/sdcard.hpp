@@ -40,8 +40,16 @@
 #include <Arduino.h>
 #include "spi_assign.h"
 
-#define USE_SDFAT false
+/*--------------------------------------------------------------------------------
+ * The configuration of the features defined in this file
+ * Note: Only LovyanGFX can capture the screen using `readPixel()` or `readRect()`.
+ *--------------------------------------------------------------------------------*/
+#define SCREEN_CAPTURE  true
+#define USE_SDFAT       false
 
+/*--------------------------------------------------------------------------------
+ * SD library
+ *--------------------------------------------------------------------------------*/
 #if USE_SDFAT
 
 #define DISABLE_FS_H_WARNING
@@ -58,22 +66,26 @@ typedef FsFile  File;
 #define FS_TYPE SdFs
 SdFs SD;
 
-#else
+#else // ! USE_SDFAT
 
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
 #define FS_TYPE  fs::FS
 #ifdef _TFT_eSPIH_
-#define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()), SPI_READ_FREQUENCY
+#define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()) //, SPI_READ_FREQUENCY
 #else
 #define SD_CONFIG SD_CS //, SPI, SPI_READ_FREQUENCY
 #endif
-#endif
+
+#endif // USE_SDFAT
 
 // Uncomment and set up if you want to use custom pins for the SPI communication
 // #define REASSIGN_PINS
 
+/*--------------------------------------------------------------------------------
+ * Basic file I/O and directory related functions
+ *--------------------------------------------------------------------------------*/
 void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels) {
   Serial.printf("Listing directory: %s\n", dirname);
 
@@ -245,25 +257,7 @@ void testFileIO(FS_TYPE &fs, const char *path) {
   file.close();
 }
 
-void sdcard_setup(void) {
-#ifdef REASSIGN_PINS
-  // Initialize SD card interface
-  SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
-#endif
-}
-
-bool sdcard_save(void) {
-  sdcard_setup();
-
-  uint8_t retry = 0;
-  while (!SD.begin(SD_CONFIG)) {
-    if (++retry >= 2) {
-      Serial.println("Card mount failed");
-      return false;
-    }
-    delay(1000);
-  }
-
+bool BasicTest(void) {
 #if USE_SDFAT
 
   Serial.print("SD card type: ");
@@ -331,6 +325,149 @@ bool sdcard_save(void) {
   Serial.printf("Size of sector: %d\n", SD.sectorSize());
   Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
   Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
+#endif
+  return true;
+}
+
+/*--------------------------------------------------------------------------------
+ * LCD screen capture to save image to SD card
+ *--------------------------------------------------------------------------------*/
+// Converts 565 format 16 bit color to RGB
+inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) __attribute__((always_inline));
+inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
+  r = (color>>8)&0x00F8;
+  g = (color>>3)&0x00FC;
+  b = (color<<3)&0x00F8;
+}
+
+#ifdef _ADAFRUIT_GFX_H
+/* create snapshot of 3.5" TFT and save to file in bitmap format
+ * https://forum.arduino.cc/t/create-snapshot-of-3-5-tft-and-save-to-file-in-bitmap-format/391367/7
+*/
+uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
+
+    GFX_EXEC(startWrite());    // needed for low-level methods. CS active
+    GFX_EXEC(setAddrWindow(x, y, 1, 1));
+    GFX_EXEC(writeCommand(0x2E)); // memory read command. sets DC (ILI9341: LCD_RAMRD, ST7789: ST7789_RAMRD)
+
+    uint8_t r, g, b;
+    r = GFX_EXEC(spiRead()); // discard dummy read
+    r = GFX_EXEC(spiRead());
+    g = GFX_EXEC(spiRead());
+    b = GFX_EXEC(spiRead());
+    GFX_EXEC(endWrite());    // needed for low-level methods. CS idle
+
+    return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3);
+}
+#endif // _ADAFRUIT_GFX_H
+
+bool SaveBMP24(FS_TYPE &fs, const char *path) {
+  uint16_t rgb;
+  uint8_t r, g, b;
+
+  File file = fs.open(path, FILE_WRITE);
+
+  if (!file) {
+    Serial.println("SD open failed");
+    return false;
+  }
+
+  int h = GFX_EXEC(height());
+  int w = GFX_EXEC(width());
+
+  unsigned char bmFlHdr[14] = {
+    'B', 'M', 0, 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 0
+  };
+
+  // set color depth to 24 as we're storing 8 bits for r-g-b
+  unsigned char bmInHdr[40] = {
+    40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 24, 0,
+  };
+
+  unsigned long fileSize = 3ul * h * w + 54;
+
+  bmFlHdr[ 2] = (unsigned char)(fileSize);
+  bmFlHdr[ 3] = (unsigned char)(fileSize >> 8);
+  bmFlHdr[ 4] = (unsigned char)(fileSize >> 16);
+  bmFlHdr[ 5] = (unsigned char)(fileSize >> 24);
+
+  bmInHdr[ 4] = (unsigned char)(w);
+  bmInHdr[ 5] = (unsigned char)(w >> 8);
+  bmInHdr[ 6] = (unsigned char)(w >> 16);
+  bmInHdr[ 7] = (unsigned char)(w >> 24);
+  bmInHdr[ 8] = (unsigned char)(h);
+  bmInHdr[ 9] = (unsigned char)(h >> 8);
+  bmInHdr[10] = (unsigned char)(h >> 16);
+  bmInHdr[11] = (unsigned char)(h >> 24);
+
+  file.write(bmFlHdr, sizeof(bmFlHdr));
+  file.write(bmInHdr, sizeof(bmInHdr));
+
+  for (int y = h - 1; y >= 0; y--) {
+    if (y % 4 == 0) Serial.print(".");
+    for (int x = 0; x < w; x++) {
+
+      // if you are attempting to convert this library to use another display library,
+      // this is where you may run into issues
+      // the libries must have a readPixel function
+#ifdef _ADAFRUIT_GFX_H
+      rgb = readPixA(x, y);
+#else
+      rgb = GFX_EXEC(readPixel(x, y));
+#endif
+      // convert the 16 bit color to full 24
+      // that way we have a legit bmp that can be read into the
+      // bmp reader below
+      color565toRGB(rgb, r, g, b);
+
+      // write the data in BMP reverse order
+      file.write(b);
+      file.write(g);
+      file.write(r);
+    }
+  }
+
+  file.close();
+  Serial.println("Image was saved successfully");
+  return true;
+}
+
+/*--------------------------------------------------------------------------------
+ * External interface entry function
+ *--------------------------------------------------------------------------------*/
+void sdcard_setup(void) {
+#ifdef REASSIGN_PINS
+  // Initialize SD card interface
+  SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
+#endif
+
+#if   defined(SPI2_HOST) || defined(SPI3_HOST)
+  Serial.println("SPI_PORT = " + String(SPI_PORT)); // LovyanGFX SPI2_HOST = 1
+#elif defined(SPI_HOST)
+  Serial.println("SPI_HOST = " + String(SPI_HOST)); // TFT_eSPI SPI_HOST = 3
+#endif
+}
+
+bool sdcard_save(void) {
+  sdcard_setup();
+
+  uint8_t retry = 0;
+  while (!SD.begin(SD_CONFIG)) {
+    if (++retry >= 2) {
+      Serial.println("Card mount failed");
+      return false;
+    }
+    delay(1000);
+  }
+
+  Serial.println("The card was mounted successfully");
+
+#if SCREEN_CAPTURE
+  listDir(SD, "/", 0);
+  SaveBMP24(SD, "/test.bmp");
+  listDir(SD, "/", 0);
+#else
+  BasicTest();
 #endif
 
 //SD.end(); --> Activating this line will cause some GFX libraries to stop working.

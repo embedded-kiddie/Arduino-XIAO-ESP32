@@ -27,6 +27,12 @@
 - [PaulStoffregen/XPT2046_Touchscreen][18] ([v1.4][19])
 - [greiman/SdFat][20] ([2.2.3][21])
 
+## Screen capture
+
+At present, only LovyanGFX can capture the screen using `readPixel()` or `readRect()`.
+
+![LovyanGFX](benchmark_LovyanGFX.bmp)
+
 ## Related discussions and issues
 
 - [Display freezes when saving images to SD card #616][22]
@@ -34,7 +40,7 @@
 
 [^1]: Reading and writing to the SD card is several times slower than SD by ESP-IDF.
 
-[^2]: In ESP-IDF v5.1, `sdspi_host.h` for ESP32S3 configures `SDSPI_DEFAULT_HOST` as `SPI2_HOST`. Therefore the host for SPI bus should be selected as`SPI2_HOST`.
+[^2]: In ESP-IDF v5.1, [`sdspi_host.h`][24] for ESP32S3 configures `SDSPI_DEFAULT_HOST` as `SPI2_HOST`. Therefore the host for SPI bus should be selected as`SPI2_HOST`.
 
 [^3]: Specify the 2nd parameter in `SD.begin()` as `tft.getSPIinstance()`.
 
@@ -65,3 +71,5 @@
 
 [22]: https://github.com/lovyan03/LovyanGFX/discussions/616 "Display freezes when saving images to SD card · lovyan03/LovyanGFX · Discussion #616"
 [23]: https://github.com/lovyan03/LovyanGFX/issues/617 "Display freezes when saving images to SD card · Issue #617 · lovyan03/LovyanGFX"
+
+[24]: https://github.com/espressif/esp-idf/blob/master/components/esp_driver_sdspi/include/driver/sdspi_host.h#L23-L29 "esp-idf/components/esp_driver_sdspi/include/driver/sdspi_host.h at master · espressif/esp-idf"

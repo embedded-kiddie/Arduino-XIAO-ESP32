@@ -20,7 +20,7 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
 #define GFX_EXEC(x) tft.x
 #define GFX_TITLE   F("Adafruit GFX PDQ")
-#define GFX_FILE    F("bmAdafruit_GFX")
+#define GFX_FILE    F("benchmark_Adafruit_GFX")
 
 void gfx_setup(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
@@ -45,7 +45,7 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IP
 
 #define GFX_EXEC(x) gfx->x
 #define GFX_TITLE   F("Arduino GFX PDQ")
-#define GFX_FILE    F("bmArduino_GFX")
+#define GFX_FILE    F("benchmark_Arduino_GFX")
 
 void gfx_setup(void) {
   // Init Display
@@ -62,7 +62,7 @@ void gfx_setup(void) {
   GFX_EXEC(invertDisplay(true));
 }
 
-#elif 0
+#elif 1
 
 /*=============================================================
  * LovyanGFX Library
@@ -76,7 +76,7 @@ LGFX lcd;
 
 #define GFX_EXEC(x) lcd.x
 #define GFX_TITLE   F("Lovyan GFX PDQ")
-#define GFX_FILE    F("bmLovyanGFX")
+#define GFX_FILE    F("benchmark_LovyanGFX")
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -99,7 +99,7 @@ TFT_eSPI tft = TFT_eSPI();
 
 #define GFX_EXEC(x) tft.x
 #define GFX_TITLE   F("TFT_eSPI GFX PDQ")
-#define GFX_FILE    F("bmTFT_eSPI")
+#define GFX_FILE    F("benchmark_TFT_eSPI")
 
 void gfx_setup(void) {
   tft.init();

@@ -4,6 +4,10 @@
 
 #include <LovyanGFX.hpp>
 
+// https://github.com/espressif/esp-idf/blob/master/components/esp_driver_sdspi/include/driver/sdspi_host.h#L23-L29
+// #define SDSPI_DEFAULT_HOST SPI2_HOST
+#define SPI_HOST  SPI2_HOST
+
 // ESP32でLovyanGFXを独自設定で利用する場合の設定例
 
 /*
