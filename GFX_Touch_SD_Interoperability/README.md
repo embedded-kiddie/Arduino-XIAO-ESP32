@@ -1,11 +1,11 @@
 # Interoperability with GFX and SD Libraries
 
-| GFX library         | Touch library       | SD by ESP-IDF | SdFat `SHARED_SPI` | SdFat `DEDICATED_SPI` |
-| ------------------- | ------------------- | ------------- | ------------------ | --------------------- |
-| Adafruit_GFX        | XPT2046_Touchscreen | OK            | OK [^1]            | NG                    |
-| Arduino_GFX_Library | XPT2046_Touchscreen | OK            | OK [^1]            | NG                    |
-| LovyanGFX           | <--                 | OK [^2]       | NG                 | NG                    |
-| TFT_eSPI            | <--                 | OK [^3]       | NG                 | NG                    |
+| GFX library         | Touch library       | SD by espressif | SdFat `SHARED_SPI` | SdFat `DEDICATED_SPI` |
+| ------------------- | ------------------- | --------------- | ------------------ | --------------------- |
+| Adafruit_GFX        | XPT2046_Touchscreen | OK              | OK [^1]            | NG                    |
+| Arduino_GFX_Library | XPT2046_Touchscreen | OK              | OK [^1]            | NG                    |
+| LovyanGFX           | <--                 | OK [^2]         | NG                 | NG                    |
+| TFT_eSPI            | <--                 | OK [^3]         | NG                 | NG                    |
 
 ## Figures
 
@@ -25,7 +25,8 @@
 - [lovyan03/LovyanGFX][14] ([1.1.16][15])
 - [Bodmer/TFT_eSPI][16] ([V2.5.43][17])
 - [PaulStoffregen/XPT2046_Touchscreen][18] ([v1.4][19])
-- [greiman/SdFat][20] ([2.2.3][21])
+- [espressif/arduino-esp32/libraries/SD][20]
+- [greiman/SdFat][21] ([2.2.3][22])
 
 ## Screen capture
 
@@ -35,12 +36,12 @@ At present, only LovyanGFX can capture the screen using readPixel() or readRect(
 
 ## Related discussions and issues
 
-- [Display freezes when saving images to SD card #616][22]
-- [Display freezes when saving images to SD card #617][23]
+- [Display freezes when saving images to SD card #616][23]
+- [Display freezes when saving images to SD card #617][24]
 
-[^1]: Reading and writing to the SD card is several times slower than SD by ESP-IDF.
+[^1]: Reading and writing to the SD card is several times slower than [SD by espressif][20].
 
-[^2]: In ESP-IDF v5.1, [`sdspi_host.h`][24] for ESP32S3 configures `SDSPI_DEFAULT_HOST` as `SPI2_HOST`. Therefore the host for SPI bus should be selected as`SPI2_HOST`.
+[^2]: In ESP-IDF v5.1, [`sdspi_host.h`][25] for ESP32S3 configures `SDSPI_DEFAULT_HOST` as `SPI2_HOST`. Therefore the host for SPI bus should be selected as`SPI2_HOST`.
 
 [^3]: Specify the 2nd parameter in `SD.begin()` as `tft.getSPIinstance()`.
 
@@ -66,10 +67,12 @@ At present, only LovyanGFX can capture the screen using readPixel() or readRect(
 [18]: https://github.com/PaulStoffregen/XPT2046_Touchscreen "PaulStoffregen/XPT2046_Touchscreen: Touchscreen Arduino Library for XPT2046 Touch Controller Chip"
 [19]: https://github.com/PaulStoffregen/XPT2046_Touchscreen/releases/tag/v1.4 "Release Version 1.4 · PaulStoffregen/XPT2046_Touchscreen"
 
-[20]: https://github.com/greiman/SdFat "greiman/SdFat: Arduino FAT16/FAT32 exFAT Library"
-[21]: https://github.com/greiman/SdFat/releases/tag/2.2.3 "Release Add Move Constructor and bug fixes. · greiman/SdFat"
+[20]: https://github.com/espressif/arduino-esp32/tree/master/libraries/SD "arduino-esp32/libraries/SD at master · espressif/arduino-esp32"
 
-[22]: https://github.com/lovyan03/LovyanGFX/discussions/616 "Display freezes when saving images to SD card · lovyan03/LovyanGFX · Discussion #616"
-[23]: https://github.com/lovyan03/LovyanGFX/issues/617 "Display freezes when saving images to SD card · Issue #617 · lovyan03/LovyanGFX"
+[21]: https://github.com/greiman/SdFat "greiman/SdFat: Arduino FAT16/FAT32 exFAT Library"
+[22]: https://github.com/greiman/SdFat/releases/tag/2.2.3 "Release Add Move Constructor and bug fixes. · greiman/SdFat"
 
-[24]: https://github.com/espressif/esp-idf/blob/master/components/esp_driver_sdspi/include/driver/sdspi_host.h#L23-L29 "esp-idf/components/esp_driver_sdspi/include/driver/sdspi_host.h at master · espressif/esp-idf"
+[23]: https://github.com/lovyan03/LovyanGFX/discussions/616 "Display freezes when saving images to SD card · lovyan03/LovyanGFX · Discussion #616"
+[24]: https://github.com/lovyan03/LovyanGFX/issues/617 "Display freezes when saving images to SD card · Issue #617 · lovyan03/LovyanGFX"
+
+[25]: https://github.com/espressif/esp-idf/blob/master/components/esp_driver_sdspi/include/driver/sdspi_host.h#L23-L29 "esp-idf/components/esp_driver_sdspi/include/driver/sdspi_host.h at master · espressif/esp-idf"

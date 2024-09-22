@@ -168,20 +168,22 @@ void loop(void)
   void DoBenchmark();
   DoBenchmark();
 
-  /*=============================================================
+ /*=============================================================
   * SD Card library
   * ToDo: Save image to the SD card.
   *=============================================================*/
   uint32_t start = millis();
   while (millis() - start < 10 * 1000L) {
     if (touch_check()) {
-      if (sdcard_save(GFX_FILE)) {
-        return;
-      };
+      sdcard_save(GFX_FILE);
     }
   }
 }
 
+/*=============================================================
+ * Benchmark
+ * cf. https://github.com/moononournation/Arduino_GFX/
+ *=============================================================*/
 static inline uint32_t micros_start() __attribute__((always_inline));
 static inline uint32_t micros_start()
 {
