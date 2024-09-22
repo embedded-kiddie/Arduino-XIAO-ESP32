@@ -25,7 +25,7 @@
 - [lovyan03/LovyanGFX][14] ([1.1.16][15])
 - [Bodmer/TFT_eSPI][16] ([V2.5.43][17])
 - [PaulStoffregen/XPT2046_Touchscreen][18] ([v1.4][19])
-- [espressif/arduino-esp32/libraries/SD][20]
+- [espressif/arduino-esp32/libraries/SD][20] ([3.0.4][4])
 - [greiman/SdFat][21] ([2.2.3][22])
 
 ## Screen capture
