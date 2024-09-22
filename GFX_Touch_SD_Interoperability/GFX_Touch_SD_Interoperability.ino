@@ -5,7 +5,7 @@
 */
 #include "spi_assign.h"
 
-#ifdef ESP32
+#if defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_UNOR4_MINIMA) || defined(ESP32)
 #undef F
 #define F(s) (s)
 #endif
