@@ -291,8 +291,8 @@ void setup() {
 
   // Initialize LCD display with touch and SD card
   gfx_setup();
-//touch_setup();
-//sdcard_setup();
+  touch_setup();
+  sdcard_setup();
 
   // Initialize interpolation
   interpolate_setup(INTERPOLATED_ROWS, INTERPOLATED_COLS, INTERPOLATE_SCALE);
