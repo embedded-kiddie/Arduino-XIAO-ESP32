@@ -103,24 +103,6 @@ void gfx_setup(void) {
 
 #endif
 
-/*=============================================================
- * Touch library
- * This should be included after GFX_EXEC() definition
- *=============================================================*/
-#include "touch.hpp"
-
-/*=============================================================
- * SD Card library
- * This should be included after GFX_EXEC() definition
- *=============================================================*/
-#include "sdcard.hpp"
-
-#define MLX90640_COLS 32
-#define MLX90640_ROWS 24
-
-#define MINTEMP 20  // Low range of the sensor (this will be blue on the screen)
-#define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
-
 // Definitoins for Interpolation
 #define USE_INTERPOLATION true
 
@@ -134,9 +116,27 @@ void gfx_setup(void) {
 #define BOX_SIZE          8
 #endif
 
+#define MLX90640_COLS 32
+#define MLX90640_ROWS 24
+
 // The size of thermal image
 #define INTERPOLATED_COLS (MLX90640_COLS * INTERPOLATE_SCALE)
 #define INTERPOLATED_ROWS (MLX90640_ROWS * INTERPOLATE_SCALE)
+
+#define MINTEMP 20  // Low range of the sensor (this will be blue on the screen)
+#define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
+
+/*=============================================================
+ * Touch library
+ * This should be included after GFX_EXEC() definition
+ *=============================================================*/
+#include "touch.hpp"
+
+/*=============================================================
+ * SD Card library
+ * This should be included after GFX_EXEC() definition
+ *=============================================================*/
+#include "sdcard.hpp"
 
 /*=============================================================
  * Interpolation
@@ -144,17 +144,10 @@ void gfx_setup(void) {
  *=============================================================*/
 #include "interpolation.hpp"
 
-/*=============================================================
- * Multi-tasking
- * This should be included after GFX_EXEC() definition
- *=============================================================*/
-#include "multitasking.hpp"
-
 // Global variables
 Adafruit_MLX90640 mlx;
-float src[MLX90640_ROWS     * MLX90640_COLS    ];
+float src[2][MLX90640_ROWS  * MLX90640_COLS    ];
 float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
-uint32_t startTime, mlxTime, drawTime;
 
 // The colors we will be using
 const uint16_t camColors[] = {0x480F,
@@ -211,25 +204,26 @@ void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
  * Get thermal image from MLX90640
  *=============================================================*/
 void ProcessInput(uint8_t bank) {
-  startTime = millis();
-
-  if (mlx.getFrame(src) != 0) {
+  if (mlx.getFrame(src[bank]) != 0) {
     gfx_printf(TFT_WIDTH / 2 - FONT_WIDTH * 3, TFT_HEIGHT / 2 - FONT_HEIGHT * 5, "Failed");
     Serial.println("Failed");
     delay(1000); // false = no new frame capture
     return;
   }
-
-  mlxTime = millis();
 }
 
 /*=============================================================
  * Output process
  * Interpolate thermal image and display on LCD.
  *=============================================================*/
-void ProcessOutput(uint8_t bank) {
+void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
+  static uint32_t prevFinish;
+  uint32_t outputStart = millis();
+
+  float *SRC = src[bank];
+
 #if USE_INTERPOLATION
-  interpolate_image(src, MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATED_ROWS, INTERPOLATED_COLS);
+  interpolate_image(SRC, MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATED_ROWS, INTERPOLATED_COLS);
 #endif
 
   for (int h = 0; h < INTERPOLATED_ROWS; h++) {
@@ -237,7 +231,7 @@ void ProcessOutput(uint8_t bank) {
 #if USE_INTERPOLATION
       float t = dst[h * INTERPOLATED_COLS + w];
 #else
-      float t = src[h * INTERPOLATED_COLS + w];
+      float t = SRC[h * INTERPOLATED_COLS + w];
 #endif
       t = min((int)t, MAXTEMP);
       t = max((int)t, MINTEMP); 
@@ -259,23 +253,26 @@ void ProcessOutput(uint8_t bank) {
     }
   }
 
-  drawTime = millis();
+  // Reduce latency
+//delay(ADJUSTMENT_DELAY);
+
+  // MLX90640
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
+
+  // Interpolation
+  uint32_t outputFinish = millis();
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", outputFinish - outputStart);
+
+  // FPS
+  float v = 1000.0f / (float)(outputFinish - prevFinish) + 0.05f; // 2 frames per display
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
+  prevFinish = outputFinish;
 
   // Ambient temperature
-  float v = mlx.getTa(false) + 0.05f;
+  v = mlx.getTa(false) + 0.05f;
   if (0.0f < v && v < 100.0f) {
     gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%4.1f", v);
   }
-
-  // FPS
-  v = 2000.0f / (float)(drawTime - startTime) + 0.05f; // 2 frames per display
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
-
-  // MLX90640
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", mlxTime - startTime);
-
-  // Interpolation
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", drawTime - mlxTime);
 
   /*=============================================================
   * SD Card library
@@ -283,8 +280,6 @@ void ProcessOutput(uint8_t bank) {
   *=============================================================*/
   if (touch_check()) {
     sdcard_save();
-  } else {
-    delay(ADJUSTMENT_DELAY);
   }
 }
 
@@ -296,8 +291,8 @@ void setup() {
 
   // Initialize LCD display with touch and SD card
   gfx_setup();
-  touch_setup();
-  sdcard_setup();
+//touch_setup();
+//sdcard_setup();
 
   // Initialize interpolation
   interpolate_setup(INTERPOLATED_ROWS, INTERPOLATED_COLS, INTERPOLATE_SCALE);
@@ -346,6 +341,7 @@ void setup() {
   Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
 
   // Start tasks
+  void task_setup(void (*task1)(uint8_t), void (*task2)(uint8_t, uint32_t, uint32_t));
   task_setup(ProcessInput, ProcessOutput);
 }
 
