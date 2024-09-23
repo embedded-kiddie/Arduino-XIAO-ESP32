@@ -71,7 +71,7 @@ void gfx_setup(void) {
 LGFX lcd;
 
 #define GFX_EXEC(x) lcd.x
-#define ADJUSTMENT_DELAY  20  // SPI2_HOST: 20 (18.9 FPS), SPI3_HOST: 35 (21.8 FPS)
+#define ADJUSTMENT_DELAY  20  // SPI2_HOST: 20 (18.7 FPS), SPI3_HOST: 35 (22.0 FPS)
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -115,15 +115,6 @@ void gfx_setup(void) {
  *=============================================================*/
 #include "sdcard.hpp"
 
-#define ClearScreen() GFX_EXEC(fillScreen(BLACK))
-
-// 2.4 inch ... "RESET" on breakout board can be connected to "RESET" or +3.3V on UNO R4 instead of D9.
-
-// Font size for setTextSize(2)
-#define FONT_WIDTH    12 // [px] (Device coordinate system)
-#define FONT_HEIGHT   16 // [px] (Device coordinate system)
-#define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
-
 #define MLX90640_COLS 32
 #define MLX90640_ROWS 24
 
@@ -134,20 +125,36 @@ void gfx_setup(void) {
 #define USE_INTERPOLATION true
 
 #if     USE_INTERPOLATION
+// INTERPOLATE_SCALE x BOX_SIZE = 8
 #define INTERPOLATE_SCALE 2
 #define BOX_SIZE          4
 #else
+// No interpolation
 #define INTERPOLATE_SCALE 1
 #define BOX_SIZE          8
 #endif
 
+// The size of thermal image
 #define INTERPOLATED_COLS (MLX90640_COLS * INTERPOLATE_SCALE)
 #define INTERPOLATED_ROWS (MLX90640_ROWS * INTERPOLATE_SCALE)
+
+/*=============================================================
+ * Interpolation
+ * This should be included after GFX_EXEC() definition
+ *=============================================================*/
+#include "interpolation.hpp"
+
+/*=============================================================
+ * Multi-tasking
+ * This should be included after GFX_EXEC() definition
+ *=============================================================*/
+#include "multitasking.hpp"
 
 // Global variables
 Adafruit_MLX90640 mlx;
 float src[MLX90640_ROWS     * MLX90640_COLS    ];
 float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
+uint32_t startTime, mlxTime, drawTime;
 
 // The colors we will be using
 const uint16_t camColors[] = {0x480F,
@@ -178,7 +185,12 @@ const uint16_t camColors[] = {0x480F,
 0xF1E0,0xF1C0,0xF1A0,0xF180,0xF160,0xF140,0xF100,0xF0E0,0xF0C0,0xF0A0,
 0xF080,0xF060,0xF040,0xF020,0xF800,};
 
-#include "interpolation.hpp"
+// Font size for setTextSize(2)
+#define FONT_WIDTH    12 // [px] (Device coordinate system)
+#define FONT_HEIGHT   16 // [px] (Device coordinate system)
+#define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
+
+#define ClearScreen() GFX_EXEC(fillScreen(BLACK))
 
 void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   int len = 0;
@@ -194,13 +206,101 @@ void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   GFX_EXEC(print(buf));
 }
 
+/*=============================================================
+ * Input process
+ * Get thermal image from MLX90640
+ *=============================================================*/
+void ProcessInput(uint8_t bank) {
+  startTime = millis();
+
+  if (mlx.getFrame(src) != 0) {
+    gfx_printf(TFT_WIDTH / 2 - FONT_WIDTH * 3, TFT_HEIGHT / 2 - FONT_HEIGHT * 5, "Failed");
+    Serial.println("Failed");
+    delay(1000); // false = no new frame capture
+    return;
+  }
+
+  mlxTime = millis();
+}
+
+/*=============================================================
+ * Output process
+ * Interpolate thermal image and display on LCD.
+ *=============================================================*/
+void ProcessOutput(uint8_t bank) {
+#if USE_INTERPOLATION
+  interpolate_image(src, MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATED_ROWS, INTERPOLATED_COLS);
+#endif
+
+  for (int h = 0; h < INTERPOLATED_ROWS; h++) {
+    for (int w = 0; w < INTERPOLATED_COLS; w++) {
+#if USE_INTERPOLATION
+      float t = dst[h * INTERPOLATED_COLS + w];
+#else
+      float t = src[h * INTERPOLATED_COLS + w];
+#endif
+      t = min((int)t, MAXTEMP);
+      t = max((int)t, MINTEMP); 
+
+      int colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
+      colorIndex = constrain(colorIndex, 0, 255);
+
+#if 0
+      // Selfie Camera
+      GFX_EXEC(fillRect(BOX_SIZE * w, BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
+#else
+      // Front Camera
+#if BOX_SIZE == 1
+      GFX_EXEC(drawPixel(INTERPOLATED_COLS - 1 - w, h, camColors[colorIndex]));
+#else
+      GFX_EXEC(fillRect((INTERPOLATED_COLS - 1 - w) * BOX_SIZE, h * BOX_SIZE, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
+#endif
+#endif
+    }
+  }
+
+  drawTime = millis();
+
+  // Ambient temperature
+  float v = mlx.getTa(false) + 0.05f;
+  if (0.0f < v && v < 100.0f) {
+    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%4.1f", v);
+  }
+
+  // FPS
+  v = 2000.0f / (float)(drawTime - startTime) + 0.05f; // 2 frames per display
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
+
+  // MLX90640
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", mlxTime - startTime);
+
+  // Interpolation
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", drawTime - mlxTime);
+
+  /*=============================================================
+  * SD Card library
+  * ToDo: Save image to the SD card.
+  *=============================================================*/
+  if (touch_check()) {
+    sdcard_save();
+  } else {
+    delay(ADJUSTMENT_DELAY);
+  }
+}
+
+/*=============================================================
+ * setup() and loop()
+ *=============================================================*/
 void setup() {
   Serial.begin(115200);
 
-  // Initialize ST7789
+  // Initialize LCD display with touch and SD card
   gfx_setup();
   touch_setup();
   sdcard_setup();
+
+  // Initialize interpolation
+  interpolate_setup(INTERPOLATED_ROWS, INTERPOLATED_COLS, INTERPOLATE_SCALE);
  
   // Draw color bar
   ClearScreen();
@@ -226,13 +326,11 @@ void setup() {
   gfx_printf(260, LINE_HEIGHT * 4.5, "Output[ms]");
   GFX_EXEC(setTextSize(2));
 
-  delay(100);
-
-  Serial.println("Adafruit MLX90640 Camera");
   if (! mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire)) {
     Serial.println("MLX90640 not found!");
+  } else {
+    Serial.println("MLX90640 found");
   }
-  Serial.println("Found Adafruit MLX90640");
 
   Serial.print("Serial number: ");
   Serial.print(mlx.serialNumber[0], HEX);
@@ -241,88 +339,14 @@ void setup() {
 
   // MLX90640
   mlx.setMode(MLX90640_CHESS);
-//mlx.setResolution(MLX90640_ADC_16BIT);
-  mlx.setResolution(MLX90640_ADC_18BIT);
-//mlx.setResolution(MLX90640_ADC_19BIT);
-//mlx.setRefreshRate(MLX90640_8_HZ); // 8 FPS
-  mlx.setRefreshRate(MLX90640_16_HZ); // 16 FPS
-//mlx.setRefreshRate(MLX90640_32_HZ); // 32 FPS
+  mlx.setResolution(MLX90640_ADC_18BIT);  // 16BIT, 18BIT or 18BIT
+  mlx.setRefreshRate(MLX90640_16_HZ);     // 8_HZ, 16_HZ or 32_HZ
 
   // I2C Clock for MLX90640
-//Wire.setClock(400000); // 400 KHz (Sm)
-  Wire.setClock(1000000); // 1 MHz (Fm+)
+  Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
 
-  // Interpolation
-  interpolate_setup(INTERPOLATED_ROWS, INTERPOLATED_COLS, INTERPOLATE_SCALE);
+  // Start tasks
+  task_setup(ProcessInput, ProcessOutput);
 }
 
-void loop() {
-  uint32_t startTime = millis();
-  if (mlx.getFrame(src) != 0) {
-    gfx_printf(TFT_WIDTH / 2 - FONT_WIDTH * 3, TFT_HEIGHT / 2 - FONT_HEIGHT * 5, "Failed");
-    Serial.println("Failed");
-    delay(1000); // false = no new frame capture
-    return;
-  }
-
-  uint32_t mlxTime = millis();
-
-#if USE_INTERPOLATION
-  interpolate_image(src, MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATED_ROWS, INTERPOLATED_COLS);
-#endif
-
-  for (int h = 0; h < INTERPOLATED_ROWS; h++) {
-    for (int w = 0; w < INTERPOLATED_COLS; w++) {
-#if USE_INTERPOLATION
-      float t = dst[h * INTERPOLATED_COLS + w];
-#else
-      float t = src[h * INTERPOLATED_COLS + w];
-#endif
-      t = min((int)t, MAXTEMP);
-      t = max((int)t, MINTEMP); 
-
-      int colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
-      colorIndex = constrain(colorIndex, 0, 255);
-
-#if 0
-      // Selfie
-      GFX_EXEC(fillRect(BOX_SIZE * w, BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
-#else
-      // Front
-#if BOX_SIZE == 1
-      GFX_EXEC(drawPixel(INTERPOLATED_COLS - 1 - w, h, camColors[colorIndex]));
-#else
-      GFX_EXEC(fillRect((INTERPOLATED_COLS - 1 - w) * BOX_SIZE, h * BOX_SIZE, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
-#endif
-#endif
-    }
-  }
-
-  uint32_t drawTime = millis();
-
-  // Ambient temperature
-  float v = mlx.getTa(false) + 0.05f;
-  if (0.0f < v && v < 100.0f) {
-    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%4.1f", v);
-  }
-
-  // FPS
-  v = 2000.0f / (float)(drawTime - startTime) + 0.05f; // 2 frames per display
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
-
-  // MLX90640
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", mlxTime - startTime);
-
-  // Interpolation
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", drawTime - mlxTime);
-
-  /*=============================================================
-  * SD Card library
-  * ToDo: Save image to the SD card.
-  *=============================================================*/
-  if (touch_check()) {
-    sdcard_save();
-  }
-
-  delay(ADJUSTMENT_DELAY);
-}
+void loop() { delay(1000); }

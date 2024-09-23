@@ -4,8 +4,8 @@
 
 #include <LovyanGFX.hpp>
 
+// Configuration to share the SPI bus host with SD
 // https://github.com/espressif/esp-idf/blob/master/components/esp_driver_sdspi/include/driver/sdspi_host.h#L23-L29
-// #define SDSPI_DEFAULT_HOST SPI2_HOST
 #include <driver/sdspi_host.h>
 #define SPI_HOST  SDSPI_DEFAULT_HOST
 
