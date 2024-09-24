@@ -2,12 +2,14 @@
 #include <Adafruit_MLX90640.h>
 #include "spi_assign.h"
 
-#if 0
-
 /*=============================================================
+ * Step 1: Select GFX Library
+ *=============================================================*/
+#if 0
+/*---------------------------------------------------
  * Adafruit GFX Library
  * https://github.com/adafruit/Adafruit-GFX-Library
- *=============================================================*/
+ *---------------------------------------------------*/
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include <SPI.h>
@@ -16,7 +18,6 @@
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
 #define GFX_EXEC(x) tft.x
-#define ADJUSTMENT_DELAY  42  // 13.6 FPS
 
 void gfx_setup(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
@@ -29,18 +30,16 @@ void gfx_setup(void) {
 }
 
 #elif 0
-
-/*=============================================================
+/*---------------------------------------------------
  * Arduino GFX Library
  * https://github.com/moononournation/Arduino_GFX
- *=============================================================*/
+ *---------------------------------------------------*/
 #include <Arduino_GFX_Library.h>
 
 Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC /* DC */, TFT_CS /* CS */, TFT_SCLK /* SCK */, TFT_MOSI /* MOSI */, TFT_MISO /* MISO */);
 Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
 
 #define GFX_EXEC(x) gfx->x
-#define ADJUSTMENT_DELAY  82  // 18.6 FPS
 
 void gfx_setup(void) {
   // Init Display
@@ -59,11 +58,10 @@ void gfx_setup(void) {
 }
 
 #elif 1
-
-/*=============================================================
+/*---------------------------------------------------
  * LovyanGFX Library
  * https://github.com/lovyan03/LovyanGFX
- *=============================================================*/
+ *---------------------------------------------------*/
 #include <LovyanGFX.hpp>
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
 #include "colors.h"
@@ -71,21 +69,18 @@ void gfx_setup(void) {
 LGFX lcd;
 
 #define GFX_EXEC(x) lcd.x
-#define ADJUSTMENT_DELAY  20  // SPI2_HOST: 20 (18.7 FPS), SPI3_HOST: 35 (22.0 FPS)
 
 void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(setRotation(3));
-  GFX_EXEC(setColorDepth(16));
   GFX_EXEC(invertDisplay(false));
 }
 
 #else
-
-/*=============================================================
+/*---------------------------------------------------
  * TFT_eSPI Library
  * https://github.com/Bodmer/TFT_eSPI
- *=============================================================*/
+ *---------------------------------------------------*/
 #include "SPI.h"
 #include "TFT_eSPI.h"
 #include "colors.h"
@@ -94,24 +89,40 @@ void gfx_setup(void) {
 TFT_eSPI tft = TFT_eSPI();
 
 #define GFX_EXEC(x) tft.x
-#define ADJUSTMENT_DELAY  55  // 16.0 FPS
 
 void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(setRotation(3));
 }
-
 #endif
 
-// Definitoins for Interpolation
-#define USE_INTERPOLATION true
+/*=============================================================
+ * Step 2: Select whether to multitask or not
+ *=============================================================*/
+#define ENA_MULTITASKING  true
 
-#if     USE_INTERPOLATION
-// INTERPOLATE_SCALE x BOX_SIZE = 8
-#define INTERPOLATE_SCALE 2
-#define BOX_SIZE          4
+/*=============================================================
+ * Step 3: Select whether to interpolate or not
+ *=============================================================*/
+#define ENA_INTERPOLATION true
+
+/*=============================================================
+ * Step 4: Select whether to include a transaction
+ *=============================================================*/
+#if defined(LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
+#define ENA_TRANSACTION   true
 #else
-// No interpolation
+#define ENA_TRANSACTION   false
+#endif
+
+/*=============================================================
+ * Step 5: Defines the output image resolution
+ *=============================================================*/
+// INTERPOLATE_SCALE x BOX_SIZE = 8
+#if ENA_INTERPOLATION
+#define INTERPOLATE_SCALE 4
+#define BOX_SIZE          2
+#else
 #define INTERPOLATE_SCALE 1
 #define BOX_SIZE          8
 #endif
@@ -144,7 +155,9 @@ void gfx_setup(void) {
  *=============================================================*/
 #include "interpolation.hpp"
 
-// Global variables
+/*=============================================================
+ * Global variables
+ *=============================================================*/
 Adafruit_MLX90640 mlx;
 float src[2][MLX90640_ROWS  * MLX90640_COLS    ];
 float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
@@ -178,6 +191,9 @@ const uint16_t camColors[] = {0x480F,
 0xF1E0,0xF1C0,0xF1A0,0xF180,0xF160,0xF140,0xF100,0xF0E0,0xF0C0,0xF0A0,
 0xF080,0xF060,0xF040,0xF020,0xF800,};
 
+/*=============================================================
+ * Definition of graphics helpers
+ *=============================================================*/
 // Font size for setTextSize(2)
 #define FONT_WIDTH    12 // [px] (Device coordinate system)
 #define FONT_HEIGHT   16 // [px] (Device coordinate system)
@@ -220,19 +236,21 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   static uint32_t prevFinish;
   uint32_t outputStart = millis();
 
-  float *SRC = src[bank];
+#if ENA_INTERPOLATION
+  interpolate_image(src[bank], MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATED_ROWS, INTERPOLATED_COLS);
+  float *drw = dst;
+#else
+  float *drw = src[bank];
+#endif
 
-#if USE_INTERPOLATION
-  interpolate_image(SRC, MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATED_ROWS, INTERPOLATED_COLS);
+#if ENA_TRANSACTION
+  GFX_EXEC(startWrite());
 #endif
 
   for (int h = 0; h < INTERPOLATED_ROWS; h++) {
     for (int w = 0; w < INTERPOLATED_COLS; w++) {
-#if USE_INTERPOLATION
-      float t = dst[h * INTERPOLATED_COLS + w];
-#else
-      float t = SRC[h * INTERPOLATED_COLS + w];
-#endif
+      float t = drw[h * INTERPOLATED_COLS + w];
+
       t = min((int)t, MAXTEMP);
       t = max((int)t, MINTEMP); 
 
@@ -252,9 +270,6 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 #endif
     }
   }
-
-  // Reduce latency
-//delay(ADJUSTMENT_DELAY);
 
   // MLX90640
   gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
@@ -281,6 +296,10 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   if (touch_check()) {
     sdcard_save();
   }
+
+#if ENA_TRANSACTION
+  GFX_EXEC(endWrite());
+#endif
 }
 
 /*=============================================================
@@ -341,8 +360,18 @@ void setup() {
   Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
 
   // Start tasks
+#if ENA_MULTITASKING
   void task_setup(void (*task1)(uint8_t), void (*task2)(uint8_t, uint32_t, uint32_t));
   task_setup(ProcessInput, ProcessOutput);
+#endif
 }
 
-void loop() { delay(1000); }
+void loop() {
+#if ENA_MULTITASKING
+  delay(1000);
+#else
+  uint32_t inputStart = millis();
+  ProcessInput(0);
+  ProcessOutput(0, inputStart, millis());
+#endif
+}
