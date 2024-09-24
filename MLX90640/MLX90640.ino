@@ -107,7 +107,7 @@ void gfx_setup(void) {
 #define ENA_INTERPOLATION true
 
 /*=============================================================
- * Step 4: Select whether to include a transaction
+ * Step 4: Select whether to enable transaction or not
  *=============================================================*/
 #if defined(LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
 #define ENA_TRANSACTION   true
@@ -116,7 +116,7 @@ void gfx_setup(void) {
 #endif
 
 /*=============================================================
- * Step 5: Defines the output image resolution
+ * Step 5: Configure the output image resolution
  *=============================================================*/
 // INTERPOLATE_SCALE x BOX_SIZE = 8
 #if ENA_INTERPOLATION
@@ -192,7 +192,7 @@ const uint16_t camColors[] = {0x480F,
 0xF080,0xF060,0xF040,0xF020,0xF800,};
 
 /*=============================================================
- * Definition of graphics helpers
+ * Definitions of graphics helpers
  *=============================================================*/
 // Font size for setTextSize(2)
 #define FONT_WIDTH    12 // [px] (Device coordinate system)
@@ -289,6 +289,10 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%4.1f", v);
   }
 
+#if ENA_TRANSACTION
+  GFX_EXEC(endWrite());
+#endif
+
   /*=============================================================
   * SD Card library
   * ToDo: Save image to the SD card.
@@ -296,10 +300,6 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   if (touch_check()) {
     sdcard_save();
   }
-
-#if ENA_TRANSACTION
-  GFX_EXEC(endWrite());
-#endif
 }
 
 /*=============================================================

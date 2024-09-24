@@ -40,8 +40,16 @@
 #include <Arduino.h>
 #include "spi_assign.h"
 
-#define USE_SDFAT false
+/*================================================================================
+ * The configuration of the features defined in this file
+ * Note: Only LovyanGFX can capture the screen with `readPixel()` or `readRect()`
+ *================================================================================*/
+#define CAPTURE_SCREEN  true
+#define USE_SDFAT       false
 
+/*--------------------------------------------------------------------------------
+ * SD library
+ *--------------------------------------------------------------------------------*/
 #if USE_SDFAT
 
 #define DISABLE_FS_H_WARNING
@@ -58,22 +66,28 @@ typedef FsFile  File;
 #define FS_TYPE SdFs
 SdFs SD;
 
-#else
+#else // ! USE_SDFAT
 
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
 #define FS_TYPE  fs::FS
 #ifdef _TFT_eSPIH_
-#define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()), SPI_READ_FREQUENCY
+#define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()) //, SPI_READ_FREQUENCY
 #else
 #define SD_CONFIG SD_CS //, SPI, SPI_READ_FREQUENCY
 #endif
-#endif
+
+#endif // USE_SDFAT
 
 // Uncomment and set up if you want to use custom pins for the SPI communication
 // #define REASSIGN_PINS
 
+/*--------------------------------------------------------------------------------
+ * Basic file I/O and directory related functions
+ * ex)  listDir(SD, "/", 0);
+ *      createDir(SD, "/mydir");
+ *--------------------------------------------------------------------------------*/
 void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels) {
   Serial.printf("Listing directory: %s\n", dirname);
 
@@ -129,122 +143,114 @@ void createDir(FS_TYPE &fs, const char *path) {
   }
 }
 
-void removeDir(FS_TYPE &fs, const char *path) {
-  Serial.printf("Removing dir: %s\n", path);
-  if (fs.rmdir(path)) {
-    Serial.println("Dir removed");
-  } else {
-    Serial.println("rmdir failed");
-  }
+/*--------------------------------------------------------------------------------
+ * LCD screen capture to save image to SD card
+ *--------------------------------------------------------------------------------*/
+// Converts 565 format 16 bit color to RGB
+inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) __attribute__((always_inline));
+inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
+  r = (color>>8)&0x00F8;
+  g = (color>>3)&0x00FC;
+  b = (color<<3)&0x00F8;
 }
 
-void readFile(FS_TYPE &fs, const char *path) {
-  Serial.printf("Reading file: %s\n", path);
+#ifdef _ADAFRUIT_GFX_H
 
-  File file = fs.open(path);
-  if (!file) {
-    Serial.println("Failed to open file for reading");
-    return;
-  }
+/* create snapshot of 3.5" TFT and save to file in bitmap format
+ * https://forum.arduino.cc/t/create-snapshot-of-3-5-tft-and-save-to-file-in-bitmap-format/391367/7
+*/
+uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
 
-  Serial.print("Read from file: ");
-  while (file.available()) {
-    Serial.write(file.read());
-  }
-  file.close();
+    GFX_EXEC(startWrite());    // needed for low-level methods. CS active
+    GFX_EXEC(setAddrWindow(x, y, 1, 1));
+    GFX_EXEC(writeCommand(0x2E)); // memory read command. sets DC (ILI9341: LCD_RAMRD, ST7789: ST7789_RAMRD)
+
+    uint8_t r, g, b;
+    r = GFX_EXEC(spiRead()); // discard dummy read
+    r = GFX_EXEC(spiRead());
+    g = GFX_EXEC(spiRead());
+    b = GFX_EXEC(spiRead());
+    GFX_EXEC(endWrite());   // needed for low-level methods. CS idle
+
+    return RGB565(r, g, b); // defined in colors.h
 }
 
-void writeFile(FS_TYPE &fs, const char *path, const char *message) {
-  Serial.printf("Writing file: %s\n", path);
+#endif // _ADAFRUIT_GFX_H
+
+bool SaveBMP24(FS_TYPE &fs, const char *path) {
+  uint16_t rgb;
+  uint8_t r, g, b;
 
   File file = fs.open(path, FILE_WRITE);
+
   if (!file) {
-    Serial.println("Failed to open file for writing");
-    return;
+    Serial.println("SD open failed");
+    return false;
   }
-  if (file.print(message)) {
-    Serial.println("File written");
-  } else {
-    Serial.println("Write failed");
-  }
-  file.close();
-}
 
-void appendFile(FS_TYPE &fs, const char *path, const char *message) {
-  Serial.printf("Appending to file: %s\n", path);
+  int h = GFX_EXEC(height());
+  int w = GFX_EXEC(width());
 
-  File file = fs.open(path, FILE_APPEND);
-  if (!file) {
-    Serial.println("Failed to open file for appending");
-    return;
-  }
-  if (file.print(message)) {
-    Serial.println("Message appended");
-  } else {
-    Serial.println("Append failed");
-  }
-  file.close();
-}
+  unsigned char bmFlHdr[14] = {
+    'B', 'M', 0, 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 0
+  };
 
-void renameFile(FS_TYPE &fs, const char *path1, const char *path2) {
-  Serial.printf("Renaming file %s to %s\n", path1, path2);
-  if (fs.rename(path1, path2)) {
-    Serial.println("File renamed");
-  } else {
-    Serial.println("Rename failed");
-  }
-}
+  // set color depth to 24 as we're storing 8 bits for r-g-b
+  unsigned char bmInHdr[40] = {
+    40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 24, 0,
+  };
 
-void deleteFile(FS_TYPE &fs, const char *path) {
-  Serial.printf("Deleting file: %s\n", path);
-  if (fs.remove(path)) {
-    Serial.println("File deleted");
-  } else {
-    Serial.println("Delete failed");
-  }
-}
+  unsigned long fileSize = 3ul * h * w + 54;
 
-void testFileIO(FS_TYPE &fs, const char *path) {
-  File file = fs.open(path);
-  static uint8_t buf[512];
-  size_t len = 0;
-  uint32_t start = millis();
-  uint32_t end = start;
-  if (file) {
-    len = file.size();
-    size_t flen = len;
-    start = millis();
-    while (len) {
-      size_t toRead = len;
-      if (toRead > 512) {
-        toRead = 512;
-      }
-      file.read(buf, toRead);
-      len -= toRead;
+  bmFlHdr[ 2] = (unsigned char)(fileSize);
+  bmFlHdr[ 3] = (unsigned char)(fileSize >> 8);
+  bmFlHdr[ 4] = (unsigned char)(fileSize >> 16);
+  bmFlHdr[ 5] = (unsigned char)(fileSize >> 24);
+
+  bmInHdr[ 4] = (unsigned char)(w);
+  bmInHdr[ 5] = (unsigned char)(w >> 8);
+  bmInHdr[ 6] = (unsigned char)(w >> 16);
+  bmInHdr[ 7] = (unsigned char)(w >> 24);
+  bmInHdr[ 8] = (unsigned char)(h);
+  bmInHdr[ 9] = (unsigned char)(h >> 8);
+  bmInHdr[10] = (unsigned char)(h >> 16);
+  bmInHdr[11] = (unsigned char)(h >> 24);
+
+  file.write(bmFlHdr, sizeof(bmFlHdr));
+  file.write(bmInHdr, sizeof(bmInHdr));
+
+  for (int y = h - 1; y >= 0; y--) {
+    if (y % 10 == 0) Serial.print(".");
+    for (int x = 0; x < w; x++) {
+
+      // if you are attempting to convert this library to use another display library,
+      // this is where you may run into issues
+      // the libries must have a readPixel function
+#ifdef _ADAFRUIT_GFX_H
+      rgb = readPixA(x, y);
+#else
+      rgb = GFX_EXEC(readPixel(x, y));
+#endif
+      // convert the 16 bit color to full 24
+      // that way we have a legit bmp that can be read into the
+      // bmp reader below
+      color565toRGB(rgb, r, g, b);
+
+      // write the data in BMP reverse order
+      file.write(b);
+      file.write(g);
+      file.write(r);
     }
-    end = millis() - start;
-    Serial.printf("%u bytes read for %lu ms\n", flen, end);
-    file.close();
-  } else {
-    Serial.println("Failed to open file for reading");
   }
 
-  file = fs.open(path, FILE_WRITE);
-  if (!file) {
-    Serial.println("Failed to open file for writing");
-    return;
-  }
-
-  size_t i;
-  start = millis();
-  for (i = 0; i < 2048; i++) {
-    file.write(buf, 512);
-  }
-  end = millis() - start;
-  Serial.printf("%u bytes written for %lu ms\n", 2048 * 512, end);
   file.close();
+  Serial.println("Image was saved successfully");
+  return true;
 }
 
+/*--------------------------------------------------------------------------------
+ * API entries
+ *--------------------------------------------------------------------------------*/
 void sdcard_setup(void) {
 #ifdef REASSIGN_PINS
   // Initialize SD card interface
@@ -264,73 +270,17 @@ bool sdcard_save(void) {
     delay(1000);
   }
 
-#if USE_SDFAT
+  Serial.println("The card was mounted successfully");
 
-  Serial.print("SD card type: ");
-  switch (SD.card()->type()) {
-    case SD_CARD_TYPE_SD1:  Serial.println("SD1");       break;
-    case SD_CARD_TYPE_SD2:  Serial.println("SD2");       break;
-    case SD_CARD_TYPE_SDHC: Serial.println("SDHC/SDXC"); break;
-    default:                Serial.println("unknown");   break;
-  }
+#if CAPTURE_SCREEN
+  listDir(SD, "/", 0);
 
-  Serial.print("FS type: ");
-  switch (SD.vol()->fatType()) {
-    case FAT_TYPE_EXFAT: Serial.println("exFat"); break;
-    case FAT_TYPE_FAT32: Serial.println("FAT32"); break;
-    case FAT_TYPE_FAT16: Serial.println("FAT16"); break;
-    case FAT_TYPE_FAT12: Serial.println("FAT12"); break;
-  }
-
-  uint32_t cardSize = SD.card()->sectorCount() * 0.000512 + 0.5;
-  Serial.printf("SD card Size: %dMB\n", cardSize);
-
-#else
-
-  uint8_t cardType = SD.cardType();
-
-  if (cardType == CARD_NONE) {
-    Serial.println("No SD card attached");
-    return false;
-  }
-
-  Serial.print("SD card Type: ");
-  if (cardType == CARD_MMC) {
-    Serial.println("MMC");
-  } else if (cardType == CARD_SD) {
-    Serial.println("SDSC");
-  } else if (cardType == CARD_SDHC) {
-    Serial.println("SDHC");
-  } else {
-    Serial.println("UNKNOWN");
-  }
-
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD card size: %lluMB\n", cardSize);
-
-#endif // USE_SDFAT
+  String path = String("/test.bmp");
+  SaveBMP24(SD, path.c_str());
 
   listDir(SD, "/", 0);
-  createDir(SD, "/mydir");
-  listDir(SD, "/", 0);
-  removeDir(SD, "/mydir");
-  listDir(SD, "/", 2);
-  writeFile(SD, "/hello.txt", "Hello ");
-  appendFile(SD, "/hello.txt", "World!\n");
-  readFile(SD, "/hello.txt");
-  deleteFile(SD, "/foo.txt");
-  renameFile(SD, "/hello.txt", "/foo.txt");
-  readFile(SD, "/foo.txt");
-  testFileIO(SD, "/test.txt");
-
-#if USE_SDFAT
-  Serial.printf("Free space: %dMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
-  SD.ls(LS_R | LS_DATE | LS_SIZE);
 #else
-  Serial.printf("Number of sectors: %d\n", SD.numSectors());
-  Serial.printf("Size of sector: %d\n", SD.sectorSize());
-  Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
-  Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
+  listDir(SD, "/", 0);
 #endif
 
 //SD.end(); --> Activating this line will cause some GFX libraries to stop working.

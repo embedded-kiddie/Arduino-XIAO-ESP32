@@ -40,11 +40,11 @@
 #include <Arduino.h>
 #include "spi_assign.h"
 
-/*--------------------------------------------------------------------------------
+/*================================================================================
  * The configuration of the features defined in this file
- * Note: Only LovyanGFX can capture the screen using `readPixel()` or `readRect()`.
- *--------------------------------------------------------------------------------*/
-#define SCREEN_CAPTURE  true
+ * Note: Only LovyanGFX can capture the screen with `readPixel()` or `readRect()`
+ *================================================================================*/
+#define CAPTURE_SCREEN  true
 #define USE_SDFAT       false
 
 /*--------------------------------------------------------------------------------
@@ -85,6 +85,8 @@ SdFs SD;
 
 /*--------------------------------------------------------------------------------
  * Basic file I/O and directory related functions
+ * ex)  listDir(SD, "/", 0);
+ *      createDir(SD, "/mydir");
  *--------------------------------------------------------------------------------*/
 void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels) {
   Serial.printf("Listing directory: %s\n", dirname);
@@ -363,7 +365,6 @@ uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
 
 #endif // _ADAFRUIT_GFX_H
 
-// At present, only LovyanGFX can capture the screen using readPixel() or readRect()
 bool SaveBMP24(FS_TYPE &fs, const char *path) {
   uint16_t rgb;
   uint8_t r, g, b;
@@ -407,7 +408,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
   file.write(bmInHdr, sizeof(bmInHdr));
 
   for (int y = h - 1; y >= 0; y--) {
-    if (y % 4 == 0) Serial.print(".");
+    if (y % 10 == 0) Serial.print(".");
     for (int x = 0; x < w; x++) {
 
       // if you are attempting to convert this library to use another display library,
@@ -436,7 +437,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
 }
 
 /*--------------------------------------------------------------------------------
- * External interface entry function
+ * API entries
  *--------------------------------------------------------------------------------*/
 void sdcard_setup(void) {
 #ifdef REASSIGN_PINS
@@ -465,7 +466,7 @@ bool sdcard_save(const char *base_name) {
 
   Serial.println("The card was mounted successfully");
 
-#if SCREEN_CAPTURE
+#if CAPTURE_SCREEN
   listDir(SD, "/", 0);
 
   String path = String("/") + String(base_name) + String(".bmp");
