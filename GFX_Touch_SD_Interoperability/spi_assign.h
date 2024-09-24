@@ -39,7 +39,7 @@
 #define TOUCH_CS      D3
 #define TOUCH_IRQ     D7
 #define SD_CS         D6
-#define SPI_MODE      SPI_MODE3 // SPI_MODE2 or SPI_MODE3
+#define SPI_MODE      SPI_MODE3 // SPI_MODE0, SPI_MODE2 or SPI_MODE3
 
 #define SPI_FREQUENCY       80000000  // 80 MHz
 #define SPI_READ_FREQUENCY   4000000  //  4 MHz
