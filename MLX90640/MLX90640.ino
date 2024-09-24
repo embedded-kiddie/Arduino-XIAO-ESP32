@@ -224,7 +224,6 @@ void ProcessInput(uint8_t bank) {
     gfx_printf(TFT_WIDTH / 2 - FONT_WIDTH * 3, TFT_HEIGHT / 2 - FONT_HEIGHT * 5, "Failed");
     Serial.println("Failed");
     delay(1000); // false = no new frame capture
-    return;
   }
 }
 
@@ -300,6 +299,9 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   if (touch_check()) {
     sdcard_save();
   }
+
+  // Prevent the watchdog from firing
+  delay(0);
 }
 
 /*=============================================================
