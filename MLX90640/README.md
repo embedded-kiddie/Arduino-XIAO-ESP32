@@ -45,6 +45,10 @@
 - [**espressif/arduino-esp32/libraries/SD**][14]  
   ESP32 and SD (Secure Digital) and MMC (Multi Media Card) cards library without additional modules.
 
+- [**ESP32-S3 Series Datasheet**][15]
+
+- [**ESP32 Technical Reference Manual**][16]
+
 [1]: https://www.arduino.cc/en/software "Software - Arduino"
 
 [2]: https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/ "Getting Started with Seeed Studio XIAO ESP32S3 (Sense) - Seeed Studio Wiki"
@@ -71,3 +75,6 @@
 [13]: https://www.arduino.cc/reference/en/libraries/xpt2046_touchscreen/ "XPT2046_Touchscreen - Arduino Reference"
 
 [14]: https://github.com/espressif/arduino-esp32/tree/master/libraries/SD "arduino-esp32/libraries/SD at master · espressif/arduino-esp32"
+
+[15]: https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf
+[16]: https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
