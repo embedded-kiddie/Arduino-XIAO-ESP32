@@ -20,28 +20,29 @@
   - Interface: SPI
   - SPI frequency: 80MHz
   - SPI bus host: SPI2_HOST ([sdspi_host.h][5])
-- [MLX90640][6]
+  - [AliExpress][6]
+- [MLX90640][7]
   - I2C Frequency: 1MHz (Fm+)
-  - [aliexpress][7]
+  - [Aliexpress][8]
 
 ## Related resources
 
-- [**Far infrared thermal sensor array (32x24 RES)**][8]  
+- [**Far infrared thermal sensor array (32x24 RES)**][9]  
   Melexi.com MLX90640 product page.
 
-- [**GY-MCU90640 user manual**][9]  
+- [**GY-MCU90640 user manual**][10]  
   Official or private user manual of MLX90640 camera module.
 
-- [**adafruit/Adafruit_MLX90640**][10]  
+- [**adafruit/Adafruit_MLX90640**][11]  
   MLX90640 library functions by Adafruit.
 
-- [**sparkfun/SparkFun_MLX90640_Arduino_Example**][11]  
+- [**sparkfun/SparkFun_MLX90640_Arduino_Example**][12]  
   MLX90640 examples by SparkFun.
 
-- [**XPT2046_Touchscreen**][12]  
+- [**XPT2046_Touchscreen**][13]  
   Touchscreens library using the XPT2046 controller chip.
 
-- [**espressif/arduino-esp32/libraries/SD**][13]  
+- [**espressif/arduino-esp32/libraries/SD**][14]  
   ESP32 and SD (Secure Digital) and MMC (Multi Media Card) cards library without additional modules.
 
 [1]: https://www.arduino.cc/en/software "Software - Arduino"
@@ -53,18 +54,20 @@
 
 [5]: https://github.com/espressif/esp-idf/blob/master/components/esp_driver_sdspi/include/driver/sdspi_host.h#L23-L29 "esp-idf/components/esp_driver_sdspi/include/driver/sdspi_host.h at master · espressif/esp-idf"
 
-[6]: https://www.melexis.com/en/documents/documentation/datasheets/datasheet-mlx90640 "Datasheet for MLX90640 I Melexis"
+[6]: https://www.aliexpress.com/item/1005006198656280.html
 
-[7]: https://www.aliexpress.com/item/1005006674751991.html
+[7]: https://www.melexis.com/en/documents/documentation/datasheets/datasheet-mlx90640 "Datasheet for MLX90640 I Melexis"
 
-[8]: https://www.melexis.com/en/product/MLX90640/Far-Infrared-Thermal-Sensor-Array "Far Infrared Thermal Sensor Array (32x24 RES) I Melexis"
+[8]: https://www.aliexpress.com/item/1005006674751991.html
 
-[9]: https://github.com/vvkuryshev/GY-MCU90640-RPI-Python/blob/master/GY_MCU9064%20user%20manual%20v1.pdf "vvkuryshev/GY-MCU90640-RPI-Python: The script to connect the thermal image module GY-MCU90640 to Raspberry Pi."
+[9]: https://www.melexis.com/en/product/MLX90640/Far-Infrared-Thermal-Sensor-Array "Far Infrared Thermal Sensor Array (32x24 RES) I Melexis"
 
-[10]: https://github.com/adafruit/Adafruit_MLX90640 "adafruit/Adafruit_MLX90640: MLX90640 library functions"
+[10]: https://github.com/vvkuryshev/GY-MCU90640-RPI-Python/blob/master/GY_MCU9064%20user%20manual%20v1.pdf "vvkuryshev/GY-MCU90640-RPI-Python: The script to connect the thermal image module GY-MCU90640 to Raspberry Pi."
 
-[11]: https://github.com/sparkfun/SparkFun_MLX90640_Arduino_Example "sparkfun/SparkFun_MLX90640_Arduino_Example: Controlling and reading from the MLX90640 IR array thermal imaging sensor"
+[11]: https://github.com/adafruit/Adafruit_MLX90640 "adafruit/Adafruit_MLX90640: MLX90640 library functions"
 
-[12]: https://www.arduino.cc/reference/en/libraries/xpt2046_touchscreen/ "XPT2046_Touchscreen - Arduino Reference"
+[12]: https://github.com/sparkfun/SparkFun_MLX90640_Arduino_Example "sparkfun/SparkFun_MLX90640_Arduino_Example: Controlling and reading from the MLX90640 IR array thermal imaging sensor"
 
-[13]: https://github.com/espressif/arduino-esp32/tree/master/libraries/SD "arduino-esp32/libraries/SD at master · espressif/arduino-esp32"
+[13]: https://www.arduino.cc/reference/en/libraries/xpt2046_touchscreen/ "XPT2046_Touchscreen - Arduino Reference"
+
+[14]: https://github.com/espressif/arduino-esp32/tree/master/libraries/SD "arduino-esp32/libraries/SD at master · espressif/arduino-esp32"
