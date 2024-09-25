@@ -10,6 +10,10 @@
 
 ![MLX90640 on bread board](MLX90640-XIAO-ESP32.jpg)
 
+## Timing diagram
+
+[Drawio](https://drive.google.com/file/d/1W-xelIn-PvofRw0Ya43I02ksVurOTiDk/view?usp=sharing)
+
 ## Testbed environment
 
 - [Arduino IDE 2.3.2][1]
