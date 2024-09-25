@@ -22,7 +22,7 @@
   - SPI bus host: SPI2_HOST ([sdspi_host.h][5])
   - [AliExpress][6]
 - [MLX90640][7]
-  - I2C Frequency: 1MHz (Fm+)
+  - I2C Frequency: 1MHz (Fast mode+)
   - [Aliexpress][8]
 
 ## Related resources
