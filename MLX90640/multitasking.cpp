@@ -134,9 +134,9 @@ void Task2(void *pvParameters) {
   while (true) {
     MessageQueue_t queue = ReceiveQueue();
 
+    GiveSemaphore();
+
     // some process
     Process2(queue.bank, queue.start, queue.finish);
-
-    GiveSemaphore();
   }
 }
