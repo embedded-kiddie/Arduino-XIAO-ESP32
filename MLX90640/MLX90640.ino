@@ -159,7 +159,11 @@ void gfx_setup(void) {
  * Global variables
  *=============================================================*/
 Adafruit_MLX90640 mlx;
+#if ENA_MULTITASKING
 float src[2][MLX90640_ROWS  * MLX90640_COLS    ];
+#else
+float src[1][MLX90640_ROWS  * MLX90640_COLS    ];
+#endif
 float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
 
 // The colors we will be using
@@ -301,7 +305,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   }
 
   // Prevent the watchdog from firing
-  delay(0);
+  delay(1);
 }
 
 /*=============================================================
@@ -355,8 +359,8 @@ void setup() {
 
   // MLX90640
   mlx.setMode(MLX90640_CHESS);
-  mlx.setResolution(MLX90640_ADC_18BIT);  // 16BIT, 18BIT or 18BIT
-  mlx.setRefreshRate(MLX90640_16_HZ);     // 8_HZ, 16_HZ or 32_HZ
+  mlx.setResolution(MLX90640_ADC_18BIT);  // 16BIT, 17BIT, 18BIT or 19BIT
+  mlx.setRefreshRate(MLX90640_16_HZ);     // 0_5_HZ, 1_HZ, 2_HZ, 4_HZ, 8_HZ, 16_HZ, 32_HZ or 64_HZ
 
   // I2C Clock for MLX90640
   Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
@@ -373,7 +377,7 @@ void loop() {
   delay(1000);
 #else
   uint32_t inputStart = millis();
-  ProcessInput(0);
+  ProcessInput(0); // always use bank 0
   ProcessOutput(0, inputStart, millis());
 #endif
 }

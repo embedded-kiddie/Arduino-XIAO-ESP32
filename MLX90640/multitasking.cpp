@@ -3,6 +3,9 @@
 #define TASK1_CORE      1
 #define TASK2_CORE      0
 
+#define TASK1_STACK     4096
+#define TASK2_STACK     4096
+
 #define TASK1_PRIORITY  2
 #define TASK2_PRIORITY  1
 
@@ -47,7 +50,7 @@ void task_setup(void (*task1)(uint8_t), void (*task2)(uint8_t, uint32_t, uint32_
   // Set up sender task in core 1 and start immediately
   xTaskCreatePinnedToCore(
     Task1, "Task1",
-    8192,           // The stack size
+    TASK1_STACK,    // The stack size
     NULL,           // Pass reference to a variable describing the task number
     TASK1_PRIORITY, // priority
     &taskHandle[0], // Pass reference to task handle
@@ -57,7 +60,7 @@ void task_setup(void (*task1)(uint8_t), void (*task2)(uint8_t, uint32_t, uint32_
   // Set up receiver task on core 0 and start immediately
   xTaskCreatePinnedToCore(
     Task2, "Task2",
-    8192,           // The stack size
+    TASK2_STACK,    // The stack size
     NULL,           // Pass reference to a variable describing the task number
     TASK2_PRIORITY, // priority
     &taskHandle[1], // Pass reference to task handle
