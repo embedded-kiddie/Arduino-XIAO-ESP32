@@ -128,15 +128,17 @@ void gfx_setup(void) {
 #endif
 
 /*=============================================================
- * MLX90640 settings
+ * MLX90640 settings (optimized for LovyanGFX and TFT_eSPI)
  *=============================================================*/
 // 0_5_HZ, 1_HZ, 2_HZ, 4_HZ, 8_HZ, 16_HZ, 32_HZ or 64_HZ
-#if   (INTERPOLATE_SCALE == 4) && (BOX_SIZE == 2)
-#define REFRESH_RATE  MLX90640_16_HZ
+#if   (INTERPOLATE_SCALE == 1) && (BOX_SIZE == 8)
+#define REFRESH_RATE  (ENA_MULTITASKING ? MLX90640_32_HZ : MLX90640_16_HZ)
+#elif (INTERPOLATE_SCALE == 2) && (BOX_SIZE == 4)
+#define REFRESH_RATE  (ENA_MULTITASKING ? MLX90640_32_HZ : MLX90640_16_HZ)
+#elif (INTERPOLATE_SCALE == 4) && (BOX_SIZE == 2)
+#define REFRESH_RATE  (ENA_MULTITASKING ? MLX90640_32_HZ : MLX90640_16_HZ)
 #elif (INTERPOLATE_SCALE == 8) && (BOX_SIZE == 1)
-#define REFRESH_RATE  MLX90640_8_HZ
-#elif (INTERPOLATE_SCALE == 1) && (BOX_SIZE == 8)
-#define REFRESH_RATE  MLX90640_32_HZ
+#define REFRESH_RATE  (ENA_MULTITASKING ? MLX90640_8_HZ  : MLX90640_4_HZ )
 #else
 #error 'REFRESH_RATE'
 #endif
@@ -238,7 +240,7 @@ void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
  *=============================================================*/
 void ProcessInput(uint8_t bank) {
   if (mlx.getFrame(src[bank]) != 0) {
-    gfx_printf(TFT_WIDTH / 2 - FONT_WIDTH * 3, TFT_HEIGHT / 2 - FONT_HEIGHT * 5, "Failed");
+    gfx_printf(TFT_WIDTH / 2 - FONT_WIDTH * 2, TFT_HEIGHT / 2 - FONT_HEIGHT * 4, "Failed");
     Serial.println("Failed");
     delay(1000); // false = no new frame capture
   }

@@ -154,7 +154,7 @@ inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
   b = (color<<3)&0x00F8;
 }
 
-#ifdef _ADAFRUIT_GFX_H
+#if defined(_ADAFRUIT_GFX_H)
 
 /* create snapshot of 3.5" TFT and save to file in bitmap format
  * https://forum.arduino.cc/t/create-snapshot-of-3-5-tft-and-save-to-file-in-bitmap-format/391367/7
@@ -175,7 +175,7 @@ uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
     return RGB565(r, g, b); // defined in colors.h
 }
 
-#endif // _ADAFRUIT_GFX_H
+#endif // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
 
 bool SaveBMP24(FS_TYPE &fs, const char *path) {
   uint16_t rgb;
@@ -223,17 +223,14 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
     if (y % 10 == 0) Serial.print(".");
     for (int x = 0; x < w; x++) {
 
-      // if you are attempting to convert this library to use another display library,
-      // this is where you may run into issues
-      // the libries must have a readPixel function
-#ifdef _ADAFRUIT_GFX_H
+#if   defined(_ADAFRUIT_GFX_H)
       rgb = readPixA(x, y);
-#else
+#elif defined(_ARDUINO_GFX_LIBRARIES_H_)
+      rgb = 0; // There is no reading function
+#else // LOVYANGFX_HPP_ || _TFT_eSPIH_
       rgb = GFX_EXEC(readPixel(x, y));
 #endif
-      // convert the 16 bit color to full 24
-      // that way we have a legit bmp that can be read into the
-      // bmp reader below
+
       color565toRGB(rgb, r, g, b);
 
       // write the data in BMP reverse order
