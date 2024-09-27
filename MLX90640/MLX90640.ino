@@ -320,7 +320,7 @@ void setup() {
   sdcard_setup();
 
   // Initialize interpolation
-  interpolate_setup(INTERPOLATED_ROWS, INTERPOLATED_COLS, INTERPOLATE_SCALE);
+  interpolate_setup(INTERPOLATE_SCALE);
  
   // Draw color bar
   ClearScreen();
