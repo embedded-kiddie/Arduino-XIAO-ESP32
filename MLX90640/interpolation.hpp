@@ -141,10 +141,10 @@ void interpolate_setup(const int scale) {
 
 void interpolate_image(float *src, const int src_rows, const int src_cols, float *dst, const int dst_rows, const int dst_cols) {
   int X, Y;
-  int scale = dst_rows / src_rows;
   float X0Y0, X1Y0, X0Y1, X1Y1;
   float x_ratio_lo, x_ratio_hi;
   float y_ratio_lo, y_ratio_hi;
+  const int scale = dst_rows / src_rows;
 
   // Bilinear interpolation
   for (int y = 0; y < dst_rows; y++) {
@@ -152,14 +152,14 @@ void interpolate_image(float *src, const int src_rows, const int src_cols, float
     y_ratio_lo = table_ratio[y % scale][0];
     y_ratio_hi = table_ratio[y % scale][1];
 
-    for (int x = 0; x < dst_cols; x += INTERPOLATE_SCALE) {
+    for (int x = 0; x < dst_cols; x += scale) {
       X = x / scale;
       X0Y0 = get_point(src, src_rows, src_cols, X,     Y    );
       X1Y0 = get_point(src, src_rows, src_cols, X + 1, Y    );
       X0Y1 = get_point(src, src_rows, src_cols, X,     Y + 1);
       X1Y1 = get_point(src, src_rows, src_cols, X + 1, Y + 1);
 
-      for (int i = 0; i < INTERPOLATE_SCALE; i++) {
+      for (int i = 0; i < scale; i++) {
         x_ratio_lo = table_ratio[i][0];
         x_ratio_hi = table_ratio[i][1];
 

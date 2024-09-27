@@ -127,10 +127,23 @@ void gfx_setup(void) {
 #define BOX_SIZE          8
 #endif
 
-#define MLX90640_COLS 32
-#define MLX90640_ROWS 24
+/*=============================================================
+ * MLX90640 settings
+ *=============================================================*/
+// 0_5_HZ, 1_HZ, 2_HZ, 4_HZ, 8_HZ, 16_HZ, 32_HZ or 64_HZ
+#if   (INTERPOLATE_SCALE == 4) && (BOX_SIZE == 2)
+#define REFRESH_RATE  MLX90640_16_HZ
+#elif (INTERPOLATE_SCALE == 8) && (BOX_SIZE == 1)
+#define REFRESH_RATE  MLX90640_8_HZ
+#elif (INTERPOLATE_SCALE == 1) && (BOX_SIZE == 8)
+#define REFRESH_RATE  MLX90640_32_HZ
+#else
+#error 'REFRESH_RATE'
+#endif
 
 // The size of thermal image
+#define MLX90640_COLS 32
+#define MLX90640_ROWS 24
 #define INTERPOLATED_COLS (MLX90640_COLS * INTERPOLATE_SCALE)
 #define INTERPOLATED_ROWS (MLX90640_ROWS * INTERPOLATE_SCALE)
 
@@ -360,14 +373,7 @@ void setup() {
   // MLX90640
   mlx.setMode(MLX90640_CHESS);
   mlx.setResolution(MLX90640_ADC_18BIT);  // 16BIT, 17BIT, 18BIT or 19BIT
-
-#if   INTERPOLATE_SCALE == 4 && BOX_SIZE == 2
-  mlx.setRefreshRate(MLX90640_16_HZ);     // 0_5_HZ, 1_HZ, 2_HZ, 4_HZ, 8_HZ, 16_HZ, 32_HZ or 64_HZ
-#elif INTERPOLATE_SCALE == 8 && BOX_SIZE == 1
-  mlx.setRefreshRate(MLX90640_8_HZ);      // 0_5_HZ, 1_HZ, 2_HZ, 4_HZ, 8_HZ, 16_HZ, 32_HZ or 64_HZ
-#else
-#error 'setRefreshRate()'
-#endif
+  mlx.setRefreshRate(REFRESH_RATE);     
 
   // I2C Clock for MLX90640
   Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
