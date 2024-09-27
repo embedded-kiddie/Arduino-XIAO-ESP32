@@ -282,7 +282,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", outputFinish - outputStart);
 
   // FPS
-  float v = 1000.0f / (float)(outputFinish - prevFinish) + 0.05f; // 2 frames per display
+  float v = 1000.0f / (float)(outputFinish - prevFinish);
   gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
   prevFinish = outputFinish;
 
