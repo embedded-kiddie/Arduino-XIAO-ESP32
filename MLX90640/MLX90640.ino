@@ -120,8 +120,8 @@ void gfx_setup(void) {
  *=============================================================*/
 // INTERPOLATE_SCALE x BOX_SIZE = 8
 #if ENA_INTERPOLATION
-#define INTERPOLATE_SCALE 4
-#define BOX_SIZE          2
+#define INTERPOLATE_SCALE 8
+#define BOX_SIZE          1
 #else
 #define INTERPOLATE_SCALE 1
 #define BOX_SIZE          8
@@ -360,7 +360,14 @@ void setup() {
   // MLX90640
   mlx.setMode(MLX90640_CHESS);
   mlx.setResolution(MLX90640_ADC_18BIT);  // 16BIT, 17BIT, 18BIT or 19BIT
+
+#if   INTERPOLATE_SCALE == 4 && BOX_SIZE == 2
   mlx.setRefreshRate(MLX90640_16_HZ);     // 0_5_HZ, 1_HZ, 2_HZ, 4_HZ, 8_HZ, 16_HZ, 32_HZ or 64_HZ
+#elif INTERPOLATE_SCALE == 8 && BOX_SIZE == 1
+  mlx.setRefreshRate(MLX90640_8_HZ);      // 0_5_HZ, 1_HZ, 2_HZ, 4_HZ, 8_HZ, 16_HZ, 32_HZ or 64_HZ
+#else
+#error 'setRefreshRate()'
+#endif
 
   // I2C Clock for MLX90640
   Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
