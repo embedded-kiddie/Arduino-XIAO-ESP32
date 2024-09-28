@@ -161,6 +161,8 @@ inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
 */
 uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
 
+    digitalWrite(TFT_CS, LOW);
+
     GFX_EXEC(startWrite());    // needed for low-level methods. CS active
     GFX_EXEC(setAddrWindow(x, y, 1, 1));
     GFX_EXEC(writeCommand(0x2E)); // memory read command. sets DC (ILI9341: LCD_RAMRD, ST7789: ST7789_RAMRD)
@@ -171,6 +173,8 @@ uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
     g = GFX_EXEC(spiRead());
     b = GFX_EXEC(spiRead());
     GFX_EXEC(endWrite());   // needed for low-level methods. CS idle
+
+    digitalWrite(TFT_CS, HIGH);
 
     return RGB565(r, g, b); // defined in colors.h
 }
@@ -220,13 +224,17 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
   file.write(bmInHdr, sizeof(bmInHdr));
 
   for (int y = h - 1; y >= 0; y--) {
-    if (y % 10 == 0) Serial.print(".");
+    if (y % 10 == 0) {
+      Serial.print(".");
+      delay(1); // reset wdt
+    }
+
     for (int x = 0; x < w; x++) {
 
-#if   defined(_ADAFRUIT_GFX_H)
+#if   defined(_ARDUINO_GFX_LIBRARIES_H_)
+      rgb = 0; // does not support reading
+#elif defined(_ADAFRUIT_GFX_H)
       rgb = readPixA(x, y);
-#elif defined(_ARDUINO_GFX_LIBRARIES_H_)
-      rgb = 0; // There is no reading function
 #else // LOVYANGFX_HPP_ || _TFT_eSPIH_
       rgb = GFX_EXEC(readPixel(x, y));
 #endif

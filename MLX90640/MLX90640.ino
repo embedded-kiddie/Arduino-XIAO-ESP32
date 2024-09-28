@@ -112,7 +112,7 @@ void gfx_setup(void) {
 #if defined(LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
 #define ENA_TRANSACTION   true
 #else
-#define ENA_TRANSACTION   false
+#define ENA_TRANSACTION   false // 'true' stops display
 #endif
 
 /*=============================================================
@@ -132,13 +132,13 @@ void gfx_setup(void) {
  *=============================================================*/
 // 0_5_HZ, 1_HZ, 2_HZ, 4_HZ, 8_HZ, 16_HZ, 32_HZ or 64_HZ
 #if   (INTERPOLATE_SCALE == 1) && (BOX_SIZE == 8)
-#define REFRESH_RATE  (ENA_MULTITASKING ? MLX90640_32_HZ : MLX90640_16_HZ)
+#define REFRESH_RATE  (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ : MLX90640_16_HZ)
 #elif (INTERPOLATE_SCALE == 2) && (BOX_SIZE == 4)
-#define REFRESH_RATE  (ENA_MULTITASKING ? MLX90640_32_HZ : MLX90640_16_HZ)
+#define REFRESH_RATE  (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ : MLX90640_16_HZ)
 #elif (INTERPOLATE_SCALE == 4) && (BOX_SIZE == 2)
-#define REFRESH_RATE  (ENA_MULTITASKING ? MLX90640_32_HZ : MLX90640_16_HZ)
+#define REFRESH_RATE  (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ : MLX90640_8_HZ )
 #elif (INTERPOLATE_SCALE == 8) && (BOX_SIZE == 1)
-#define REFRESH_RATE  (ENA_MULTITASKING ? MLX90640_8_HZ  : MLX90640_4_HZ )
+#define REFRESH_RATE  (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_8_HZ  : MLX90640_2_HZ )
 #else
 #error 'REFRESH_RATE'
 #endif
