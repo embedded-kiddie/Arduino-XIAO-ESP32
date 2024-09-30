@@ -249,7 +249,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
   }
 
   file.close();
-  Serial.println("Image was saved successfully");
+  Serial.println("saved successfully");
   return true;
 }
 

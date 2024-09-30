@@ -377,8 +377,10 @@ void setup() {
   mlx.setResolution(MLX90640_ADC_18BIT);  // 16BIT, 17BIT, 18BIT or 19BIT
   mlx.setRefreshRate(REFRESH_RATE);     
 
-  // I2C Clock for MLX90640
+  // I2C bus clock for MLX90640
+  // Note: ESP32S3 supports up to 800 MHz
   Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
+  // Serial.println(Wire.getClock()); // 1000000
 
   // Start tasks
 #if ENA_MULTITASKING
