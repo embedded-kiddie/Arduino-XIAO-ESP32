@@ -90,6 +90,7 @@ Enable the `USE_HSPI_PORT` or `USE_FSPI_PORT` in `User_Setup.h` as follows:
 - [Guru Meditation Error on tft.begin() (ESP32-S3 dev module) #3289][18]
 - [library not working with espressif32 esp32-s3 Arduino core > 2.0.14 #3329][19]
 - [ESP32 Core 1 panic'ed (StoreProhibited). Exception was unhandled when tft.init() is executed. #3332][20]
+- [ESP32-C3 using TFT_eSPI@^2.5.43 version, what is the reason for repeated reboots? #3464][21]
 
 [1]: https://www.arduino.cc/en/software "Software｜Arduino"
 
@@ -112,3 +113,4 @@ Enable the `USE_HSPI_PORT` or `USE_FSPI_PORT` in `User_Setup.h` as follows:
 [18]: https://github.com/Bodmer/TFT_eSPI/issues/3289 "Guru Meditation Error on tft.begin() (ESP32-S3 dev module) · Issue #3289 · Bodmer/TFT_eSPI"
 [19]: https://github.com/Bodmer/TFT_eSPI/issues/3329 "library not working with espressif32 esp32-s3 Arduino core &gt; 2.0.14 · Issue #3329 · Bodmer/TFT_eSPI"
 [20]: https://github.com/Bodmer/TFT_eSPI/issues/3332 "ESP32 Core  1 panic&#39;ed (StoreProhibited). Exception was unhandled when tft.init() is executed. · Issue #3332 · Bodmer/TFT_eSPI"
+[21]: https://github.com/Bodmer/TFT_eSPI/issues/3464 "ESP32-C3 using TFT_eSPI@^2.5.43 version, what is the reason for repeated reboots? · Issue #3464 · Bodmer/TFT_eSPI"
