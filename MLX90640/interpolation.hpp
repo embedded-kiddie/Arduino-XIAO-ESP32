@@ -133,7 +133,7 @@ void interpolate_image(float *src, const int src_rows, const int src_cols,
 static float table_ratio[INTERPOLATE_SCALE][2];
 
 void interpolate_setup(const int scale) {
-  for (int i = 0; i < INTERPOLATE_SCALE; i++) {
+  for (int i = 0; i < scale; i++) {
     table_ratio[i][0] = (float)i / (float)scale;
     table_ratio[i][1] = 1.0f - table_ratio[i][0];
   }
