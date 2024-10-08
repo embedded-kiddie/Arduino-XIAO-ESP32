@@ -84,12 +84,20 @@ SdFs SD;
 // #define REASSIGN_PINS
 
 /*
- * Managing sequence numbers
+ * File name and size for GetFileList()
+ */
+typedef struct {
+  std::string name;
+  std::size_t size;
+} FileInfo_t;
+
+/*
+ * Sequence number management file
  */
 #define MLX90640_DIR  String("/MLX90640")
 #define MLX90640_NUM  String("/@number.txt")
 
-int getFileNo(FS_TYPE &fs) {
+static int GetFileNo(FS_TYPE &fs) {
 
   if (!fs.exists(MLX90640_DIR)) {
     DBG_EXEC(printf("Creating Dir: %s\n", MLX90640_DIR));
@@ -124,10 +132,9 @@ int getFileNo(FS_TYPE &fs) {
 
 /*--------------------------------------------------------------------------------
  * Basic file I/O and directory related functions
- * ex)  listDir(SD, "/", 0);
- *      createDir(SD, "/mydir");
+ * ex)  GetFileList(SD, "/", 0);
  *--------------------------------------------------------------------------------*/
-void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<std::string> &files) {
+static void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<FileInfo_t> &files) {
   File root = fs.open(dirname);
   if (!root) {
     DBG_EXEC(printf("Failed to open directory.\n"));
@@ -152,30 +159,21 @@ void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<std::
     } else if (file.isDirectory()) {
       if (levels) {
 #if USE_SDFAT
-        listDir(fs, buf, levels - 1, files);
+        GetFileList(fs, buf, levels - 1, files);
 #else
-        listDir(fs, file.path(), levels - 1, files);
+        GetFileList(fs, file.path(), levels - 1, files);
 #endif
       }
     } else {
       // Add full path to vector
       // file.path(), file.name(), file.size()
 #if USE_SDFAT
-      files.push_back(buf);
+      files.push_back({buf, (uint32_t)file.fileSize()});
 #else
-      files.push_back(file.path());
+      files.push_back({file.path(), file.size()});
 #endif
     }
     file = root.openNextFile();
-  }
-}
-
-void createDir(FS_TYPE &fs, const char *path) {
-  DBG_EXEC(printf("Creating dir: %s\n", path));
-  if (fs.mkdir(path)) {
-    DBG_EXEC(printf("Dir created.\n"));
-  } else {
-    DBG_EXEC(printf("mkdir failed.\n"));
   }
 }
 
@@ -217,7 +215,7 @@ uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
 
 #endif // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
 
-bool SaveBMP24(FS_TYPE &fs, const char *path) {
+static bool SaveBMP24(FS_TYPE &fs, const char *path) {
   uint16_t rgb;
   uint8_t r, g, b;
 
@@ -314,7 +312,7 @@ bool sdcard_save(void) {
   DBG_EXEC(printf("The card was mounted successfully.\n"));
 
 #if CAPTURE_SCREEN
-  int no = getFileNo(SD);
+  int no = GetFileNo(SD);
   char path[64];
   sprintf(path, "%s/mlx%04d.bmp", MLX90640_DIR, no);
   DBG_EXEC(printf("%s\n", path));
@@ -326,22 +324,22 @@ bool sdcard_save(void) {
   DBG_EXEC(printf("Elapsed time: %d msec\n", millis() - start));
 #endif
 
-  std::vector<std::string> files;
-  listDir(SD, "/", 1, files);
+  std::vector<FileInfo_t> files;
+  GetFileList(SD, "/", 1, files);
 
   for (const auto& file : files) {
-    printf("%s\n", file.c_str());
+    printf("%s, %lu\n", file.name.c_str(), file.size);
   }
 
   // Activating the next line will cause some GFX libraries to stop working.
   // SD.end();
 
 #if USE_SDFAT
-  printf("Card size: %dMB\n", (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5));
-  printf("Free space: %dMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
+  printf("Card size: %luMB\n", (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5));
+  printf("Free size: %luMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
 #else
-  printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
-  printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
+  printf("Card size: %lluMB\n", SD.totalBytes() / (1024 * 1024));
+  printf("Used size: %lluMB\n", SD.usedBytes()  / (1024 * 1024));
 #endif
 
   return true;
