@@ -323,6 +323,7 @@ void setup() {
   testFileIO(SD, "/test.txt");
 
 #if USE_SDFAT
+  Serial.printf("Card size: %dMB\n", (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5));
   Serial.printf("Free space: %dMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
   SD.ls(LS_R | LS_DATE | LS_SIZE);
 #else

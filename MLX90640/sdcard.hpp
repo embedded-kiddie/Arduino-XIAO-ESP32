@@ -40,6 +40,12 @@
 #include <Arduino.h>
 #include "spi_assign.h"
 
+#if 1
+#define SD_DEBUG(x) {x;}
+#else
+#define SD_DEBUG(x)
+#endif
+
 /*================================================================================
  * The configuration of the features defined in this file
  * Note: Only LovyanGFX can capture the screen with `readPixel()` or `readRect()`
@@ -83,63 +89,102 @@ SdFs SD;
 // Uncomment and set up if you want to use custom pins for the SPI communication
 // #define REASSIGN_PINS
 
+/*
+ * Managing sequence numbers
+ */
+#define MLX90640_DIR  String("/MLX90640")
+#define MLX90640_NUM  String("/@number.txt")
+
+int getFileNo(FS_TYPE &fs) {
+
+  if (!fs.exists(MLX90640_DIR)) {
+    SD_DEBUG(Serial.printf("Creating Dir: %s: ", MLX90640_DIR); Serial.flush());
+    if (fs.mkdir(MLX90640_DIR)) {
+      SD_DEBUG(Serial.println("done."); Serial.flush());
+    } else {
+      SD_DEBUG(Serial.println("failed."); Serial.flush());
+      return 0;
+    }
+  }
+
+  char num[8] = {"0"};
+  String path = MLX90640_DIR + MLX90640_NUM;
+  File file = fs.open(path, FILE_READ);
+  if (file.available()) {
+    file.read((uint8_t*)num, sizeof(num));
+  }
+
+  int number = atoi(num);
+  file.close();
+
+  file = fs.open(path, FILE_WRITE);
+  if (file.print(++number)) {
+    SD_DEBUG(Serial.println("done: " + String(number)); Serial.flush());
+  } else {
+    SD_DEBUG(Serial.println("fail: " + String(number)); Serial.flush());
+  }
+
+  file.close();
+  return number;
+}
+
 /*--------------------------------------------------------------------------------
  * Basic file I/O and directory related functions
  * ex)  listDir(SD, "/", 0);
  *      createDir(SD, "/mydir");
  *--------------------------------------------------------------------------------*/
-void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels) {
-  Serial.printf("Listing directory: %s\n", dirname);
-
+void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<std::string> &files) {
   File root = fs.open(dirname);
   if (!root) {
-    Serial.println("Failed to open directory");
+    SD_DEBUG(Serial.println("Failed to open directory"); Serial.flush());
     return;
   }
   if (!root.isDirectory()) {
-    Serial.println("Not a directory");
+    SD_DEBUG(Serial.println("Not a directory"); Serial.flush());
     return;
   }
 
-  char buf[16];
+#if USE_SDFAT
+  char buf[64];
+#endif
+
   File file = root.openNextFile();
   while (file) {
-    if (file.isDirectory()) {
-      Serial.print("  DIR : ");
 #if USE_SDFAT
-      file.getName(buf, sizeof(buf));
-      Serial.println(buf);
+    file.getName(buf, sizeof(buf));
+    if (file.isHidden())
 #else
-      Serial.println(file.name());
+    if ((file.path())[0] == '.')
 #endif
+    {
+      ; // skip dot file
+    } else if (file.isDirectory()) {
       if (levels) {
 #if USE_SDFAT
-        listDir(fs, buf, levels - 1);
+        listDir(fs, buf, levels - 1, files);
 #else
-        listDir(fs, file.path(), levels - 1);
+        listDir(fs, file.path(), levels - 1, files);
 #endif
       }
     } else {
-      Serial.print("  FILE: ");
+      // Add full path to vector
+      // file.path(), file.name(), file.size()
 #if USE_SDFAT
-      file.getName(buf, sizeof(buf));
-      Serial.print(buf);
+      files.push_back(buf);
 #else
-      Serial.print(file.name());
+      files.push_back(file.path());
 #endif
-      Serial.print("  SIZE: ");
-      Serial.println(file.size());
     }
     file = root.openNextFile();
   }
 }
 
 void createDir(FS_TYPE &fs, const char *path) {
-  Serial.printf("Creating dir: %s\n", path);
+  SD_DEBUG(Serial.printf("Creating dir: %s\n", path); Serial.flush());
   if (fs.mkdir(path)) {
-    Serial.println("Dir created");
+    SD_DEBUG(Serial.println("Dir created"); Serial.flush());
   } else {
-    Serial.println("mkdir failed");
+    SD_DEBUG(Serial.println("mkdir failed"); Serial.flush());
   }
 }
 
@@ -188,7 +233,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
   File file = fs.open(path, FILE_WRITE);
 
   if (!file) {
-    Serial.println("SD open failed");
+    SD_DEBUG(Serial.println("SD open failed"); Serial.flush());
     return false;
   }
 
@@ -225,7 +270,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
 
   for (int y = h - 1; y >= 0; y--) {
     if (y % 10 == 0) {
-      Serial.print(".");
+      SD_DEBUG(Serial.print("."); Serial.flush());
       delay(1); // reset wdt
     }
 
@@ -249,7 +294,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
   }
 
   file.close();
-  Serial.println("saved successfully");
+  SD_DEBUG(Serial.println("saved successfully"); Serial.flush());
   return true;
 }
 
@@ -269,26 +314,42 @@ bool sdcard_save(void) {
   uint8_t retry = 0;
   while (!SD.begin(SD_CONFIG)) {
     if (++retry >= 2) {
-      Serial.println("Card mount failed");
+      SD_DEBUG(Serial.println("Card mount failed"); Serial.flush());
       return false;
     }
     delay(1000);
   }
 
-  Serial.println("The card was mounted successfully");
+  SD_DEBUG(Serial.println("The card was mounted successfully"); Serial.flush());
 
 #if CAPTURE_SCREEN
-  listDir(SD, "/", 0);
-
-  String path = String("/test.bmp");
-  SaveBMP24(SD, path.c_str());
-
-  listDir(SD, "/", 0);
-#else
-  listDir(SD, "/", 0);
+  int no = getFileNo(SD);
+  char path[64];
+  sprintf(path, "%s/mlx%04d.bmp", MLX90640_DIR, no);
+  SD_DEBUG(Serial.println(path); Serial.flush());
+  
+  if (!SaveBMP24(SD, path)) {
+    return false;
+  }
 #endif
 
+  std::vector<std::string> files;
+  listDir(SD, "/", 1, files);
+
+  for (const auto& file : files) {
+    Serial.println(file.c_str());
+    Serial.flush();
+  }
+
 //SD.end(); --> Activating this line will cause some GFX libraries to stop working.
-  Serial.println("done.");
+
+#if USE_SDFAT
+  Serial.printf("Card size: %dMB\n", (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5));
+  Serial.printf("Free space: %dMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
+#else
+  Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
+  Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
+#endif
+
   return true;
 }

@@ -1,5 +1,4 @@
 #include <SPI.h>
-#include <Adafruit_MLX90640.h>
 #include "spi_assign.h"
 
 /*=============================================================
@@ -173,7 +172,9 @@ void gfx_setup(void) {
 /*=============================================================
  * Global variables
  *=============================================================*/
+#include <Adafruit_MLX90640.h>
 Adafruit_MLX90640 mlx;
+
 #if ENA_MULTITASKING
 float src[2][MLX90640_ROWS  * MLX90640_COLS    ];
 #else
@@ -380,7 +381,6 @@ void setup() {
   // I2C bus clock for MLX90640
   // Note: ESP32S3 supports up to 800 MHz
   Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
-  // Serial.println(Wire.getClock()); // 1000000
 
   // Start tasks
 #if ENA_MULTITASKING
