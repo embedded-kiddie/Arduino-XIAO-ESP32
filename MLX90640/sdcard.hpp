@@ -51,7 +51,7 @@
  * Note: Only LovyanGFX can capture the screen with `readPixel()` or `readRect()`
  *================================================================================*/
 #define CAPTURE_SCREEN  true
-#define USE_SDFAT       false
+#define USE_SDFAT       true
 
 /*--------------------------------------------------------------------------------
  * SD library
@@ -144,17 +144,14 @@ void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<std::
     return;
   }
 
-#if USE_SDFAT
-  char buf[64];
-#endif
-
   File file = root.openNextFile();
   while (file) {
 #if USE_SDFAT
+    char buf[64];
     file.getName(buf, sizeof(buf));
     if (file.isHidden())
 #else
-    if ((file.path())[0] == '.')
+    if ((file.path())[1] == '.')  // [0] == '/'
 #endif
     {
       ; // skip dot file
@@ -327,10 +324,12 @@ bool sdcard_save(void) {
   char path[64];
   sprintf(path, "%s/mlx%04d.bmp", MLX90640_DIR, no);
   SD_DEBUG(Serial.println(path); Serial.flush());
-  
+
+  uint32_t start = millis();
   if (!SaveBMP24(SD, path)) {
     return false;
   }
+  SD_DEBUG(Serial.println("Elapsed time: " + String(millis() - start) + " msec"); Serial.flush());
 #endif
 
   std::vector<std::string> files;
