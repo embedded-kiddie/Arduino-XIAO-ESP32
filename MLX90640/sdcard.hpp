@@ -177,6 +177,23 @@ static void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::v
   }
 }
 
+static void DeleteDir(FS_TYPE &fs, const char *path) {
+  // `path` must be empty
+  if (fs.rmdir(path)) {
+    DBG_EXEC(printf("Delete %s: done.\n", path));
+  } else {
+    DBG_EXEC(printf("Delete %s: failed.\n", path));
+  }
+}
+
+static void DeleteFile(FS_TYPE &fs, const char *path) {
+  if (fs.remove(path)) {
+    DBG_EXEC(printf("Delete %s: done.\n", path));
+  } else {
+    DBG_EXEC(printf("Delete %s: failed.\n", path));
+  }
+}
+
 /*--------------------------------------------------------------------------------
  * LCD screen capture to save image to SD card
  *--------------------------------------------------------------------------------*/
@@ -321,6 +338,8 @@ bool sdcard_save(void) {
   if (!SaveBMP24(SD, path)) {
     return false;
   }
+
+  // SD: 6264 msec, SdFat: 4202 msec
   DBG_EXEC(printf("Elapsed time: %d msec\n", millis() - start));
 #endif
 

@@ -340,7 +340,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
  *=============================================================*/
 void setup() {
   Serial.begin(115200);
-  while (!Serial);
+  while (!Serial && millis() <= 1000);
 
   // Initialize LCD display with touch and SD card
   gfx_setup();
