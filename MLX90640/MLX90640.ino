@@ -152,6 +152,11 @@ void gfx_setup(void) {
 #define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
 
 /*=============================================================
+ * printf library
+ *=============================================================*/
+#include "printf.hpp"
+
+/*=============================================================
  * Touch library
  * This should be included after GFX_EXEC() definition
  *=============================================================*/

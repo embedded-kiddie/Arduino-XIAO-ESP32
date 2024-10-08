@@ -98,11 +98,11 @@ SdFs SD;
 int getFileNo(FS_TYPE &fs) {
 
   if (!fs.exists(MLX90640_DIR)) {
-    SD_DEBUG(Serial.printf("Creating Dir: %s: ", MLX90640_DIR); Serial.flush());
+    SD_DEBUG(printf("Creating Dir: %s\n", MLX90640_DIR));
     if (fs.mkdir(MLX90640_DIR)) {
-      SD_DEBUG(Serial.println("done."); Serial.flush());
+      SD_DEBUG(printf("done.\n"));
     } else {
-      SD_DEBUG(Serial.println("failed."); Serial.flush());
+      SD_DEBUG(printf("failed.\n"));
       return 0;
     }
   }
@@ -119,9 +119,9 @@ int getFileNo(FS_TYPE &fs) {
 
   file = fs.open(path, FILE_WRITE);
   if (file.print(++number)) {
-    SD_DEBUG(Serial.println("done: " + String(number)); Serial.flush());
+    SD_DEBUG(printf("done: %d\n", number));
   } else {
-    SD_DEBUG(Serial.println("fail: " + String(number)); Serial.flush());
+    SD_DEBUG(printf("fail: %d\n", number));
   }
 
   file.close();
@@ -136,11 +136,11 @@ int getFileNo(FS_TYPE &fs) {
 void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<std::string> &files) {
   File root = fs.open(dirname);
   if (!root) {
-    SD_DEBUG(Serial.println("Failed to open directory"); Serial.flush());
+    SD_DEBUG(printf("Failed to open directory.\n"));
     return;
   }
   if (!root.isDirectory()) {
-    SD_DEBUG(Serial.println("Not a directory"); Serial.flush());
+    SD_DEBUG(printf("Not a directory.\n"));
     return;
   }
 
@@ -177,11 +177,11 @@ void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<std::
 }
 
 void createDir(FS_TYPE &fs, const char *path) {
-  SD_DEBUG(Serial.printf("Creating dir: %s\n", path); Serial.flush());
+  SD_DEBUG(printf("Creating dir: %s\n", path));
   if (fs.mkdir(path)) {
-    SD_DEBUG(Serial.println("Dir created"); Serial.flush());
+    SD_DEBUG(printf("Dir created.\n"));
   } else {
-    SD_DEBUG(Serial.println("mkdir failed"); Serial.flush());
+    SD_DEBUG(printf("mkdir failed.\n"));
   }
 }
 
@@ -230,7 +230,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
   File file = fs.open(path, FILE_WRITE);
 
   if (!file) {
-    SD_DEBUG(Serial.println("SD open failed"); Serial.flush());
+    SD_DEBUG(printf("SD open failed.\n"));
     return false;
   }
 
@@ -267,7 +267,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
 
   for (int y = h - 1; y >= 0; y--) {
     if (y % 10 == 0) {
-      SD_DEBUG(Serial.print("."); Serial.flush());
+      SD_DEBUG(printf("."));
       delay(1); // reset wdt
     }
 
@@ -291,7 +291,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
   }
 
   file.close();
-  SD_DEBUG(Serial.println("saved successfully"); Serial.flush());
+  SD_DEBUG(printf("saved successfully.\n"));
   return true;
 }
 
@@ -311,43 +311,43 @@ bool sdcard_save(void) {
   uint8_t retry = 0;
   while (!SD.begin(SD_CONFIG)) {
     if (++retry >= 2) {
-      SD_DEBUG(Serial.println("Card mount failed"); Serial.flush());
+      SD_DEBUG(printf("Card mount failed.\n"));
       return false;
     }
     delay(1000);
   }
 
-  SD_DEBUG(Serial.println("The card was mounted successfully"); Serial.flush());
+  SD_DEBUG(printf("The card was mounted successfully.\n"));
 
 #if CAPTURE_SCREEN
   int no = getFileNo(SD);
   char path[64];
   sprintf(path, "%s/mlx%04d.bmp", MLX90640_DIR, no);
-  SD_DEBUG(Serial.println(path); Serial.flush());
+  SD_DEBUG(printf("%s\n", path));
 
   uint32_t start = millis();
   if (!SaveBMP24(SD, path)) {
     return false;
   }
-  SD_DEBUG(Serial.println("Elapsed time: " + String(millis() - start) + " msec"); Serial.flush());
+  SD_DEBUG(printf("Elapsed time: %d msec\n", millis() - start));
 #endif
 
   std::vector<std::string> files;
   listDir(SD, "/", 1, files);
 
   for (const auto& file : files) {
-    Serial.println(file.c_str());
-    Serial.flush();
+    printf("%s\n", file.c_str());
   }
 
-//SD.end(); --> Activating this line will cause some GFX libraries to stop working.
+  // Activating the next line will cause some GFX libraries to stop working.
+  // SD.end();
 
 #if USE_SDFAT
-  Serial.printf("Card size: %dMB\n", (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5));
-  Serial.printf("Free space: %dMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
+  printf("Card size: %dMB\n", (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5));
+  printf("Free space: %dMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
 #else
-  Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
-  Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
+  printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
+  printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
 #endif
 
   return true;
