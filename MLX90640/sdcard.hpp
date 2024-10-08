@@ -40,12 +40,6 @@
 #include <Arduino.h>
 #include "spi_assign.h"
 
-#if 1
-#define SD_DEBUG(x) {x;}
-#else
-#define SD_DEBUG(x)
-#endif
-
 /*================================================================================
  * The configuration of the features defined in this file
  * Note: Only LovyanGFX can capture the screen with `readPixel()` or `readRect()`
@@ -98,11 +92,11 @@ SdFs SD;
 int getFileNo(FS_TYPE &fs) {
 
   if (!fs.exists(MLX90640_DIR)) {
-    SD_DEBUG(printf("Creating Dir: %s\n", MLX90640_DIR));
+    DBG_EXEC(printf("Creating Dir: %s\n", MLX90640_DIR));
     if (fs.mkdir(MLX90640_DIR)) {
-      SD_DEBUG(printf("done.\n"));
+      DBG_EXEC(printf("done.\n"));
     } else {
-      SD_DEBUG(printf("failed.\n"));
+      DBG_EXEC(printf("failed.\n"));
       return 0;
     }
   }
@@ -119,9 +113,9 @@ int getFileNo(FS_TYPE &fs) {
 
   file = fs.open(path, FILE_WRITE);
   if (file.print(++number)) {
-    SD_DEBUG(printf("done: %d\n", number));
+    DBG_EXEC(printf("done: %d\n", number));
   } else {
-    SD_DEBUG(printf("fail: %d\n", number));
+    DBG_EXEC(printf("fail: %d\n", number));
   }
 
   file.close();
@@ -136,18 +130,18 @@ int getFileNo(FS_TYPE &fs) {
 void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<std::string> &files) {
   File root = fs.open(dirname);
   if (!root) {
-    SD_DEBUG(printf("Failed to open directory.\n"));
+    DBG_EXEC(printf("Failed to open directory.\n"));
     return;
   }
   if (!root.isDirectory()) {
-    SD_DEBUG(printf("Not a directory.\n"));
+    DBG_EXEC(printf("Not a directory.\n"));
     return;
   }
 
   File file = root.openNextFile();
   while (file) {
 #if USE_SDFAT
-    char buf[64];
+    char buf[BUF_SIZE]; // defined in printf.hpp
     file.getName(buf, sizeof(buf));
     if (file.isHidden())
 #else
@@ -177,11 +171,11 @@ void listDir(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<std::
 }
 
 void createDir(FS_TYPE &fs, const char *path) {
-  SD_DEBUG(printf("Creating dir: %s\n", path));
+  DBG_EXEC(printf("Creating dir: %s\n", path));
   if (fs.mkdir(path)) {
-    SD_DEBUG(printf("Dir created.\n"));
+    DBG_EXEC(printf("Dir created.\n"));
   } else {
-    SD_DEBUG(printf("mkdir failed.\n"));
+    DBG_EXEC(printf("mkdir failed.\n"));
   }
 }
 
@@ -230,7 +224,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
   File file = fs.open(path, FILE_WRITE);
 
   if (!file) {
-    SD_DEBUG(printf("SD open failed.\n"));
+    DBG_EXEC(printf("SD open failed.\n"));
     return false;
   }
 
@@ -267,7 +261,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
 
   for (int y = h - 1; y >= 0; y--) {
     if (y % 10 == 0) {
-      SD_DEBUG(printf("."));
+      DBG_EXEC(printf("."));
       delay(1); // reset wdt
     }
 
@@ -291,7 +285,7 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
   }
 
   file.close();
-  SD_DEBUG(printf("saved successfully.\n"));
+  DBG_EXEC(printf("saved successfully.\n"));
   return true;
 }
 
@@ -311,25 +305,25 @@ bool sdcard_save(void) {
   uint8_t retry = 0;
   while (!SD.begin(SD_CONFIG)) {
     if (++retry >= 2) {
-      SD_DEBUG(printf("Card mount failed.\n"));
+      DBG_EXEC(printf("Card mount failed.\n"));
       return false;
     }
     delay(1000);
   }
 
-  SD_DEBUG(printf("The card was mounted successfully.\n"));
+  DBG_EXEC(printf("The card was mounted successfully.\n"));
 
 #if CAPTURE_SCREEN
   int no = getFileNo(SD);
   char path[64];
   sprintf(path, "%s/mlx%04d.bmp", MLX90640_DIR, no);
-  SD_DEBUG(printf("%s\n", path));
+  DBG_EXEC(printf("%s\n", path));
 
   uint32_t start = millis();
   if (!SaveBMP24(SD, path)) {
     return false;
   }
-  SD_DEBUG(printf("Elapsed time: %d msec\n", millis() - start));
+  DBG_EXEC(printf("Elapsed time: %d msec\n", millis() - start));
 #endif
 
   std::vector<std::string> files;

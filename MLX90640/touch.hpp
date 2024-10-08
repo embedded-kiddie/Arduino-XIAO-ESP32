@@ -22,14 +22,8 @@ bool touch_setup() {
 bool touch_check() {
   if (ts.touched()) {
     TS_Point p = ts.getPoint();
-    Serial.print("Pressure = ");
-    Serial.print(p.z);
-    Serial.print(", x = ");
-    Serial.print(p.x);
-    Serial.print(", y = ");
-    Serial.print(p.y);
+    DBG_EXEC(printf("Pressure = %d, x = %d, y = %d\n", p.z, p.x, p.y));
     delay(30);
-    Serial.println();
     return true;
   } else {
     return false;
@@ -51,7 +45,7 @@ bool touch_setup() {
 bool touch_check() {
   uint16_t x, y;
   if (GFX_EXEC(getTouch(&x, &y))) {
-    Serial.println("x = " + String(x) + ", y = " + String(y));
+    DBG_EXEC(printf("x = %d, y = %d\n", x, y));
     return true;
   } else {
     return false;

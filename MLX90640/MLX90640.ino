@@ -1,6 +1,12 @@
 #include <SPI.h>
 #include "spi_assign.h"
 
+#if 1
+#define DBG_EXEC(x) {x;}
+#else
+#define DBG_EXEC(x)
+#endif
+
 /*=============================================================
  * Step 1: Select GFX Library
  *=============================================================*/
@@ -48,7 +54,7 @@ void gfx_setup(void) {
   if (!GFX_EXEC(begin())
 #endif
   {
-    Serial.println("gfx->begin() failed!");
+    DBG_EXEC(printf("gfx->begin() failed!\n"));
   }
 
   SPI.setDataMode(SPI_MODE);
@@ -247,7 +253,7 @@ void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
 void ProcessInput(uint8_t bank) {
   if (mlx.getFrame(src[bank]) != 0) {
     gfx_printf(TFT_WIDTH / 2 - FONT_WIDTH * 2, TFT_HEIGHT / 2 - FONT_HEIGHT * 4, "Failed");
-    Serial.println("Failed");
+    DBG_EXEC(printf("Failed\n"));
     delay(1000); // false = no new frame capture
   }
 }
@@ -334,6 +340,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
  *=============================================================*/
 void setup() {
   Serial.begin(115200);
+  while (!Serial);
 
   // Initialize LCD display with touch and SD card
   gfx_setup();
@@ -368,15 +375,11 @@ void setup() {
   GFX_EXEC(setTextSize(2));
 
   if (! mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire)) {
-    Serial.println("MLX90640 not found!");
+    DBG_EXEC(printf("MLX90640 not found!\n"));
   } else {
-    Serial.println("MLX90640 found");
+    DBG_EXEC(printf("MLX90640 found.\n"));
+    DBG_EXEC(printf("Serial number: %X%X%X\n", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]));
   }
-
-  Serial.print("Serial number: ");
-  Serial.print(mlx.serialNumber[0], HEX);
-  Serial.print(mlx.serialNumber[1], HEX);
-  Serial.println(mlx.serialNumber[2], HEX);
 
   // MLX90640
   mlx.setMode(MLX90640_CHESS);
