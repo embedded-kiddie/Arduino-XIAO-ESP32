@@ -109,14 +109,19 @@ static int GetFileNo(FS_TYPE &fs) {
     }
   }
 
-  char num[8] = {"0"};
+  int number = 0;
   String path = MLX90640_DIR + MLX90640_NUM;
+
   File file = fs.open(path, FILE_READ);
   if (file.available()) {
-    file.read((uint8_t*)num, sizeof(num));
+    char num[8];
+    int len = file.read((uint8_t*)num, sizeof(num) - 1);
+    if (len >= 0) {
+      num[len] = 0;
+      number = atoi(num);
+    }
   }
 
-  int number = atoi(num);
   file.close();
 
   file = fs.open(path, FILE_WRITE);
