@@ -324,12 +324,9 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 #endif
 
   /*=============================================================
-  * SD Card library
-  * ToDo: Save image to the SD card.
-  *=============================================================*/
-  if (touch_check()) {
-    sdcard_save();
-  }
+   * Touch event manager
+   *=============================================================*/
+  touch_event();
 
   // Prevent the watchdog from firing
   delay(1);
