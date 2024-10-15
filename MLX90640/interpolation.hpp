@@ -169,6 +169,7 @@ void interpolate_image(float *src, const int src_rows, const int src_cols, float
           float t = y_ratio_hi * (x_ratio_hi * X0Y0 + x_ratio_lo * X1Y0) +
                     y_ratio_lo * (x_ratio_hi * X0Y1 + x_ratio_lo * X1Y1);
 
+          // Is it okay to leave it to the compiler to optimize?
           dst[(X + i) + (Y + j) * dst_cols] = t;
         }
       }

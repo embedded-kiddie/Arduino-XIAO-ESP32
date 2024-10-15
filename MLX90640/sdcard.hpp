@@ -320,8 +320,6 @@ void sdcard_setup(void) {
 }
 
 bool sdcard_save(void) {
-  sdcard_setup();
-
   uint8_t retry = 0;
   while (!SD.begin(SD_CONFIG)) {
     if (++retry >= 2) {
