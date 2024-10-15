@@ -78,7 +78,6 @@ LGFX lcd;
 void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(setRotation(3));
-  GFX_EXEC(setEpdMode(epd_mode_t::epd_fastest));
 }
 
 #else
