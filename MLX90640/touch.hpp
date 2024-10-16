@@ -1,6 +1,6 @@
-/*
+/*=============================================================
  * Touch event manager
- */
+ *=============================================================*/
 
 typedef enum {
   none      = 0x0000,
@@ -16,13 +16,13 @@ typedef enum {
 
 typedef struct {
   TouchEvent_t  event;
-  int16_t       x, y;
+  uint16_t      x, y;
 } EventPoint_t;
 
 typedef struct {
   TouchEvent_t  event;
-  int16_t       x[2];
-  int16_t       y[2];
+  uint16_t      x[2];
+  uint16_t      y[2];
   void          (*callback)(EventPoint_t &ep);
 } EventRegion_t;
 
@@ -84,11 +84,11 @@ void onApply  (EventPoint_t &ep) {
 #include "spi_assign.h"
 
 // Use no interrupts when using the SD library
-XPT2046_Touchscreen ts(TOUCH_CS);  // Param 2 - NULL - No interrupts
+//XPT2046_Touchscreen ts(TOUCH_CS);  // Param 2 - NULL - No interrupts
 //XPT2046_Touchscreen ts(TOUCH_CS, 255);  // Param 2 - 255 - No interrupts
-//XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);  // Param 2 - Touch IRQ Pin - interrupt enabled polling
+XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);  // Param 2 - Touch IRQ Pin - interrupt enabled polling
 
-bool touch_setup() {
+bool touch_setup(void) {
   if (ts.begin()) {
     ts.setRotation(3);
     return true;
@@ -99,7 +99,7 @@ bool touch_setup() {
 
 #else // LovyanGFX || TFT_eSPI
 
-bool touch_setup() {
+bool touch_setup(void) {
 #ifdef LGFX_USE_V1
   // LovyanGFX
   uint16_t cal[8] = {319, 384, 3866, 355, 277, 3729, 3832, 3785};
@@ -111,12 +111,13 @@ bool touch_setup() {
 
 #endif  // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
 
-bool touch_event() {
-  int16_t x = -1, y = -1;
+bool touch_event(void) {
+  uint16_t x, y;
 
 #if defined(_ADAFRUIT_GFX_H) || defined(_ARDUINO_GFX_LIBRARIES_H_)
 
-  if (ts.touched()) {
+  bool stat = ts.touched();
+  if (stat) {
     TS_Point p = ts.getPoint();
     x = constrain(p.x, 0, 319);
     y = constrain(p.y, 0, 239);
@@ -125,7 +126,8 @@ bool touch_event() {
 
 #else // LovyanGFX || TFT_eSPI
 
-  if (GFX_EXEC(getTouch(&x, &y))) {
+  bool stat = GFX_EXEC(getTouch(&x, &y));
+  if (stat) {
     x = constrain(x, 0, 319);
     y = constrain(y, 0, 239);
     DBG_EXEC(printf("x = %d, y = %d\n", x, y));
@@ -133,7 +135,7 @@ bool touch_event() {
 
 #endif  // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
 
-  if (x != -1 && y != -1) {
+  if (stat) {
     for (int i = 0; i < N_EVENT_REGION; i++) {
       if (region[i].x[0] <= x && x <= region[i].x[1] &&
           region[i].y[0] <= y && y <= region[i].y[1]) {

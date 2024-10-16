@@ -47,6 +47,9 @@
 #define CAPTURE_SCREEN  true
 #define USE_SDFAT       true
 
+// Uncomment and set up if you want to use custom pins for the SPI communication
+// #define REASSIGN_PINS
+
 /*--------------------------------------------------------------------------------
  * SD library
  *--------------------------------------------------------------------------------*/
@@ -80,12 +83,10 @@ SdFs SD;
 
 #endif // USE_SDFAT
 
-// Uncomment and set up if you want to use custom pins for the SPI communication
-// #define REASSIGN_PINS
-
 /*
  * File name and size for GetFileList()
  */
+#include <string>
 typedef struct {
   std::string name;
   std::size_t size;
@@ -215,7 +216,7 @@ inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
 /* create snapshot of 3.5" TFT and save to file in bitmap format
  * https://forum.arduino.cc/t/create-snapshot-of-3-5-tft-and-save-to-file-in-bitmap-format/391367/7
 */
-uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
+static uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
 
     digitalWrite(TFT_CS, LOW);
 
