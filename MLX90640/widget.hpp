@@ -116,6 +116,39 @@ const unsigned char icon_config[671] PROGMEM = {
 0xf5, 0xcd, 0xed, 0x03, 0xa3, 0x84, 0x7f, 0xcc, 0x40, 0x7e, 0x01, 0x70, 0xcb, 0x43, 0xf0, 0xf5, 
 0x93, 0x2c, 0x3c, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82, };
 
+/*-------------------------------------------------------------
+ * Widgets definition
+ *-------------------------------------------------------------*/
+typedef enum {
+  INSIDE = 0,
+  INFO,
+  COLORS,
+  RANGE,
+  CAMERA,
+  CONFIG,
+} WidgetID_t;
+
+void onInside (EventPoint_t &ep);
+void onInfo   (EventPoint_t &ep);
+void onColors (EventPoint_t &ep);
+void onRange  (EventPoint_t &ep);
+void onCamera (EventPoint_t &ep);
+void onConfig (EventPoint_t &ep);
+
+static const Widget_t widgets[] {
+  {   0,   0, 256, 192, NULL, 0, EVENT_ALL, onInside },
+  { 256,   0,  64, 120, NULL, 0, EVENT_ALL, onInfo   },
+  {   0, 195, 256,  15, NULL, 0, EVENT_ALL, onColors },
+  {   0, 210, 255,  30, NULL, 0, EVENT_ALL, onRange  },
+  { 265, 120, ICON_WIDTH, ICON_HEIGHT, icon_camera, sizeof(icon_camera), EVENT_CLICK, onCamera },
+  { 265, 170, ICON_WIDTH, ICON_HEIGHT, icon_config, sizeof(icon_config), EVENT_CLICK, onConfig },
+};
+
+#define N_WIDGETS  (sizeof(widgets) / sizeof(widgets[0]))
+
+/*-------------------------------------------------------------
+ * Event callback functions
+ *-------------------------------------------------------------*/
 void onInside(EventPoint_t &ep) {
   DBG_EXEC(printf("onInside\n"));
 }
@@ -132,25 +165,14 @@ void onRange(EventPoint_t &ep) {
   DBG_EXEC(printf("onRange\n"));
 }
 
-void onCamera     (EventPoint_t &ep) {
+void onCamera(EventPoint_t &ep) {
   DBG_EXEC(printf("onCamera\n"));
   sdcard_save();
 }
 
-void onConfig     (EventPoint_t &ep) {
+void onConfig(EventPoint_t &ep) {
   DBG_EXEC(printf("onConfig\n"));
 }
-
-static const Widget_t widgets[] {
-  {   0,   0, 256, 192, NULL, 0, EVENT_ALL, onInside },
-  { 256,   0,  64, 120, NULL, 0, EVENT_ALL, onInfo   },
-  {   0, 195, 256,  15, NULL, 0, EVENT_ALL, onColors },
-  {   0, 210, 255,  30, NULL, 0, EVENT_ALL, onRange  },
-  { 265, 120, ICON_WIDTH, ICON_HEIGHT, icon_camera, sizeof(icon_camera), EVENT_CLICK, onCamera },
-  { 265, 170, ICON_WIDTH, ICON_HEIGHT, icon_config, sizeof(icon_config), EVENT_CLICK, onConfig },
-};
-
-#define N_WIDGETS  (sizeof(widgets) / sizeof(widgets[0]))
 
 #ifdef _TFT_eSPIH_
 /*-------------------------------------------------------------
