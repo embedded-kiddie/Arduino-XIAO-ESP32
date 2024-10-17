@@ -27,6 +27,7 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 void gfx_setup(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
   GFX_EXEC(setRotation(1));
+  GFX_EXEC(fillScreen(BLACK));
   GFX_EXEC(invertDisplay(false));
 
 #if defined (ARDUINO_XIAO_ESP32S3)
@@ -59,6 +60,7 @@ void gfx_setup(void) {
 
   SPI.setDataMode(SPI_MODE);
   GFX_EXEC(setRotation(3));
+  GFX_EXEC(fillScreen(BLACK));
   GFX_EXEC(invertDisplay(true));
 }
 
@@ -77,6 +79,7 @@ LGFX lcd;
 void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(setRotation(3));
+  GFX_EXEC(fillScreen(BLACK));
 }
 
 #else
@@ -93,6 +96,7 @@ TFT_eSPI tft = TFT_eSPI();
 void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(setRotation(3));
+  GFX_EXEC(fillScreen(BLACK));
 }
 #endif
 
@@ -158,20 +162,22 @@ void gfx_setup(void) {
 #include "printf.hpp"
 
 /*=============================================================
- * Touch library
- * This should be included after GFX_EXEC() definition
- *=============================================================*/
-#include "touch.hpp"
-
-/*=============================================================
  * SD Card library
- * This should be included after GFX_EXEC() definition
  *=============================================================*/
 #include "sdcard.hpp"
 
 /*=============================================================
+ * Touch library
+ *=============================================================*/
+#include "touch.hpp"
+
+/*=============================================================
+ * Wedget manager
+ *=============================================================*/
+ #include "widget.hpp"
+
+/*=============================================================
  * Interpolation
- * This should be included after GFX_EXEC() definition
  *=============================================================*/
 #include "interpolation.hpp"
 
@@ -224,8 +230,6 @@ const uint16_t camColors[] = {0x480F,
 #define FONT_WIDTH    12 // [px] (Device coordinate system)
 #define FONT_HEIGHT   16 // [px] (Device coordinate system)
 #define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
-
-#define ClearScreen() GFX_EXEC(fillScreen(BLACK))
 
 void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   int len = 0;
@@ -321,7 +325,10 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   /*=============================================================
    * Touch event manager
    *=============================================================*/
-  touch_event();
+  EventPoint_t ep;
+  if (touch_event(ep)) {
+    widget_event(ep);
+  }
 
   // Prevent the watchdog from firing
   delay(1);
@@ -341,9 +348,11 @@ void setup() {
 
   // Initialize interpolation
   interpolate_setup(INTERPOLATE_SCALE);
+
+  // Setup widget
+  widget_setup();
  
   // Draw color bar
-  ClearScreen();
   const int n = sizeof(camColors) / sizeof(camColors[0]);
   const int w = BOX_SIZE * INTERPOLATED_COLS;
   int       y = BOX_SIZE * INTERPOLATED_ROWS + 3;
