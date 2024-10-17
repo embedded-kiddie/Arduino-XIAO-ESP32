@@ -29,6 +29,24 @@
   - I2C Frequency: 1MHz (Fast mode+)
   - [Aliexpress][8]
 
+## Dependencies
+
+- Graphic libraries
+  - [adafruit/Adafruit-GFX-Library][18]
+  - [moononournation/Arduino_GFX][19]
+  - [lovyan03/LovyanGFX][20]
+  - [Bodmer/TFT_eSPI][21]
+
+- Touch screen library
+  - [PaulStoffregen/XPT2046_Touchscreen][13]
+
+- SD card libraries
+  - [espressif/arduino-esp32/libraries/SD][14]
+  - [greiman/SdFat][17]
+
+- [adafruit/Adafruit_MLX90640][11]  
+  MLX90640 library functions by Adafruit.
+
 ## Related resources
 
 - [**Far infrared thermal sensor array (32x24 RES)**][9]  
@@ -37,17 +55,8 @@
 - [**GY-MCU90640 user manual**][10]  
   Official or private user manual of MLX90640 camera module.
 
-- [**adafruit/Adafruit_MLX90640**][11]  
-  MLX90640 library functions by Adafruit.
-
 - [**sparkfun/SparkFun_MLX90640_Arduino_Example**][12]  
   MLX90640 examples by SparkFun.
-
-- [**XPT2046_Touchscreen**][13]  
-  Touchscreens library using the XPT2046 controller chip.
-
-- [**espressif/arduino-esp32/libraries/SD**][14]  
-  ESP32 and SD (Secure Digital) and MMC (Multi Media Card) cards library without additional modules.
 
 - [**ESP32-S3 Series Datasheet**][15]
 
@@ -76,9 +85,19 @@
 
 [12]: https://github.com/sparkfun/SparkFun_MLX90640_Arduino_Example "sparkfun/SparkFun_MLX90640_Arduino_Example: Controlling and reading from the MLX90640 IR array thermal imaging sensor"
 
-[13]: https://www.arduino.cc/reference/en/libraries/xpt2046_touchscreen/ "XPT2046_Touchscreen - Arduino Reference"
+[13]: https://github.com/PaulStoffregen/XPT2046_Touchscreen "PaulStoffregen/XPT2046_Touchscreen: Touchscreen Arduino Library for XPT2046 Touch Controller Chip"
 
 [14]: https://github.com/espressif/arduino-esp32/tree/master/libraries/SD "arduino-esp32/libraries/SD at master · espressif/arduino-esp32"
 
 [15]: https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf
 [16]: https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
+
+[17]: https://github.com/greiman/SdFat "greiman/SdFat: Arduino FAT16/FAT32 exFAT Library"
+
+[18]: https://github.com/adafruit/Adafruit-GFX-Library "adafruit/Adafruit-GFX-Library: Adafruit GFX graphics core Arduino library, this is the &#39;core&#39; class that all our other graphics libraries derive from"
+
+[19]: https://github.com/moononournation/Arduino_GFX "moononournation/Arduino_GFX: Arduino GFX developing for various color displays and various data bus interfaces"
+
+[20]: https://github.com/lovyan03/LovyanGFX "lovyan03/LovyanGFX: SPI LCD graphics library for ESP32 (ESP-IDF/ArduinoESP32) / ESP8266 (ArduinoESP8266) / SAMD51(Seeed ArduinoSAMD51)"
+
+[21]: https://github.com/Bodmer/TFT_eSPI "Bodmer/TFT_eSPI: Arduino and PlatformIO IDE compatible TFT library optimised for the Raspberry Pi Pico (RP2040), STM32, ESP8266 and ESP32 that supports different driver chips"
