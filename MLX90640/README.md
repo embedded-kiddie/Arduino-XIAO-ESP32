@@ -36,8 +36,9 @@
   - [moononournation/Arduino_GFX][19]
   - [lovyan03/LovyanGFX][20]
   - [Bodmer/TFT_eSPI][21]
+  - [bitbank2/PNGdec][22] (only for `TFT_eSPI`)
 
-- Touch screen library
+- Touch screen library (only for `Adafruit-GFX-Library` and `Arduino_GFX`)
   - [PaulStoffregen/XPT2046_Touchscreen][13]
 
 - SD card libraries
@@ -101,3 +102,5 @@
 [20]: https://github.com/lovyan03/LovyanGFX "lovyan03/LovyanGFX: SPI LCD graphics library for ESP32 (ESP-IDF/ArduinoESP32) / ESP8266 (ArduinoESP8266) / SAMD51(Seeed ArduinoSAMD51)"
 
 [21]: https://github.com/Bodmer/TFT_eSPI "Bodmer/TFT_eSPI: Arduino and PlatformIO IDE compatible TFT library optimised for the Raspberry Pi Pico (RP2040), STM32, ESP8266 and ESP32 that supports different driver chips"
+
+[22]: https://github.com/bitbank2/PNGdec "bitbank2/PNGdec: An optimized PNG decoder suitable for microcontrollers and PCs"
