@@ -664,18 +664,15 @@ void onConfig(EventPoint_t &ep) {
 }
 
 #ifdef _TFT_eSPIH_
-/*-------------------------------------------------------------
- * Draw PNG
- *-------------------------------------------------------------*/
+//=========================================v==========================================
+//  pngDraw: Callback function to draw pixels to the display
+//====================================================================================
 // https://github.com/Bodmer/TFT_eSPI/tree/master/examples/PNG%20Images
 // Include the PNG decoder library, available via the IDE library manager
 #include <PNGdec.h>
 
-PNG png; // PNG decoder instance
+static PNG png; // PNG decoder instance
 
-//=========================================v==========================================
-//  pngDraw: Callback function to draw pixels to the display
-//====================================================================================
 // Position variables must be global (PNGdec does not handle position coordinates)
 static uint16_t xpos = 0;
 static uint16_t ypos = 0;
@@ -694,6 +691,9 @@ static void pngDraw(PNGDRAW *pDraw) {
   }
 }
 
+/*-------------------------------------------------------------
+ * Draw PNG
+ *-------------------------------------------------------------*/
 static void DrawPNG(uint8_t *img, size_t size, uint16_t x, uint16_t y) {
   xpos = x;
   ypos = y;
