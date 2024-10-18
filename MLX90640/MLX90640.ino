@@ -9,7 +9,8 @@
 #include "spi_assign.h"
 #include "colors.h"
 
-#if 1
+#define DEBUG       true
+#if     DEBUG
 #define DBG_EXEC(x) {x;}
 #else
 #define DBG_EXEC(x)
@@ -356,8 +357,10 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
  * setup() and loop()
  *--------------------------------------------------------------------------------*/
 void setup() {
+#if     DEBUG
   Serial.begin(115200);
   while (!Serial && millis() <= 1000);
+#endif
 
   // Initialize LCD display with touch and SD card
   gfx_setup();

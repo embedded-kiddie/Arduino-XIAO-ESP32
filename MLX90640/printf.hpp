@@ -6,6 +6,8 @@
 
 #define BUF_SIZE  64
 
+#if     DEBUG
+
 int printf(const char* fmt, ...) {
 	char buf[BUF_SIZE];
 
@@ -18,3 +20,5 @@ int printf(const char* fmt, ...) {
   Serial.flush();
 	return len;
 }
+
+#endif

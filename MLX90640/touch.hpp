@@ -136,5 +136,13 @@ bool touch_event(EventPoint_t &ep) {
     return true;
   }
 
+#if     DEBUG
+  // Capture screen
+  else if (Serial.available()) {
+    Serial.readStringUntil('\n');
+    sdcard_save();
+  }
+#endif
+
   return false;
 }
