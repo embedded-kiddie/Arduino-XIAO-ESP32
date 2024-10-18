@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<!-- Coding By CodingNepal - codingnepalweb.com -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Range Slider in HTML CSS & JavaScript</title>
+  </head>
+  <body>
+    <canvas id="MyCanvas"></canvas>
+    <script>
+	window.onload = function() {
+		var canvas = document.getElementById('MyCanvas');
+		var ctx = canvas.getContext('2d');
+		drawColorWheel(canvas, ctx);
+	};
+
+	// RGB色空間からHSL色空間へ変換する 
+	//  r(red)  : 赤色 0-255の値
+	//  g(green): 緑色 0-255の値
+	//  b(blue) : 青色 0-255の値 
+	function rgb2hsl(r, g, b) {
+		var max = Math.max(r, g, b);
+		var min = Math.min(r, g, b);
+		var hsl = {
+			'h': 0,
+			's': 0,
+			'l': (max + min) / 2
+		}; // L(明度)   
+
+		if (max != min) {
+			// H(色相)  
+			if (max == r) hsl.h = 60 * (g - b) / (max - min);
+			if (max == g) hsl.h = 60 * (b - r) / (max - min) + 120;
+			if (max == b) hsl.h = 60 * (r - g) / (max - min) + 240;
+
+			// S(彩度)
+			if (hsl.l <= 127) {
+				hsl.s = (max - min) / (max + min);
+			} else {
+				hsl.s = (max - min) / (510 - max - min);
+			}
+		}
+
+		if (hsl.h < 0) {
+			hsl.h = hsl.h + 360;
+		}
+
+		hsl.h = Math.round(hsl.h);
+		hsl.s = Math.round(hsl.s * 100);
+		hsl.l = Math.round((hsl.l / 255) * 100);
+		return hsl;
+	}
+  // HSL色空間からRGB色空間へ変換する 
+  //  h(hue)       : 色相/色合い       0-360度の値
+  //  s(saturation): 彩度/鮮やかさ     0-100%の値
+  //  l(lightness) : 明度/明るさ       0-100%の値 
+  function hsl2rgb(h, s, l){
+  var max,min;
+  var rgb = {'r':0,'g':0,'b':0};
+  
+  if (h == 360){
+    h = 0;
+  }
+  
+  if(l <= 49){
+    max = 2.55 * (l + l * (s / 100));
+    min = 2.55 * (l - l * (s / 100));
+  }else{
+    max = 2.55 * (l + (100 - l) * (s / 100));
+    min = 2.55 * (l - (100 - l) * (s / 100)); 
+  }  
+  
+  if (h < 60){
+    rgb.r = max;
+    rgb.g = min + (max - min) * (h / 60) ;
+    rgb.b = min;
+  }else if (h >= 60 &&  h < 120){
+    rgb.r = min + (max - min) * ((120 - h) / 60);
+    rgb.g = max ;
+    rgb.b = min;    
+  }else if (h >= 120 &&  h < 180){
+    rgb.r = min;
+    rgb.g = max ;
+    rgb.b = min + (max - min) * ((h - 120) / 60);        
+  }else if (h >= 180 &&  h < 240){
+    rgb.r = min;
+    rgb.g = min + (max - min) * ((240 - h) / 60);
+    rgb.b = max;     
+  }else if (h >= 240 &&  h < 300){
+    rgb.r = min + (max - min) * ((h - 240) / 60);
+    rgb.g = min;
+    rgb.b = max;     
+  }else if (h >= 300 &&  h < 360){
+    rgb.r = max;
+    rgb.g = min;
+    rgb.b = min + (max - min) * ((360 - h) / 60); 
+  } 
+  
+  rgb.r =  Math.round(rgb.r);
+  rgb.g =  Math.round(rgb.g);
+  rgb.b =  Math.round(rgb.b);
+  return rgb; 
+  }  
+
+	// 色相環の描画 
+	function drawColorWheel(canvas, ctx) {
+		var radius = 100; // 半径 
+
+		canvas.width = radius * 2;
+		canvas.height = radius * 2;
+
+		// 色相環の作成
+		for (var i = 0; i < 360; i++) {
+			var rgb = hsl2rgb(i, 100, 50);
+
+			ctx.beginPath();
+			ctx.moveTo(radius, radius)
+				// -90はラジアン角がx軸の正方向からはじまる為(時計回り)
+			ctx.arc(radius, radius, radius, (-90 + i) * Math.PI / 180, (-90 + i + 2) *
+				Math.PI / 180, false);
+
+			ctx.closePath();
+			ctx.fillStyle = RGB2bgColor(rgb.r, rgb.g, rgb.b);
+			ctx.fill();
+		}
+	}
+
+	// RGBから#ffffff形式へ変換する
+	function RGB2bgColor(r, g, b) {
+
+		r = r.toString(16);
+		if (r.length == 1) r = "0" + r;
+
+		g = g.toString(16);
+		if (g.length == 1) g = "0" + g;
+
+		b = b.toString(16);
+		if (b.length == 1) b = "0" + b;
+
+		return '#' + r + g + b;
+	}
+
+	</script>
+  </body>
+</html>
