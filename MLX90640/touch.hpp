@@ -42,7 +42,7 @@ typedef struct {
 /*-------------------------------------------------------------
  * Setup touch manager
  *-------------------------------------------------------------*/
-#if defined(_ADAFRUIT_GFX_H) || defined(_ARDUINO_GFX_LIBRARIES_H_)
+#ifdef  _XPT2046_Touchscreen_h_
 
 bool touch_setup(void) {
   if (ts.begin()) {
@@ -56,15 +56,17 @@ bool touch_setup(void) {
 #else // LovyanGFX || TFT_eSPI
 
 bool touch_setup(void) {
+
 #ifdef LOVYANGFX_HPP_
   // https://github.com/lovyan03/LovyanGFX/discussions/539
   uint16_t cal[8] = {319, 384, 3866, 355, 277, 3729, 3832, 3785};
   GFX_EXEC(setTouchCalibrate(cal));
 #endif
+
   return true;
 }
 
-#endif  // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
+#endif // _XPT2046_Touchscreen_h_
 
 /*-------------------------------------------------------------
  * Event manager
@@ -84,7 +86,7 @@ bool touch_event(EventPoint_t &ep) {
   static bool prev_stat = false;
   EventType_t event = EVENT_NONE;
 
-#if defined(_ADAFRUIT_GFX_H) || defined(_ARDUINO_GFX_LIBRARIES_H_)
+#ifdef  _XPT2046_Touchscreen_h_
 
   bool stat = ts.touched();
   if (stat) {
@@ -97,7 +99,7 @@ bool touch_event(EventPoint_t &ep) {
 
   bool stat = GFX_EXEC(getTouch(&x, &y));
 
-#endif
+#endif // _XPT2046_Touchscreen_h_
 
   // untouch --> touch
   if (prev_stat == false && stat == true) {
