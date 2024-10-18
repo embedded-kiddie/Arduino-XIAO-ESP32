@@ -1,3 +1,6 @@
+/*================================================================================
+ * Pixel interpolation
+ *================================================================================*/
 #include <Arduino.h>
 
 inline float get_point(float *p, const int rows, const int cols, int x, int y) __attribute__((always_inline));
@@ -11,10 +14,10 @@ inline float get_point(float *p, const int rows, const int cols, int x, int y) {
 
 #if 0
 
-/*----------------------------------------------------------------------------------------------------
+/*--------------------------------------------------------------------------------------------
  * Bicubic interpolation
  * https://github.com/adafruit/Adafruit_AMG88xx/tree/master/examples/thermal_cam_interpolate
- *----------------------------------------------------------------------------------------------------*/
+ *--------------------------------------------------------------------------------------------*/
 
 inline void set_point(float *p, const int rows, const int cols, int x, int y, float f) __attribute__((always_inline));
 inline void set_point(float *p, const int rows, const int cols, int x, int y, float f) {
@@ -126,10 +129,10 @@ void interpolate_image(float *src, const int src_rows, const int src_cols,
 
 #else
 
-/*----------------------------------------------------------------------------------------------------
+/*--------------------------------------------------------------------------------------------
  * Bilinear interpolation
  * https://algorithm.joho.info/image-processing/bi-linear-interpolation/
- *----------------------------------------------------------------------------------------------------*/
+ *--------------------------------------------------------------------------------------------*/
 static float table_ratio[INTERPOLATE_SCALE][2];
 
 void interpolate_setup(const int scale) {
