@@ -122,7 +122,7 @@ void gfx_setup(void) {
 /*=============================================================
  * Step 5: Configure the output image resolution
  *=============================================================*/
-// INTERPOLATE_SCALE x BOX_SIZE = 8
+// INTERPOLATE_SCALE x BOX_SIZE <= 8
 #if ENA_INTERPOLATION
 #define INTERPOLATE_SCALE 8
 #define BOX_SIZE          1
@@ -134,24 +134,37 @@ void gfx_setup(void) {
 /*=============================================================
  * MLX90640 settings (optimized for LovyanGFX and TFT_eSPI)
  *=============================================================*/
-// 0_5_HZ, 1_HZ, 2_HZ, 4_HZ, 8_HZ, 16_HZ, 32_HZ or 64_HZ
-#if   (INTERPOLATE_SCALE == 1) && (BOX_SIZE == 8)
+#include <Adafruit_MLX90640.h>
+#if   (INTERPOLATE_SCALE <= 4 && INTERPOLATE_SCALE * BOX_SIZE <= 8)
 #define REFRESH_RATE  (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ : MLX90640_16_HZ)
-#elif (INTERPOLATE_SCALE == 2) && (BOX_SIZE == 4)
-#define REFRESH_RATE  (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ : MLX90640_16_HZ)
-#elif (INTERPOLATE_SCALE == 4) && (BOX_SIZE == 2)
+#elif (INTERPOLATE_SCALE <= 6 && BOX_SIZE == 1)
 #define REFRESH_RATE  (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_16_HZ : MLX90640_8_HZ )
-#elif (INTERPOLATE_SCALE == 8) && (BOX_SIZE == 1)
+#elif (INTERPOLATE_SCALE <= 8 && BOX_SIZE == 1)
 #define REFRESH_RATE  (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_8_HZ  : MLX90640_2_HZ )
 #else
 #error 'REFRESH_RATE'
 #endif
 
-// The size of thermal image
+typedef struct {
+  uint8_t interpolate_scale;
+  uint8_t box_size;
+  uint8_t refresh_rate;
+  uint8_t color_pallet;
+} DisplayParams_t;
+
+// INTERPOLATE_SCALE 4-5: 32Hz, 6-7: 16Hz, 8: 8Hz
+DisplayParams_t dsp = {
+  INTERPOLATE_SCALE,
+  BOX_SIZE,
+  REFRESH_RATE,
+  0
+};
+
+// The size of thermal image (max INTERPOLATE_SCALE = 8)
 #define MLX90640_COLS 32
 #define MLX90640_ROWS 24
-#define INTERPOLATED_COLS (MLX90640_COLS * INTERPOLATE_SCALE)
-#define INTERPOLATED_ROWS (MLX90640_ROWS * INTERPOLATE_SCALE)
+#define INTERPOLATED_COLS (MLX90640_COLS * 8)
+#define INTERPOLATED_ROWS (MLX90640_ROWS * 8)
 
 #define MINTEMP 20  // Low range of the sensor (this will be blue on the screen)
 #define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
@@ -184,7 +197,6 @@ void gfx_setup(void) {
 /*=============================================================
  * Global variables
  *=============================================================*/
-#include <Adafruit_MLX90640.h>
 Adafruit_MLX90640 mlx;
 
 #if ENA_MULTITASKING
@@ -264,9 +276,12 @@ void ProcessInput(uint8_t bank) {
 void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   static uint32_t prevFinish;
   uint32_t outputStart = millis();
+  int dst_rows = dsp.interpolate_scale * MLX90640_ROWS;
+  int dst_cols = dsp.interpolate_scale * MLX90640_COLS;
+  int box_size = dsp.box_size;
 
 #if ENA_INTERPOLATION
-  interpolate_image(src[bank], MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATED_ROWS, INTERPOLATED_COLS);
+  interpolate_image(src[bank], MLX90640_ROWS, MLX90640_COLS, dst, dst_rows, dst_cols);
   float *drw = dst;
 #else
   float *drw = src[bank];
@@ -276,9 +291,9 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   GFX_EXEC(startWrite());
 #endif
 
-  for (int h = 0; h < INTERPOLATED_ROWS; h++) {
-    for (int w = 0; w < INTERPOLATED_COLS; w++) {
-      float t = drw[h * INTERPOLATED_COLS + w];
+  for (int h = 0; h < dst_rows; h++) {
+    for (int w = 0; w < dst_cols; w++) {
+      float t = drw[h * dst_cols + w];
 
       t = min((int)t, MAXTEMP);
       t = max((int)t, MINTEMP); 
@@ -288,14 +303,14 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 
 #if 0
       // Selfie Camera
-      GFX_EXEC(fillRect(BOX_SIZE * w, BOX_SIZE * h, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
+      GFX_EXEC(fillRect(box_size * w, box_size * h, box_size, box_size, camColors[colorIndex]));
 #else
       // Front Camera
-#if BOX_SIZE == 1
-      GFX_EXEC(drawPixel(INTERPOLATED_COLS - 1 - w, h, camColors[colorIndex]));
-#else
-      GFX_EXEC(fillRect((INTERPOLATED_COLS - 1 - w) * BOX_SIZE, h * BOX_SIZE, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
-#endif
+      if (box_size == 1) {
+        GFX_EXEC(drawPixel(dst_cols - 1 - w, h, camColors[colorIndex]));
+      } else {
+        GFX_EXEC(fillRect((dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, camColors[colorIndex]));
+      }
 #endif
     }
   }
@@ -347,15 +362,15 @@ void setup() {
   sdcard_setup();
 
   // Initialize interpolation
-  interpolate_setup(INTERPOLATE_SCALE);
+  interpolate_setup(dsp.interpolate_scale);
 
   // Setup widget
   widget_setup();
  
   // Draw color bar
   const int n = sizeof(camColors) / sizeof(camColors[0]);
-  const int w = BOX_SIZE * INTERPOLATED_COLS;
-  int       y = BOX_SIZE * INTERPOLATED_ROWS + 3;
+  const int w = dsp.box_size * dsp.interpolate_scale * MLX90640_COLS;
+  int       y = dsp.box_size * dsp.interpolate_scale * MLX90640_ROWS + 3;
   for (int i = 0; i < n; i++) {
     int x = map(i, 0, n, 0, w);
     GFX_EXEC(fillRect(x, y, 1, FONT_HEIGHT - 4, camColors[i]));

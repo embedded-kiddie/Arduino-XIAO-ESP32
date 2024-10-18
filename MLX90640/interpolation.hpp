@@ -78,7 +78,7 @@ inline float bicubicInterpolate(float p[], float x, float y) {
   return cubicInterpolate(arr, y);
 }
 
-void interpolate_setup(const int dst_rows, const int dst_cols, int scale) {}
+void interpolate_setup(const int scale) {}
 
 // src is a grid src_rows * src_cols
 // dst is a pre-allocated grid, dst_rows*dst_cols
