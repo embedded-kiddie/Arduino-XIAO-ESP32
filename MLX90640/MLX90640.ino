@@ -328,9 +328,9 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   prevFinish = outputFinish;
 
   // Ambient temperature
-  v = mlx.getTa(false) + 0.05f;
+  v = mlx.getTa(false);
   if (0.0f < v && v < 100.0f) {
-    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%4.1f", v);
+    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 6.5, "%4.1f", v);
   }
 
 #if ENA_TRANSACTION
@@ -373,10 +373,10 @@ void setup() {
   int       y = dsp.box_size * dsp.interpolate_scale * MLX90640_ROWS + 3;
   for (int i = 0; i < n; i++) {
     int x = map(i, 0, n, 0, w);
-    GFX_EXEC(fillRect(x, y, 1, FONT_HEIGHT - 4, camColors[i]));
+    GFX_EXEC(fillRect(x, y, 1, FONT_HEIGHT, camColors[i]));
   }
 
-  y += FONT_HEIGHT;
+  y += FONT_HEIGHT + 4;
   GFX_EXEC(setTextSize(2));
   GFX_EXEC(setTextColor(WHITE));
   gfx_printf(0,                      y, "%d", MINTEMP);
@@ -384,11 +384,14 @@ void setup() {
   gfx_printf(w     - FONT_WIDTH * 2, y, "%d", MAXTEMP);
 
   GFX_EXEC(setTextSize(1));
-  gfx_printf(260, LINE_HEIGHT * 0.0, "Sensor['C]");
+  gfx_printf(260, LINE_HEIGHT * 0.0, "Resolution");
   gfx_printf(260, LINE_HEIGHT * 1.5, "FPS [Hz]");
   gfx_printf(260, LINE_HEIGHT * 3.0, "Input [ms]");
   gfx_printf(260, LINE_HEIGHT * 4.5, "Output[ms]");
+  gfx_printf(260, LINE_HEIGHT * 6.0, "Sensor['C]");
+
   GFX_EXEC(setTextSize(2));
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%2d:%d", dsp.interpolate_scale, dsp.box_size);
 
   if (! mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire)) {
     DBG_EXEC(printf("MLX90640 not found!\n"));
