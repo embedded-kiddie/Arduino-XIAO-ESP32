@@ -115,12 +115,8 @@ static int GetFileNo(FS_TYPE &fs) {
 
   File file = fs.open(path, FILE_READ);
   if (file.available()) {
-    char num[8];
-    int len = file.read((uint8_t*)num, sizeof(num) - 1);
-    if (len >= 0) {
-      num[len] = 0;
-      number = atoi(num);
-    }
+    String n = file.readString();
+    number = n.toInt();
   }
 
   file.close();
