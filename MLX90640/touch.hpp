@@ -124,6 +124,8 @@ bool touch_event(EventPoint_t &ep) {
   prev_stat = stat;
 
   if (event != EVENT_NONE) {
+    // DBG_EXEC(printf("event: %d, x: %d, y: %d\n", event, x, y));
+ 
     if (stat) {
         x = constrain(x, 0, 319);
         y = constrain(y, 0, 239);

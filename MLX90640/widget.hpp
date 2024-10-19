@@ -16,62 +16,7 @@ typedef struct {
   void          (*callback)(EventPoint_t &ep);  // Callback event handler
 } Widget_t;
 
-/*--------------------------------------------------------------------------------
- * Widgets definition
- *--------------------------------------------------------------------------------*/
-typedef enum {
-  INSIDE = 0,
-  INFO,
-  SCALE,
-  CAMERA1,
-  CAMERA2,
-  CONFIG,
-} WidgetID_t;
-
-void onInside (EventPoint_t &ep);
-void onInform (EventPoint_t &ep);
-void onColors (EventPoint_t &ep);
-void onCamera (EventPoint_t &ep);
-void onConfig (EventPoint_t &ep);
-
-static const Widget_t widgets[] {
-  {   0,   0, 256, 192, NULL, 0, EVENT_ALL, onInside },
-  { 256,   0,  64, 140, NULL, 0, EVENT_ALL, onInform },
-  {   0, 195, 256,  45, NULL, 0, EVENT_ALL, onColors },
-  { 265, 135, ICON_WIDTH, ICON_HEIGHT, icon_camera1, sizeof(icon_camera1), EVENT_CLICK, onCamera },
-  { 265, 135, ICON_WIDTH, ICON_HEIGHT, icon_camera2, sizeof(icon_camera2), EVENT_NONE,  nullptr  },
-  { 265, 185, ICON_WIDTH, ICON_HEIGHT, icon_config,  sizeof(icon_config ), EVENT_CLICK, onConfig },
-};
-
-#define N_WIDGETS  (sizeof(widgets) / sizeof(widgets[0]))
-
-/*--------------------------------------------------------------------------------
- * Event callback functions
- *--------------------------------------------------------------------------------*/
-void DrawWidget(int id);
-
-void onInside(EventPoint_t &ep) {
-  DBG_EXEC(printf("onInside\n"));
-}
-
-void onInform(EventPoint_t &ep) {
-  DBG_EXEC(printf("onInform\n"));
-}
-
-void onColors(EventPoint_t &ep) {
-  DBG_EXEC(printf("onColors\n"));
-}
-
-void onCamera(EventPoint_t &ep) {
-  DBG_EXEC(printf("onCamera\n"));
-  DrawWidget(CAMERA2);
-  sdcard_save();
-  DrawWidget(CAMERA1);
-}
-
-void onConfig(EventPoint_t &ep) {
-  DBG_EXEC(printf("onConfig\n"));
-}
+#define N_WIDGETS(w)  (sizeof(w) / sizeof(w[0]))
 
 #ifdef _TFT_eSPIH_
 //=========================================v==========================================
@@ -115,27 +60,156 @@ static void DrawPNG(uint8_t *img, size_t size, uint16_t x, uint16_t y) {
 }
 #endif // _TFT_eSPIH_
 
-void DrawWidget(int id) {
+static void DrawWidget(const Widget_t &widget) {
   GFX_EXEC(startWrite());
 
-  if (widgets[id].img) {
+  if (widget.img) {
 #if defined(_TFT_eSPIH_)
-    DrawPNG((uint8_t*)widgets[id].img, widgets[id].size, widgets[id].x, widgets[id].y);
+    DrawPNG((uint8_t*)widget.img, widget.size, widget.x, widget.y);
 #elif defined(LOVYANGFX_HPP_)
-    GFX_EXEC(drawPng((uint8_t*)widgets[id].img, widgets[id].size, widgets[id].x, widgets[id].y));
+    GFX_EXEC(drawPng((uint8_t*)widget.img, widget.size, widget.x, widget.y));
 #endif
   }
 
   GFX_EXEC(endWrite());
 }
 
-void widget_setup(void) {
-  DrawWidget(CAMERA1);
-  DrawWidget(CONFIG);
+/*--------------------------------------------------------------------------------
+ * Widgets definition
+ *--------------------------------------------------------------------------------*/
+typedef enum {
+  INSIDE = 0,
+  OUTSIDE,
+  SCALE,
+  CAMERA1,
+  CAMERA2,
+  CONFIG,
+} WidgetMain_t;
+
+static void onInside (EventPoint_t &ep);
+static void onOutside(EventPoint_t &ep);
+static void onColors (EventPoint_t &ep);
+static void onCamera (EventPoint_t &ep);
+static void onConfig (EventPoint_t &ep);
+
+const Widget_t widget_main[] {
+  {   0,   0, 256, 192, NULL, 0, EVENT_ALL, onInside },
+  { 256,   0,  64, 140, NULL, 0, EVENT_ALL, onOutside },
+  {   0, 195, 256,  45, NULL, 0, EVENT_ALL, onColors },
+  { 265, 135, ICON1_WIDTH, ICON1_HEIGHT, icon_camera1, sizeof(icon_camera1), EVENT_CLICK, onCamera },
+  { 265, 135, ICON1_WIDTH, ICON1_HEIGHT, icon_camera2, sizeof(icon_camera2), EVENT_NONE,  nullptr  },
+  { 265, 185, ICON1_WIDTH, ICON1_HEIGHT, icon_config,  sizeof(icon_config ), EVENT_CLICK, onConfig },
+};
+
+typedef enum {
+  RESOLUTION = 0,
+  THERMOGRAPH,
+  FOLDER,
+  CAPTURING,
+  CALIBRATION,
+  DEVINFO,
+  CONFIG_APPLY,
+} WidgetConfig_t;
+
+static void onResolution (EventPoint_t &ep);
+static void onThermograph(EventPoint_t &ep);
+static void onFolder     (EventPoint_t &ep);
+static void onCapturing  (EventPoint_t &ep);
+static void onCalibration(EventPoint_t &ep);
+static void onDevInfo    (EventPoint_t &ep);
+static void onApply      (EventPoint_t &ep);
+
+const Widget_t widget_config[] {
+  {  22,  10, ICON2_WIDTH, ICON2_HEIGHT, icon_resolution,  sizeof(icon_resolution ), EVENT_ALL, onResolution  },
+  { 124,  10, ICON2_WIDTH, ICON2_HEIGHT, icon_thermograph, sizeof(icon_thermograph), EVENT_ALL, onThermograph },
+  { 226,  10, ICON2_WIDTH, ICON2_HEIGHT, icon_folder,      sizeof(icon_folder     ), EVENT_ALL, onFolder      },
+  {  22, 100, ICON2_WIDTH, ICON2_HEIGHT, icon_capturing,   sizeof(icon_capturing  ), EVENT_ALL, onCapturing   },
+  { 124, 100, ICON2_WIDTH, ICON2_HEIGHT, icon_calibration, sizeof(icon_calibration), EVENT_ALL, onCalibration },
+  { 226, 100, ICON2_WIDTH, ICON2_HEIGHT, icon_devinfo,     sizeof(icon_devinfo    ), EVENT_ALL, onDevInfo     },
+  { 134, 190, ICON1_WIDTH, ICON1_HEIGHT, icon_apply,       sizeof(icon_apply      ), EVENT_ALL, onApply       },
+};
+
+/*--------------------------------------------------------------------------------
+ * Event callback functions
+ *--------------------------------------------------------------------------------*/
+int widget_event(const Widget_t *widgets, size_t size, EventPoint_t &ep);
+
+static void onInside(EventPoint_t &ep) {
+  DBG_EXEC(printf("onInside\n"));
 }
 
-void widget_event(EventPoint_t &ep) {
-  for (int i = 0; i < N_WIDGETS; i++) {
+static void onOutside(EventPoint_t &ep) {
+  DBG_EXEC(printf("onOutside\n"));
+}
+
+static void onColors(EventPoint_t &ep) {
+  DBG_EXEC(printf("onColors\n"));
+}
+
+static void onCamera(EventPoint_t &ep) {
+  DBG_EXEC(printf("onCamera\n"));
+  DrawWidget(widget_main[CAMERA2]);
+  sdcard_save();
+  DrawWidget(widget_main[CAMERA1]);
+}
+
+static void onConfig(EventPoint_t &ep) {
+  DBG_EXEC(printf("onConfig\n"));
+  GFX_EXEC(fillScreen(BLACK));
+  for (int i = 0; i < N_WIDGETS(widget_config); i++) {
+    DrawWidget(widget_config[i]);
+  }
+
+  while (true) {
+    if (touch_event(ep)) {
+      int id = widget_event(widget_config, N_WIDGETS(widget_config), ep);
+      if (id >= 0 && widget_config[id].callback == onApply) {
+        return;
+      }
+    }
+    delay(1);
+  }
+}
+
+static void onResolution(EventPoint_t &ep) {
+  DBG_EXEC(printf("onResolution\n"));
+}
+
+static void onThermograph(EventPoint_t &ep) {
+  DBG_EXEC(printf("onThermograph\n"));
+}
+
+static void onFolder(EventPoint_t &ep) {
+  DBG_EXEC(printf("onFolder\n"));
+}
+
+static void onCapturing(EventPoint_t &ep) {
+  DBG_EXEC(printf("onCapturing\n"));
+}
+
+static void onCalibration(EventPoint_t &ep) {
+  DBG_EXEC(printf("onCalibration\n"));
+}
+
+static void onDevInfo(EventPoint_t &ep) {
+  DBG_EXEC(printf("onDevice\n"));
+}
+
+
+static void onApply(EventPoint_t &ep) {
+  DBG_EXEC(printf("onApply\n"));
+}
+
+static void widget_setup(void) {
+  DrawWidget(widget_main[CAMERA1]);
+  DrawWidget(widget_main[CONFIG]);
+}
+
+/*--------------------------------------------------------------------------------
+ * Widget API functions
+ *--------------------------------------------------------------------------------*/
+int widget_event(const Widget_t *widgets, size_t size, EventPoint_t &ep) {
+  for (int i = 0; i < size; i++) {
 
     // In case the touch event to be detected
     if ((widgets[i].event & ep.event) &&  widgets[i].callback) {
@@ -143,10 +217,13 @@ void widget_event(EventPoint_t &ep) {
       // Find the widget where the event fired
       if (widgets[i].x <= ep.x && ep.x <= widgets[i].x + widgets[i].w &&
           widgets[i].y <= ep.y && ep.y <= widgets[i].y + widgets[i].h) {
+
         DBG_EXEC(printf("event = %d, x = %d, y = %d\n", ep.event, ep.x, ep.y));
         widgets[i].callback(ep);
-        delay(PERIOD_EVENT);
+        return i;
       }
     }
   }
+
+  return -1;
 }

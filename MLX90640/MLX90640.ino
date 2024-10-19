@@ -346,7 +346,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   // Touch event manager
   EventPoint_t ep;
   if (touch_event(ep)) {
-    widget_event(ep);
+    widget_event(widget_main, N_WIDGETS(widget_main), ep);
   }
 
   // Prevent the watchdog from firing
