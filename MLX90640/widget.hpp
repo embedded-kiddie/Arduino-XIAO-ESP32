@@ -77,15 +77,7 @@ static void DrawWidget(const Widget_t &widget) {
 /*--------------------------------------------------------------------------------
  * Widgets definition
  *--------------------------------------------------------------------------------*/
-typedef enum {
-  INSIDE = 0,
-  OUTSIDE,
-  SCALE,
-  CAMERA1,
-  CAMERA2,
-  CONFIG,
-} WidgetMain_t;
-
+// Screen Main
 static void onInside (EventPoint_t &ep);
 static void onOutside(EventPoint_t &ep);
 static void onColors (EventPoint_t &ep);
@@ -93,24 +85,15 @@ static void onCamera (EventPoint_t &ep);
 static void onConfig (EventPoint_t &ep);
 
 const Widget_t widget_main[] {
-  {   0,   0, 256, 192, NULL, 0, EVENT_ALL, onInside },
+  {   0,   0, 256,  92, NULL, 0, EVENT_ALL, onInside  },
   { 256,   0,  64, 140, NULL, 0, EVENT_ALL, onOutside },
-  {   0, 195, 256,  45, NULL, 0, EVENT_ALL, onColors },
+  {   0, 195, 256,  45, NULL, 0, EVENT_ALL, onColors  },
   { 265, 135, ICON1_WIDTH, ICON1_HEIGHT, icon_camera1, sizeof(icon_camera1), EVENT_CLICK, onCamera },
   { 265, 135, ICON1_WIDTH, ICON1_HEIGHT, icon_camera2, sizeof(icon_camera2), EVENT_NONE,  nullptr  },
   { 265, 185, ICON1_WIDTH, ICON1_HEIGHT, icon_config,  sizeof(icon_config ), EVENT_CLICK, onConfig },
 };
 
-typedef enum {
-  RESOLUTION = 0,
-  THERMOGRAPH,
-  FOLDER,
-  CAPTURING,
-  CALIBRATION,
-  DEVINFO,
-  CONFIG_APPLY,
-} WidgetConfig_t;
-
+// Screen Config
 static void onResolution (EventPoint_t &ep);
 static void onThermograph(EventPoint_t &ep);
 static void onFolder     (EventPoint_t &ep);
@@ -148,9 +131,9 @@ static void onColors(EventPoint_t &ep) {
 
 static void onCamera(EventPoint_t &ep) {
   DBG_EXEC(printf("onCamera\n"));
-  DrawWidget(widget_main[CAMERA2]);
+  DrawWidget(widget_main[4]); // camera2
   sdcard_save();
-  DrawWidget(widget_main[CAMERA1]);
+  DrawWidget(widget_main[3]); // camera1
 }
 
 static void onConfig(EventPoint_t &ep) {
@@ -201,8 +184,8 @@ static void onApply(EventPoint_t &ep) {
 }
 
 static void widget_setup(void) {
-  DrawWidget(widget_main[CAMERA1]);
-  DrawWidget(widget_main[CONFIG]);
+  DrawWidget(widget_main[3]); // camera1
+  DrawWidget(widget_main[5]); // config
 }
 
 /*--------------------------------------------------------------------------------
