@@ -162,18 +162,6 @@ DisplayParams_t dsp = {
   0
 };
 
-/*--------------------------------------------------------------------------------
- * State controller
- *--------------------------------------------------------------------------------*/
-typedef enum {
-  STATE_ON = 0,
-  STATE_RUN,
-  STATE_CONFIG,
-  STATE_CONFIG_RUN,
-} State_t;
-
-State_t state = STATE_RUN;
-
 // The size of thermal image (max INTERPOLATE_SCALE = 8)
 #define MLX90640_COLS 32
 #define MLX90640_ROWS 24
@@ -258,40 +246,6 @@ const uint16_t camColors[] = {0x480F,
 #include "interpolation.hpp"
 
 /*--------------------------------------------------------------------------------
- * State controller
- *--------------------------------------------------------------------------------*/
-void state_control() {
-  EventPoint_t ep;
-
-  switch (state) {
-    case STATE_ON:
-      widget_setup();
-      state = STATE_RUN;
-      break;
-
-    case STATE_RUN:
-      if (touch_event(ep)) {
-        // when icon 'config' is clicked then state becomes 'STATE_CONFIG'
-        widget_event(widget_main, N_WIDGETS(widget_main), ep);
-        if (state == STATE_RUN) {
-          break;
-        }
-      }
-
-    case STATE_CONFIG:
-    case STATE_CONFIG_RUN:
-      do {
-        if (touch_event(ep)) {
-          // when icon 'back' is clicked then state becomes 'STATE_RUN' or 'STATE_CONFIG_RUN'
-          widget_event(widget_config, N_WIDGETS(widget_config), ep);
-        }
-        delay(1); // reset wdt
-      } while (state == STATE_CONFIG);
-      break;
-  }
-}
-
-/*--------------------------------------------------------------------------------
  * Input process
  * Get thermal image from MLX90640
  *--------------------------------------------------------------------------------*/
@@ -349,7 +303,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     }
   }
 
-  if (state == STATE_RUN) {
+  if (widget_state() == STATE_RUN) {
     // MLX90640
     gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
 
@@ -373,8 +327,8 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   GFX_EXEC(endWrite());
 #endif
 
-  // State controller
-  state_control();
+  // Widget controller
+  widget_control();
 
   // Prevent the watchdog from firing
   delay(1);
@@ -393,7 +347,6 @@ void setup() {
   gfx_setup();
   touch_setup();
   sdcard_setup();
-  widget_setup();
 
   // Initialize interpolation
   interpolate_setup(dsp.interpolate_scale);

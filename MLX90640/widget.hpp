@@ -2,7 +2,18 @@
  * Wedget manager
  *================================================================================*/
 #include <Arduino.h>
-#include "icons.h"
+
+/*--------------------------------------------------------------------------------
+ * State for controller
+ *--------------------------------------------------------------------------------*/
+typedef enum {
+  STATE_ON = 0,
+  STATE_RUN,
+  STATE_CONFIG,
+  STATE_CONFIG_RUN,
+} State_t;
+
+static State_t state = STATE_ON;
 
 /*--------------------------------------------------------------------------------
  * Widget
@@ -77,14 +88,16 @@ static void DrawWidget(const Widget_t &widget) {
 /*--------------------------------------------------------------------------------
  * Instances of widgets
  *--------------------------------------------------------------------------------*/
-// Screen Main
+#include "icons.h"
+
+// Screen - Main
 static void onInside      (EventPoint_t &ep);
 static void onOutside     (EventPoint_t &ep);
 static void onThermograph (EventPoint_t &ep);
 static void onCamera      (EventPoint_t &ep);
 static void onConfig      (EventPoint_t &ep);
 
-const Widget_t widget_main[] {
+static const Widget_t widget_main[] {
   {   0,   0, 256,  92, NULL, 0, EVENT_ALL, onInside      },
   { 256,   0,  64, 140, NULL, 0, EVENT_ALL, onOutside     },
   {   0, 195, 256,  45, NULL, 0, EVENT_ALL, onThermograph },
@@ -93,7 +106,7 @@ const Widget_t widget_main[] {
   { 265, 185, ICON1_WIDTH, ICON1_HEIGHT, icon_config,  sizeof(icon_config ), EVENT_ALL,   onConfig },
 };
 
-// Screen Config
+// Screen - Config
 static void onResolution (EventPoint_t &ep);
 static void onFolder     (EventPoint_t &ep);
 static void onCapMode    (EventPoint_t &ep);
@@ -101,7 +114,7 @@ static void onCalibration(EventPoint_t &ep);
 static void onDevInfo    (EventPoint_t &ep);
 static void onReturn     (EventPoint_t &ep);
 
-const Widget_t widget_config[] {
+static const Widget_t widget_config[] {
   {  22,  10, ICON2_WIDTH, ICON2_HEIGHT, icon_resolution,  sizeof(icon_resolution ), EVENT_ALL, onResolution  },
   { 124,  10, ICON2_WIDTH, ICON2_HEIGHT, icon_thermograph, sizeof(icon_thermograph), EVENT_ALL, onThermograph },
   { 226,  10, ICON2_WIDTH, ICON2_HEIGHT, icon_folder,      sizeof(icon_folder     ), EVENT_ALL, onFolder      },
@@ -112,10 +125,8 @@ const Widget_t widget_config[] {
 };
 
 /*--------------------------------------------------------------------------------
- * Event callback functions
+ * Widget event callbacks
  *--------------------------------------------------------------------------------*/
-void widget_event(const Widget_t *widgets, size_t size, EventPoint_t &ep);
-
 static void onInside(EventPoint_t &ep) {
   DBG_EXEC(printf("onInside\n"));
 }
@@ -138,9 +149,11 @@ static void onCamera(EventPoint_t &ep) {
 static void onConfig(EventPoint_t &ep) {
   DBG_EXEC(printf("onConfig\n"));
   GFX_EXEC(fillScreen(BLACK));
+
   for (int i = 0; i < N_WIDGETS(widget_config); i++) {
     DrawWidget(widget_config[i]);
   }
+
   touch_clear(ep);
   state = STATE_CONFIG;
 }
@@ -173,9 +186,9 @@ static void onReturn(EventPoint_t &ep) {
 }
 
 /*--------------------------------------------------------------------------------
- * Widget API functions
+ * Draw the legend and icons at STATE_ON
  *--------------------------------------------------------------------------------*/
-void widget_setup(void) {
+static void widget_setup(void) {
   GFX_EXEC(fillScreen(BLACK));
 
   // Draw color bar
@@ -208,7 +221,10 @@ void widget_setup(void) {
   DrawWidget(widget_main[5]); // config
 }
 
-void widget_event(const Widget_t *widgets, size_t size, EventPoint_t &ep) {
+/*--------------------------------------------------------------------------------
+ * Handling widget events
+ *--------------------------------------------------------------------------------*/
+static void widget_event(const Widget_t *widgets, size_t size, EventPoint_t &ep) {
   for (int i = 0; i < size; i++) {
 
     // In case the touch event to be detected
@@ -222,5 +238,43 @@ void widget_event(const Widget_t *widgets, size_t size, EventPoint_t &ep) {
         widgets[i].callback(ep);
       }
     }
+  }
+}
+
+/*--------------------------------------------------------------------------------
+ * State controller
+ *--------------------------------------------------------------------------------*/
+State_t widget_state(void) {
+  return state;
+}
+
+void widget_control(void) {
+  EventPoint_t ep;
+
+  switch (state) {
+    case STATE_ON:
+      widget_setup();
+      state = STATE_RUN;
+      break;
+
+    case STATE_RUN:
+      if (touch_event(ep)) {
+        // when icon 'config' is clicked then state becomes 'STATE_CONFIG'
+        widget_event(widget_main, N_WIDGETS(widget_main), ep);
+        if (state == STATE_RUN) {
+          break;
+        }
+      }
+
+    case STATE_CONFIG:
+    case STATE_CONFIG_RUN:
+      do {
+        if (touch_event(ep)) {
+          // when icon 'back' is clicked then state becomes 'STATE_RUN' or 'STATE_CONFIG_RUN'
+          widget_event(widget_config, N_WIDGETS(widget_config), ep);
+        }
+        delay(1); // reset wdt
+      } while (state == STATE_CONFIG);
+      break;
   }
 }
