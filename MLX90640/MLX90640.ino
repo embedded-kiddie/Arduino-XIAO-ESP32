@@ -34,7 +34,6 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 void gfx_setup(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
   GFX_EXEC(setRotation(1));
-  GFX_EXEC(fillScreen(BLACK));
   GFX_EXEC(invertDisplay(false));
 
 #if defined (ARDUINO_XIAO_ESP32S3)
@@ -67,7 +66,6 @@ void gfx_setup(void) {
 
   SPI.setDataMode(SPI_MODE);
   GFX_EXEC(setRotation(3));
-  GFX_EXEC(fillScreen(BLACK));
   GFX_EXEC(invertDisplay(true));
 }
 
@@ -86,7 +84,6 @@ LGFX lcd;
 void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(setRotation(3));
-  GFX_EXEC(fillScreen(BLACK));
 }
 
 #else
@@ -103,7 +100,6 @@ TFT_eSPI tft = TFT_eSPI();
 void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(setRotation(3));
-  GFX_EXEC(fillScreen(BLACK));
 }
 #endif
 
@@ -166,6 +162,18 @@ DisplayParams_t dsp = {
   0
 };
 
+/*--------------------------------------------------------------------------------
+ * State controller
+ *--------------------------------------------------------------------------------*/
+typedef enum {
+  STATE_ON = 0,
+  STATE_RUN,
+  STATE_CONFIG,
+  STATE_CONFIG_RUN,
+} State_t;
+
+State_t state = STATE_RUN;
+
 // The size of thermal image (max INTERPOLATE_SCALE = 8)
 #define MLX90640_COLS 32
 #define MLX90640_ROWS 24
@@ -176,29 +184,12 @@ DisplayParams_t dsp = {
 #define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
 
 /*--------------------------------------------------------------------------------
- * printf library
+ * Definitions of graphics helpers
  *--------------------------------------------------------------------------------*/
-#include "printf.hpp"
-
-/*--------------------------------------------------------------------------------
- * SD Card library
- *--------------------------------------------------------------------------------*/
-#include "sdcard.hpp"
-
-/*--------------------------------------------------------------------------------
- * Touch library
- *--------------------------------------------------------------------------------*/
-#include "touch.hpp"
-
-/*--------------------------------------------------------------------------------
- * Wedget manager
- *--------------------------------------------------------------------------------*/
- #include "widget.hpp"
-
-/*--------------------------------------------------------------------------------
- * Pixel interpolation
- *--------------------------------------------------------------------------------*/
-#include "interpolation.hpp"
+// Font size for setTextSize(2)
+#define FONT_WIDTH    12 // [px] (Device coordinate system)
+#define FONT_HEIGHT   16 // [px] (Device coordinate system)
+#define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
 
 /*--------------------------------------------------------------------------------
  * Global variables
@@ -242,25 +233,62 @@ const uint16_t camColors[] = {0x480F,
 0xF080,0xF060,0xF040,0xF020,0xF800,};
 
 /*--------------------------------------------------------------------------------
- * Definitions of graphics helpers
+ * printf library
  *--------------------------------------------------------------------------------*/
-// Font size for setTextSize(2)
-#define FONT_WIDTH    12 // [px] (Device coordinate system)
-#define FONT_HEIGHT   16 // [px] (Device coordinate system)
-#define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
+#include "printf.hpp"
 
-void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
-  int len = 0;
-  char buf[16];
+/*--------------------------------------------------------------------------------
+ * SD Card library
+ *--------------------------------------------------------------------------------*/
+#include "sdcard.hpp"
 
-  va_list arg_ptr;
-  va_start(arg_ptr, fmt);
-  len = vsnprintf(buf, sizeof(buf), fmt, arg_ptr);
-  va_end(arg_ptr);
+/*--------------------------------------------------------------------------------
+ * Touch library
+ *--------------------------------------------------------------------------------*/
+#include "touch.hpp"
 
-  GFX_EXEC(fillRect(x, y, len * FONT_WIDTH, FONT_HEIGHT, BLACK));
-  GFX_EXEC(setCursor(x, y));
-  GFX_EXEC(print(buf));
+/*--------------------------------------------------------------------------------
+ * Wedget manager
+ *--------------------------------------------------------------------------------*/
+ #include "widget.hpp"
+
+/*--------------------------------------------------------------------------------
+ * Pixel interpolation
+ *--------------------------------------------------------------------------------*/
+#include "interpolation.hpp"
+
+/*--------------------------------------------------------------------------------
+ * State controller
+ *--------------------------------------------------------------------------------*/
+void state_control() {
+  EventPoint_t ep;
+
+  switch (state) {
+    case STATE_ON:
+      widget_setup();
+      state = STATE_RUN;
+      break;
+
+    case STATE_RUN:
+      if (touch_event(ep)) {
+        // when icon 'config' is clicked then state becomes 'STATE_CONFIG'
+        widget_event(widget_main, N_WIDGETS(widget_main), ep);
+        if (state == STATE_RUN) {
+          break;
+        }
+      }
+
+    case STATE_CONFIG:
+    case STATE_CONFIG_RUN:
+      do {
+        if (touch_event(ep)) {
+          // when icon 'back' is clicked then state becomes 'STATE_RUN' or 'STATE_CONFIG_RUN'
+          widget_event(widget_config, N_WIDGETS(widget_config), ep);
+        }
+        delay(1); // reset wdt
+      } while (state == STATE_CONFIG);
+      break;
+  }
 }
 
 /*--------------------------------------------------------------------------------
@@ -321,33 +349,32 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     }
   }
 
-  // MLX90640
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
+  if (state == STATE_RUN) {
+    // MLX90640
+    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
 
-  // Interpolation
-  uint32_t outputFinish = millis();
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", outputFinish - outputStart);
+    // Interpolation
+    uint32_t outputFinish = millis();
+    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", outputFinish - outputStart);
 
-  // FPS
-  float v = 1000.0f / (float)(outputFinish - prevFinish);
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
-  prevFinish = outputFinish;
+    // FPS
+    float v = 1000.0f / (float)(outputFinish - prevFinish);
+    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
+    prevFinish = outputFinish;
 
-  // Ambient temperature
-  v = mlx.getTa(false);
-  if (0.0f < v && v < 100.0f) {
-    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 6.5, "%4.1f", v);
+    // Ambient temperature
+    v = mlx.getTa(false);
+    if (0.0f < v && v < 100.0f) {
+      gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 6.5, "%4.1f", v);
+    }
   }
 
 #if ENA_TRANSACTION
   GFX_EXEC(endWrite());
 #endif
 
-  // Touch event manager
-  EventPoint_t ep;
-  if (touch_event(ep)) {
-    widget_event(widget_main, N_WIDGETS(widget_main), ep);
-  }
+  // State controller
+  state_control();
 
   // Prevent the watchdog from firing
   delay(1);
@@ -366,38 +393,10 @@ void setup() {
   gfx_setup();
   touch_setup();
   sdcard_setup();
+  widget_setup();
 
   // Initialize interpolation
   interpolate_setup(dsp.interpolate_scale);
-
-  // Setup widget
-  widget_setup();
- 
-  // Draw color bar
-  const int n = sizeof(camColors) / sizeof(camColors[0]);
-  const int w = dsp.box_size * dsp.interpolate_scale * MLX90640_COLS;
-  int       y = dsp.box_size * dsp.interpolate_scale * MLX90640_ROWS + 3;
-  for (int i = 0; i < n; i++) {
-    int x = map(i, 0, n, 0, w);
-    GFX_EXEC(fillRect(x, y, 1, FONT_HEIGHT, camColors[i]));
-  }
-
-  y += FONT_HEIGHT + 4;
-  GFX_EXEC(setTextSize(2));
-  GFX_EXEC(setTextColor(WHITE));
-  gfx_printf(0,                      y, "%d", MINTEMP);
-  gfx_printf(w / 2 - FONT_WIDTH * 2, y, "%3.1f", (float)(MINTEMP + MAXTEMP) / 2.0f);
-  gfx_printf(w     - FONT_WIDTH * 2, y, "%d", MAXTEMP);
-
-  GFX_EXEC(setTextSize(1));
-  gfx_printf(260, LINE_HEIGHT * 0.0, "Resolution");
-  gfx_printf(260, LINE_HEIGHT * 1.5, "FPS [Hz]");
-  gfx_printf(260, LINE_HEIGHT * 3.0, "Input [ms]");
-  gfx_printf(260, LINE_HEIGHT * 4.5, "Output[ms]");
-  gfx_printf(260, LINE_HEIGHT * 6.0, "Sensor['C]");
-
-  GFX_EXEC(setTextSize(2));
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%2d:%d", dsp.interpolate_scale, dsp.box_size);
 
   if (! mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire)) {
     DBG_EXEC(printf("MLX90640 not found!\n"));

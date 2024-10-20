@@ -71,6 +71,8 @@ bool touch_setup(void) {
 /*--------------------------------------------------------------------------------
  * Event manager
  *--------------------------------------------------------------------------------*/
+#define touch_clear(ep) while(touch_event(ep));
+
 bool touch_event(EventPoint_t &ep) {
   uint32_t time = millis();
   static uint32_t prev_time = time;
