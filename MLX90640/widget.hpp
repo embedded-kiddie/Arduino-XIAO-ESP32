@@ -89,9 +89,9 @@ static void DrawWidget(const Widget_t *widget) {
 /*--------------------------------------------------------------------------------
  * Widget event callbacks for main screen
  *--------------------------------------------------------------------------------*/
-static const int get_widget_count(State_t screen);
-static const Widget_t* get_widget(State_t screen);
-static const Widget_t* find_widget(State_t screen, const uint8_t* icon);
+const int get_widget_count(State_t screen);
+const Widget_t* get_widget(State_t screen);
+const Widget_t* find_widget(State_t screen, const uint8_t* icon);
 
 // Screen - Main
 static void onInside(EventPoint_t &ep) {
@@ -181,7 +181,7 @@ static const Widget_t widget_config[] {
 /*--------------------------------------------------------------------------------
  * Manage widget instances
  *--------------------------------------------------------------------------------*/
-static const int get_widget_count(State_t screen) {
+const int get_widget_count(State_t screen) {
   switch (screen) {
     case STATE_RUN:
       return N_WIDGETS(widget_main);
@@ -192,7 +192,7 @@ static const int get_widget_count(State_t screen) {
   }
 }
 
-static const Widget_t* get_widget(State_t screen) {
+const Widget_t* get_widget(State_t screen) {
   switch (screen) {
     case STATE_RUN:
       return widget_main;
@@ -203,7 +203,7 @@ static const Widget_t* get_widget(State_t screen) {
   }
 }
 
-static const Widget_t* find_widget(State_t screen, const uint8_t* icon) {
+const Widget_t* find_widget(State_t screen, const uint8_t* icon) {
   const int n = get_widget_count(screen);
   const Widget_t* widget = get_widget(screen);
 
@@ -219,7 +219,7 @@ static const Widget_t* find_widget(State_t screen, const uint8_t* icon) {
 /*--------------------------------------------------------------------------------
  * Draw the legend and icons at STATE_ON
  *--------------------------------------------------------------------------------*/
-static void widget_setup(void) {
+void widget_setup(void) {
   GFX_EXEC(fillScreen(BLACK));
 
   // Draw color bar
@@ -255,7 +255,7 @@ static void widget_setup(void) {
 /*--------------------------------------------------------------------------------
  * Manage widget events
  *--------------------------------------------------------------------------------*/
-static void widget_event(const Widget_t *widgets, size_t size, EventPoint_t &ep) {
+void widget_event(const Widget_t *widgets, size_t size, EventPoint_t &ep) {
   for (int i = 0; i < size; i++) {
 
     // In case the touch event to be detected

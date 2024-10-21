@@ -6,7 +6,7 @@
 #define TASK1_CORE      1
 #define TASK2_CORE      0
 
-#define TASK1_STACK     8192
+#define TASK1_STACK     4096
 #define TASK2_STACK     8192
 
 #define TASK1_PRIORITY  2

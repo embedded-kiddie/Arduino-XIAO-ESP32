@@ -237,8 +237,12 @@ static uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 forma
 #endif // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
 
 static bool SaveBMP24(FS_TYPE &fs, const char *path) {
+#ifdef  LOVYANGFX_HPP_
+  lgfx::rgb888_t rgb[TFT_WIDTH > TFT_HEIGHT ? TFT_WIDTH : TFT_HEIGHT];
+#else
   uint16_t rgb;
   uint8_t r, g, b;
+#endif
 
   File file = fs.open(path, FILE_WRITE);
 
@@ -284,27 +288,43 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
       delay(1); // reset wdt
     }
 
+#ifdef  LOVYANGFX_HPP_
+
+//  GFX_EXEC(beginTransaction());
+    GFX_EXEC(readRect(0, y, w, 1, rgb));
+//  GFX_EXEC(endTransaction());
+    file.write((uint8_t*)rgb, w * sizeof(lgfx::rgb888_t));
+
+#else
+
     for (int x = 0; x < w; x++) {
 
 #if   defined(_ARDUINO_GFX_LIBRARIES_H_)
+
       rgb = 0; // does not support reading
+
 #elif defined(_ADAFRUIT_GFX_H)
+
       rgb = readPixA(x, y);
+
 #elif defined(_TFT_eSPIH_)
+
       rgb = GFX_EXEC(readPixel(x, y));
+
 #else // LOVYANGFX_HPP_
-      // GFX_EXEC(beginTransaction());
+
       rgb = GFX_EXEC(readPixel(x, y));
-      // GFX_EXEC(endTransaction());
+
 #endif
 
-      color565toRGB(rgb, r, g, b);
-
       // write the data in BMP reverse order
+      color565toRGB(rgb, r, g, b);
       file.write(b);
       file.write(g);
       file.write(r);
     }
+  
+#endif // LOVYANGFX_HPP_
   }
 
   file.close();
