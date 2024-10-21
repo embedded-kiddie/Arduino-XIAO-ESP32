@@ -142,12 +142,17 @@ void interpolate_setup(const int scale) {
   }
 }
 
+#define FURTHER_OPTIMIZATION  false // The compiler is smart enough
+
 void interpolate_image(float *src, const int src_rows, const int src_cols, float *dst, const int dst_rows, const int dst_cols) {
   int X, Y;
   float X0Y0, X1Y0, X0Y1, X1Y1;
   float x_ratio_lo, x_ratio_hi;
   float y_ratio_lo, y_ratio_hi;
   const int scale = dst_rows / src_rows;
+#if FURTHER_OPTIMIZATION
+  float v0, v1, w0, w1;
+#endif
 
   // Bilinear interpolation
   for (int y = 0; y < src_rows; y++) {
@@ -165,13 +170,23 @@ void interpolate_image(float *src, const int src_rows, const int src_cols, float
         y_ratio_lo = table_ratio[j][0];
         y_ratio_hi = table_ratio[j][1];
 
+#if FURTHER_OPTIMIZATION
+        v0 = y_ratio_hi * X0Y0;
+        v1 = y_ratio_hi * X1Y0;
+        w0 = y_ratio_lo * X0Y1;
+        w1 = y_ratio_lo * X1Y1;
+#endif
         for (int i = 0; i < scale; i++) {
           x_ratio_lo = table_ratio[i][0];
           x_ratio_hi = table_ratio[i][1];
 
+#if FURTHER_OPTIMIZATION
+          float t = v0 * x_ratio_hi + v1 * x_ratio_lo +
+                    w0 * x_ratio_hi + w1 * x_ratio_lo;
+#else
           float t = y_ratio_hi * (x_ratio_hi * X0Y0 + x_ratio_lo * X1Y0) +
                     y_ratio_lo * (x_ratio_hi * X0Y1 + x_ratio_lo * X1Y1);
-
+#endif
           // Is it okay to leave it to the compiler to optimize?
           dst[(X + i) + (Y + j) * dst_cols] = t;
         }
