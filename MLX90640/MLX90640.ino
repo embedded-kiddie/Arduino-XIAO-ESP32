@@ -30,6 +30,7 @@
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
 #define GFX_EXEC(x) tft.x
+//#define drawPixel   writePixel  // Disable because of invalid transaction 
 
 void gfx_setup(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
@@ -52,6 +53,7 @@ Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC /* DC */, TFT_CS /* CS */, TF
 Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
 
 #define GFX_EXEC(x) gfx->x
+//#define drawPixel   writePixel  // Disable because of invalid transaction 
 
 void gfx_setup(void) {
   // Init Display
@@ -80,6 +82,7 @@ void gfx_setup(void) {
 LGFX lcd;
 
 #define GFX_EXEC(x) lcd.x
+#define drawPixel   writePixel
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -96,6 +99,7 @@ void gfx_setup(void) {
 TFT_eSPI tft = TFT_eSPI();
 
 #define GFX_EXEC(x) tft.x
+//#define drawPixel   writePixel  // Disable because of missing writePixel()
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -338,7 +342,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
  * setup() and loop()
  *--------------------------------------------------------------------------------*/
 void setup() {
-#if     DEBUG
+#if DEBUG
   Serial.begin(115200);
   while (!Serial && millis() <= 1000);
 #endif

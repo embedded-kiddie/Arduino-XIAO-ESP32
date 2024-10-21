@@ -179,12 +179,14 @@ static void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::v
   }
 }
 
-static void DeleteDir(FS_TYPE &fs, const char *path) {
+static bool DeleteDir(FS_TYPE &fs, const char *path) {
   // `path` must be empty
   if (fs.rmdir(path)) {
     DBG_EXEC(printf("Delete %s: done.\n", path));
+    return true;
   } else {
     DBG_EXEC(printf("Delete %s: failed.\n", path));
+    return false;
   }
 }
 
@@ -288,8 +290,12 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
       rgb = 0; // does not support reading
 #elif defined(_ADAFRUIT_GFX_H)
       rgb = readPixA(x, y);
-#else // LOVYANGFX_HPP_ || _TFT_eSPIH_
+#elif defined(_TFT_eSPIH_)
       rgb = GFX_EXEC(readPixel(x, y));
+#else // LOVYANGFX_HPP_
+      // GFX_EXEC(beginTransaction());
+      rgb = GFX_EXEC(readPixel(x, y));
+      // GFX_EXEC(endTransaction());
 #endif
 
       color565toRGB(rgb, r, g, b);
@@ -350,8 +356,7 @@ bool sdcard_save(void) {
     printf("%s, %lu\n", file.name.c_str(), file.size);
   }
 
-  // Activating the next line will cause some GFX libraries to stop working.
-  // SD.end();
+  // SD.end(); // Activating this line will cause some GFX libraries to stop working.
 
 #if USE_SDFAT
   printf("Card size: %luMB\n", (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5));
