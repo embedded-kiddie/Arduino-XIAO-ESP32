@@ -142,7 +142,7 @@ void interpolate_setup(const int scale) {
   }
 }
 
-#define FURTHER_OPTIMIZATION  false // The compiler is smart enough
+#define FURTHER_OPTIMIZATION  true // Is the compiler smart enough?
 
 void interpolate_image(float *src, const int src_rows, const int src_cols, float *dst, const int dst_rows, const int dst_cols) {
   int X, Y;
