@@ -73,8 +73,8 @@ static void onMainConfiguration (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_main[] = {
   {   0,   0, 320,         240,          image_main,        EVENT_NONE, onMainScreen        },
-  {   0,   0, 256,          92,          NULL,              EVENT_ALL,  onMainInside        },
-  { 256,   0,  64,         140,          NULL,              EVENT_ALL,  onMainOutside       },
+  {   0,   0, 256,         192,          NULL,              EVENT_ALL,  onMainInside        },
+  { 256,   0,  64,         134,          NULL,              EVENT_ALL,  onMainOutside       },
   {   0, 195, 256,          45,          NULL,              EVENT_ALL,  onMainThermograph   },
   { 265, 135, ICON1_WIDTH, ICON1_HEIGHT, image_icon_camera, EVENT_DOWN, onMainCamera        },
   { 265, 185, ICON1_WIDTH, ICON1_HEIGHT, NULL,              EVENT_ALL,  onMainConfiguration },
@@ -201,31 +201,26 @@ static constexpr Widget_t widget_information[] = {
  * Widget callback functions for Main
  *--------------------------------------------------------------------------------*/
 static void onMainScreen(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onMainScreen\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_WIDGET);
 }
 
 static void onMainInside(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onMainInside\n"));
 }
 
 static void onMainOutside(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onMainOutside\n"));
 }
 
 static void onMainThermograph(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onMainThermograph\n"));
 
   widget_state(STATE_THERMOGRAPH);
 }
 
 static void onMainCamera(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onMainCamera\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -236,7 +231,6 @@ static void onMainCamera(const void *w, Touch_t &touch) {
 }
 
 static void onMainConfiguration(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onMainConfiguration\n"));
 
   widget_state(STATE_CONFIGURATION);
@@ -246,14 +240,12 @@ static void onMainConfiguration(const void *w, Touch_t &touch) {
  * Widget callback functions for Configuration
  *--------------------------------------------------------------------------------*/
 static void onConfigurationScreen(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onConfigurationScreen\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_WIDGET);
 }
 
 static void onConfigurationResolution(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onConfigurationResolution\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -262,7 +254,6 @@ static void onConfigurationResolution(const void *w, Touch_t &touch) {
 }
 
 static void onConfigurationThermograph(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onConfigurationThermograph\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -271,7 +262,6 @@ static void onConfigurationThermograph(const void *w, Touch_t &touch) {
 }
 
 static void onConfigurationFileManager(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onConfigurationFileManager\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -280,7 +270,6 @@ static void onConfigurationFileManager(const void *w, Touch_t &touch) {
 }
 
 static void onConfigurationCaptureMode(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onConfigurationCaptureMode\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -289,7 +278,6 @@ static void onConfigurationCaptureMode(const void *w, Touch_t &touch) {
 }
 
 static void onConfigurationCalibration(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onConfigurationCalibration\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -298,7 +286,6 @@ static void onConfigurationCalibration(const void *w, Touch_t &touch) {
 }
 
 static void onConfigurationInformation(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onConfigurationInformation\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -307,7 +294,6 @@ static void onConfigurationInformation(const void *w, Touch_t &touch) {
 }
 
 static void onConfigurationReturn(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onConfigurationReturn\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -319,35 +305,30 @@ static void onConfigurationReturn(const void *w, Touch_t &touch) {
  * Widget callback functions for Resolution
  *--------------------------------------------------------------------------------*/
 static void onResolutionScreen(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onResolutionScreen\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_WIDGET);
 }
 
 static void onResolutionSlider1(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onResolutionSlider1\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_SLIDER);
 }
 
 static void onResolutionSlider2(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onResolutionSlider2\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_SLIDER);
 }
 
 static void onResolutionClose(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onResolutionClose\n"));
 
   widget_state(STATE_CONFIGURATION);
 }
 
 static void onResolutionApply(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onResolutionApply\n"));
 
   DrawPressed((const Widget_t*)w, touch);
@@ -357,63 +338,54 @@ static void onResolutionApply(const void *w, Touch_t &touch) {
  * Widget callback functions for Thermograph
  *--------------------------------------------------------------------------------*/
 static void onThermographScreen(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onResolutionScreen\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_WIDGET);
 }
 
 static void onThermographRadio1(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onThermographRadio1\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE, 1);
 }
 
 static void onThermographRadio2(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onThermographRadio2\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE, 0);
 }
 
 static void onThermographToggle1(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onThermographToggle1\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE, 1);
 }
 
 static void onThermographToggle2(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onThermographToggle2\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE, 0);
 }
 
 static void onThermographSlider1(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onThermographSlider1\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_SLIDER);
 }
 
 static void onThermographSlider2(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onThermographSlider2\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_SLIDER);
 }
 
 static void onThermographClose(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onThermographClose\n"));
 
   widget_state(STATE_CONFIGURATION);
 }
 
 static void onThermographApply(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onThermographApply\n"));
 
   DrawPressed((const Widget_t*)w, touch);
@@ -423,30 +395,25 @@ static void onThermographApply(const void *w, Touch_t &touch) {
  * Widget callback functions for File Manager
  *--------------------------------------------------------------------------------*/
 static void onFileManagerScreen(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onFileManagerScreen\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_WIDGET);
 }
 static void onFileManagerCheckAll(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onFileManagerCheckAll\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE);
 }
 
 static void onFileManagerList1(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onFileManagerList1\n"));
 }
 
 static void onFileManagerList2(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onFileManagerList2\n"));
 }
 
 static void onFileManagerPrev(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onFileManagerPrev\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -455,7 +422,6 @@ static void onFileManagerPrev(const void *w, Touch_t &touch) {
 }
 
 static void onFileManagerNext(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onFileManagerNext\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -464,14 +430,12 @@ static void onFileManagerNext(const void *w, Touch_t &touch) {
 }
 
 static void onFileManagerClose(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onFileManagerClose\n"));
 
   widget_state(STATE_CONFIGURATION);
 }
 
 static void onFileManagerApply(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onFileManagerApply\n"));
 
   DrawPressed((const Widget_t*)w, touch);
@@ -481,14 +445,12 @@ static void onFileManagerApply(const void *w, Touch_t &touch) {
  * Widget callback functions for Capture Mode
  *--------------------------------------------------------------------------------*/
 static void onCaptureModeScreen(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onCaptureModeScreen\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_WIDGET);
 }
 
 static void onCaptureModeCamera(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onCaptureModeCamera\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -496,7 +458,6 @@ static void onCaptureModeCamera(const void *w, Touch_t &touch) {
 }
 
 static void onCaptureModeVideo(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onCaptureModeVideo\n"));
 
   if (!DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE)) {
@@ -504,7 +465,6 @@ static void onCaptureModeVideo(const void *w, Touch_t &touch) {
 }
 
 static void onCaptureModeApply(const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onCaptureModeApply\n"));
 
   widget_state(STATE_CONFIGURATION);
@@ -514,33 +474,28 @@ static void onCaptureModeApply(const void *w, Touch_t &touch) {
  * Widget callback functions for Calibration
  *--------------------------------------------------------------------------------*/
 static void onCalibrationScreen (const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onCalibrationScreen\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_WIDGET);
 }
 
 static void onCalibrationExec   (const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onCalibrationExec\n"));
 }
 
 static void onCalibrationSave   (const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onCalibrationSave\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_SPRITE);
 }
 
 static void onCalibrationClose  (const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onCalibrationClose\n"));
 
   widget_state(STATE_CONFIGURATION);
 }
 
 static void onCalibrationApply  (const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onCalibrationApply\n"));
 
   DrawPressed((const Widget_t*)w, touch);
@@ -550,14 +505,12 @@ static void onCalibrationApply  (const void *w, Touch_t &touch) {
  * Widget callback functions for Information
  *--------------------------------------------------------------------------------*/
 static void onInformationScreen (const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onInformationScreen\n"));
 
   DrawSetup((const Widget_t*)w, touch, DRAW_WIDGET);
 }
 
 static void onInformationClose  (const void *w, Touch_t &touch) {
-  POS_CHECK((const Widget_t*)w);
   DBG_EXEC(printf("onInformationClose\n"));
 
   widget_state(STATE_CONFIGURATION);

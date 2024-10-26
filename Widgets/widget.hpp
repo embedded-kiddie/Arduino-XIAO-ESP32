@@ -40,16 +40,13 @@ typedef struct {
 #define N_WIDGETS(w)  (sizeof(w) / sizeof(w[0]))
 
 /*--------------------------------------------------------------------------------
- * Check the widget position with RED marker
+ * Check the position of widget by RED rectangle
  *--------------------------------------------------------------------------------*/
 #define POSTION_CHECK true
 #if     POSTION_CHECK
-#define POS_CHECK(w)  check_position(w)
-static void check_position(const Widget_t *widget) {
-  GFX_EXEC(drawRect(widget->x - 1, widget->y - 1, widget->w + 2, widget->h + 2, RED));
-}
+#define POS_CHECK(x)  {x;}
 #else
-#define POS_CHECK(w)
+#define POS_CHECK(x)
 #endif
 
 /*--------------------------------------------------------------------------------
@@ -343,6 +340,7 @@ void widget_setup(State_t screen = STATE_MAIN) {
       if (widget->image && widget->callback) {
         widget->callback(widget, touch);
       }
+      POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     }
   }
 
