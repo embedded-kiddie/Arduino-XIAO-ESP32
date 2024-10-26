@@ -11,6 +11,7 @@
 !GFX_Touch_SD_Interoperability
 !SD_SdFat
 !FreeRTOS
+!Widgets
 
 
 # VSCODE
