@@ -24,6 +24,16 @@ static State_t state = STATE_ON;
 /*--------------------------------------------------------------------------------
  * Widget
  *--------------------------------------------------------------------------------*/
+typedef enum {
+  TYPE_SCREEN = 0,
+  TYPE_BUTTON,
+  TYPE_SLIDER,
+  TYPE_TOGGLE,
+  TYPE_RADIO,
+  TYPE_CHECK,
+  TYPE_PRESS,
+} Type_t;
+
 typedef struct {
   const uint8_t   *data;  // pointer to the image
   const size_t    size;   // size of image data
@@ -33,6 +43,7 @@ typedef struct {
   const uint16_t  x, y;   // The top left coordinate of the widget
   const uint16_t  w, h;   // Widget width and height
   const Image_t   *image; // Widget image data
+  const Type_t    type;   // type of widget
   const Event_t   event;  // The touch event to detect
   void            (*callback)(const void *widget, Touch_t &touch);  // Callback event handler
 } Widget_t;
@@ -52,19 +63,14 @@ typedef struct {
 /*--------------------------------------------------------------------------------
  * Prototype Declaration for drawing widget
  *--------------------------------------------------------------------------------*/
-typedef enum {
-  DRAW_WIDGET = 0,
-  DRAW_SPRITE,
-  DRAW_SLIDER,
-  DRAW_PRESSED,
-} DrawType_t;
-
 State_t widget_state(State_t s);
-static void DrawWidget  (const Widget_t *widget, int8_t offset = 0); // Draw screen
-static void DrawSprite  (const Widget_t *widget, int8_t offset = 0); // Draw radio and toggle
-static void DrawSlider  (const Widget_t *widget, int8_t offset = 0); // Draw slider
-static void DrawPressed (const Widget_t *widget, Touch_t &touch);    // Animation on click
-static bool DrawSetup   (const Widget_t *widget, Touch_t &touch, DrawType_t type = DRAW_WIDGET, int8_t offset = 0);
+static void DrawScreen(const Widget_t *widget, int8_t offset = 0);
+static void DrawButton(const Widget_t *widget, int8_t offset = 0);
+static void DrawSlider(const Widget_t *widget, int8_t offset = 0);
+static void DrawToggle(const Widget_t *widget, bool check = false);
+static void DrawCheck (const Widget_t *widget, bool check = false);
+static void DrawPress (const Widget_t *widget, Event_t event = EVENT_NONE);
+static void DrawRadio (const Widget_t *widget, uint8_t n_widget, uint8_t selected = 0);
 
 /*--------------------------------------------------------------------------------
  * Widgets
@@ -139,7 +145,7 @@ uint32_t swap_endian(uint32_t v) {
 /*--------------------------------------------------------------------------------
  * Draw screen
  *--------------------------------------------------------------------------------*/
-static void DrawWidget(const Widget_t *widget, int8_t offset /* = 0 */) {
+static void DrawScreen(const Widget_t *widget, int8_t offset /* = 0 */) {
   const Image_t *image = &widget->image[offset];
 
   if (image) {
@@ -155,14 +161,15 @@ static void DrawWidget(const Widget_t *widget, int8_t offset /* = 0 */) {
 
 #endif
 
+    POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());
   }
 }
 
 /*--------------------------------------------------------------------------------
- * Draw radio and toggle
+ * Draw a button-like icon
  *--------------------------------------------------------------------------------*/
-static void DrawSprite(const Widget_t *widget, int8_t offset /* = 0 */) {
+static void DrawButton(const Widget_t *widget, int8_t offset /* = 0 */) {
   const Image_t *image = &widget->image[offset];
 
   if (image) {
@@ -179,6 +186,7 @@ static void DrawSprite(const Widget_t *widget, int8_t offset /* = 0 */) {
     sprite.pushSprite(widget->x, widget->y);
     sprite.deleteSprite();
 
+    POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());
   }
 }
@@ -191,8 +199,8 @@ static void DrawSprite(const Widget_t *widget, int8_t offset /* = 0 */) {
 static void DrawSlider(const Widget_t *widget, int8_t offset /* = 0 */) {
   const Image_t *bar, *knob;
 
-  bar  = &widget->image[0];
-  knob = &widget->image[1];
+  bar  = &widget->image[offset + 0];
+  knob = &widget->image[offset + 1];
 
   if (bar && knob) {
     uint32_t w, h;
@@ -221,7 +229,22 @@ static void DrawSlider(const Widget_t *widget, int8_t offset /* = 0 */) {
     sprite_knob.deleteSprite();
     sprite_bar.deleteSprite();
 
+    POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());
+  }
+}
+
+static void DrawToggle(const Widget_t *widget, bool check /* = false */) {
+  DrawButton(widget, check ? 1 : 0);
+}
+
+static void DrawCheck(const Widget_t *widget, bool check /* = false */) {
+  DrawButton(widget, check ? 1 : 0);
+}
+
+static void DrawRadio(const Widget_t *widget, uint8_t n_widget, uint8_t selected /* = 0 */) {
+  for (int i = 0; i < n_widget; i++) {
+    DrawButton(&widget[i], (int8_t)(i == selected));
   }
 }
 
@@ -231,17 +254,18 @@ static void DrawSlider(const Widget_t *widget, int8_t offset /* = 0 */) {
 #define PRESSED_BUFFER_LEN  64
 #define PRESSED_OFFSET      2
 
-static void DrawPressed(const Widget_t *widget, Touch_t &touch) {
+static void DrawPress(const Widget_t *widget, Event_t event) {
+  int16_t offset;
   const uint16_t x = widget->x;
   const uint16_t y = widget->y;
   const uint16_t w = widget->w;
   const uint16_t h = widget->h;
-  int offset, d = PRESSED_OFFSET * 2;
+  const uint16_t d = PRESSED_OFFSET * 2;
   lgfx::rgb888_t rgb[PRESSED_BUFFER_LEN];
 
-  if (touch.event == EVENT_FALLING) {
+  if (event == EVENT_FALLING) {
     offset = +PRESSED_OFFSET;
-  } else if (touch.event == EVENT_RISING) {
+  } else if (event == EVENT_RISING) {
     offset = -PRESSED_OFFSET;
   } else {
     offset = 0;
@@ -262,30 +286,15 @@ static void DrawPressed(const Widget_t *widget, Touch_t &touch) {
       }
     }
 
+    POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());
-  }
-}
-
-/*--------------------------------------------------------------------------------
- * Drawing when switching screens
- *--------------------------------------------------------------------------------*/
-static bool DrawSetup(const Widget_t *widget, Touch_t &touch, DrawType_t type, int8_t offset) {
-  if (touch.event == EVENT_NONE) {
-    switch (type) {
-      case DRAW_WIDGET: DrawWidget(widget, offset); break;
-      case DRAW_SPRITE: DrawSprite(widget, offset); break;
-      case DRAW_SLIDER: DrawSlider(widget, offset); break;
-    }    
-    return true;
-  } else {
-    return false;
   }
 }
 
 /*--------------------------------------------------------------------------------
  * Draw the legend and icons at STATE_ON
  *--------------------------------------------------------------------------------*/
-void widget_setup(State_t screen = STATE_MAIN) {
+void widget_setup(State_t screen = STATE_OFF) {
   int n = 0;
   const Widget_t *widget = NULL;
 
@@ -296,6 +305,7 @@ void widget_setup(State_t screen = STATE_MAIN) {
       break;
 
     case STATE_CONFIGURATION:
+      cnf.video_recording = false;
       widget = widget_configuration;
       n = N_WIDGETS(widget_configuration);
       break;
@@ -339,8 +349,9 @@ void widget_setup(State_t screen = STATE_MAIN) {
     for (int i = 0; i < n; i++, widget++) {
       if (widget->image && widget->callback) {
         widget->callback(widget, touch);
+      } else {
+        POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
       }
-      POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     }
   }
 

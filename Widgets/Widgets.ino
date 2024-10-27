@@ -10,6 +10,36 @@
 #define DBG_EXEC(x)
 #endif
 
+/*--------------------------------------------------------------------------------
+ * Widget control parameters
+ *--------------------------------------------------------------------------------*/
+typedef struct {
+  uint8_t       interpolation;
+  uint8_t       block_size;
+  uint8_t       color_scheme;
+  uint8_t       capture_mode; // 0: camera, 1: video
+  bool          video_recording;
+  bool          file_checkbox;
+  bool          minmax_auto;
+  bool          range_auto;
+  int16_t       range_min;
+  int16_t       range_max;
+  uint16_t      calibration[8];
+} MLXConfig_t;
+
+MLXConfig_t cnf = {
+  .interpolation  = 8,
+  .block_size     = 1,
+  .color_scheme   = 0,
+  .capture_mode   = 0,
+  .file_checkbox  = false,
+  .minmax_auto    = false,
+  .range_auto     = false,
+  .range_min      = 20,
+  .range_max      = 35,
+  .calibration    = {319, 384, 3866, 355, 277, 3729, 3832, 3785},
+};
+
 /*=============================================================
  * Step 1: Select GFX Library
  *=============================================================*/
@@ -62,12 +92,12 @@ void gfx_setup(void) {
 /*=============================================================
  * Touch event manager
  *=============================================================*/
- #include "touch.hpp"
+#include "touch.hpp"
 
 /*=============================================================
  * Wedget manager
  *=============================================================*/
- #include "widget.hpp"
+#include "widget.hpp"
 
 void setup() {
   Serial.begin(115200);

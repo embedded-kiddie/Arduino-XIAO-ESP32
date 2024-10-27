@@ -18,19 +18,20 @@ XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);  // Param 2 - Touch IRQ Pin - inter
  * Definition of events
  *--------------------------------------------------------------------------------*/
 #define PERIOD_DEBOUNCE 25  // [msec]
-#define PERIOD_DRAG     50  // [msec]
+#define PERIOD_DOWN     50  // [msec]
 
 typedef enum {
   EVENT_NONE    = (0x00),
   EVENT_FALLING = (0x01), // untouch -->   touch
   EVENT_RISING  = (0x02), //   touch --> untouch
-  EVENT_DRAG    = (0x04), //   touch -->   touch
+  EVENT_TOUCHED = (0x04), //   touch -->   touch
   // alias
-  EVENT_UP      = (EVENT_RISING),
   EVENT_DOWN    = (EVENT_FALLING),
-  EVENT_CLICK   = (EVENT_FALLING | EVENT_RISING),
-  EVENT_CHANGE  = (EVENT_FALLING | EVENT_RISING),
-  EVENT_ALL     = (EVENT_FALLING | EVENT_RISING | EVENT_DRAG),
+  EVENT_UP      = (EVENT_RISING),
+  EVENT_DRAG    = (EVENT_RISING | EVENT_TOUCHED),
+  EVENT_CLICK   = (EVENT_RISING | EVENT_FALLING),
+  EVENT_CHANGE  = (EVENT_RISING | EVENT_FALLING),
+  EVENT_ALL     = (EVENT_RISING | EVENT_FALLING | EVENT_TOUCHED),
 } Event_t;
 
 typedef struct {
@@ -112,7 +113,7 @@ bool touch_event(Touch_t &touch) {
 
   // touch --> touch
   if (prev_stat == true && stat == true) {
-    event = time > PERIOD_DRAG ? EVENT_DRAG : EVENT_NONE;
+    event = time > PERIOD_DOWN ? EVENT_TOUCHED : EVENT_NONE;
   } /*else
 
   // untouch --> untouch

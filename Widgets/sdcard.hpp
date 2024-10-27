@@ -373,17 +373,17 @@ bool sdcard_save(void) {
   GetFileList(SD, "/", 1, files);
 
   for (const auto& file : files) {
-    printf("%s, %lu\n", file.name.c_str(), file.size);
+    DBG_EXEC(printf("%s, %lu\n", file.name.c_str(), file.size));
   }
 
   // SD.end(); // Activating this line will cause some GFX libraries to stop working.
 
 #if USE_SDFAT
-  printf("Card size: %luMB\n", (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5));
-  printf("Free size: %luMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
+  DBG_EXEC(printf("Card size: %luMB\n", (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5)));
+  DBG_EXEC(printf("Free size: %luMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024)));
 #else
-  printf("Card size: %lluMB\n", SD.totalBytes() / (1024 * 1024));
-  printf("Used size: %lluMB\n", SD.usedBytes()  / (1024 * 1024));
+  DBG_EXEC(printf("Card size: %lluMB\n", SD.totalBytes() / (1024 * 1024)));
+  DBG_EXEC(printf("Used size: %lluMB\n", SD.usedBytes()  / (1024 * 1024)));
 #endif
 
   return true;
