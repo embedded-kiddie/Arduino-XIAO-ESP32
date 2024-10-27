@@ -44,7 +44,7 @@ typedef struct {
  *--------------------------------------------------------------------------------*/
 #define POSTION_CHECK true
 #if     POSTION_CHECK
-#define POS_CHECK(x)  {x;}
+#define POS_CHECK(x)  x
 #else
 #define POS_CHECK(x)
 #endif
@@ -167,6 +167,14 @@ static void DrawScreen(const Widget_t *widget, int8_t offset /* = 0 */) {
  * Draw a button-like icon
  *--------------------------------------------------------------------------------*/
 static void DrawButton(const Widget_t *widget, int8_t offset /* = 0 */) {
+#if 1
+
+  // faster
+  DrawWidget(widget, offset);
+
+#else
+
+  // slower
   const Image_t *image = &widget->image[offset];
 
   if (image) {
@@ -185,7 +193,10 @@ static void DrawButton(const Widget_t *widget, int8_t offset /* = 0 */) {
 
     POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());
+
   }
+
+#endif
 }
 
 /*--------------------------------------------------------------------------------
@@ -194,18 +205,25 @@ static void DrawButton(const Widget_t *widget, int8_t offset /* = 0 */) {
 #define SLIDER_KNOB_OFFSET  7 // offset from BAR
 
 static void DrawSlider(const Widget_t *widget, int8_t offset /* = 0 */) {
-  const Image_t *bar, *knob;
-
-  bar  = &widget->image[offset + 0];
-  knob = &widget->image[offset + 1];
+  const Image_t *bar  = &widget->image[offset + 0];
+  const Image_t *knob = &widget->image[offset + 1];
 
   if (bar && knob) {
-    uint32_t w, h;
     GFX_EXEC(startWrite());
 
+#if 0
+
+    // faster but flickering
+    GFX_EXEC(drawPng(bar->data,  bar->size,  widget->x,                      widget->y));
+    GFX_EXEC(drawPng(knob->data, knob->size, widget->x + SLIDER_KNOB_OFFSET, widget->y));
+
+#else
+
+    // slower but no flickering
     LGFX_Sprite sprite_bar(&lcd);
     LGFX_Sprite sprite_knob(&sprite_bar);
 
+    uint32_t w, h;
     w = swap_endian(*(uint32_t*)(bar->data + PNG_HEADER_WIDTH));
     h = swap_endian(*(uint32_t*)(bar->data + PNG_HEADER_HEIGHT));
     DBG_EXEC(printf("w: %d, h: %d\n", w, h));
@@ -225,6 +243,8 @@ static void DrawSlider(const Widget_t *widget, int8_t offset /* = 0 */) {
 
     sprite_knob.deleteSprite();
     sprite_bar.deleteSprite();
+
+#endif
 
     POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());

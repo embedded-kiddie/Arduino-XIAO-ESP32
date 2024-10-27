@@ -5,7 +5,7 @@
 
 #define DEBUG       true
 #if     DEBUG
-#define DBG_EXEC(x) {x;}
+#define DBG_EXEC(x) x
 #else
 #define DBG_EXEC(x)
 #endif
@@ -107,6 +107,14 @@ void setup() {
   touch_setup();
   sdcard_setup();
   widget_setup();
+
+#ifdef  ESP32
+  // https://qiita.com/Dreamwalker/items/01cd216d48b4528c5959
+  DBG_EXEC(printf("Heap Size : %d\n", ESP.getHeapSize()));
+  DBG_EXEC(printf("Heap Free : %d\n", ESP.getFreeHeap()));
+  DBG_EXEC(printf("PSRAM Size: %d\n", ESP.getPsramSize()));
+  DBG_EXEC(printf("PSRAM Free: %d\n", ESP.getFreePsram()));
+#endif
 }
 
 void loop() {
