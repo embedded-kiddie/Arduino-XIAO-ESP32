@@ -72,12 +72,12 @@ static void onMainCamera        (const void *w, Touch_t &touch);
 static void onMainConfiguration (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_main[] = {
-  {   0,   0, 320,         240,          image_main,        TYPE_SCREEN, EVENT_NONE, onMainScreen        },
-  {   0,   0, 256,         192,          NULL,              TYPE_BUTTON, EVENT_ALL,  onMainInside        },
-  { 256,   0,  64,         134,          NULL,              TYPE_BUTTON, EVENT_ALL,  onMainOutside       },
-  {   0, 195, 256,          45,          NULL,              TYPE_BUTTON, EVENT_ALL,  onMainThermograph   },
-  { 265, 135, ICON1_WIDTH, ICON1_HEIGHT, image_icon_camera, TYPE_BUTTON, EVENT_UP,   onMainCamera        },
-  { 265, 185, ICON1_WIDTH, ICON1_HEIGHT, NULL,              TYPE_BUTTON, EVENT_ALL,  onMainConfiguration },
+  {   0,   0, 320,         240,          image_main,        EVENT_NONE, onMainScreen        },
+  {   0,   0, 256,         192,          NULL,              EVENT_ALL,  onMainInside        },
+  { 256,   0,  64,         134,          NULL,              EVENT_ALL,  onMainOutside       },
+  {   0, 195, 256,          45,          NULL,              EVENT_ALL,  onMainThermograph   },
+  { 265, 135, ICON1_WIDTH, ICON1_HEIGHT, image_icon_camera, EVENT_UP,   onMainCamera        },
+  { 265, 185, ICON1_WIDTH, ICON1_HEIGHT, NULL,              EVENT_ALL,  onMainConfiguration },
 };
 
 // Screen - Configuration
@@ -91,14 +91,14 @@ static void onConfigurationInformation  (const void *w, Touch_t &touch);
 static void onConfigurationReturn       (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_configuration[] = {
-  {   0,   0, 320,         240,          image_configuration, TYPE_SCREEN, EVENT_NONE, onConfigurationScreen      },
-  {  22,  10, ICON2_WIDTH, ICON2_HEIGHT, NULL,                TYPE_BUTTON, EVENT_ALL,  onConfigurationResolution  },
-  { 124,  10, ICON2_WIDTH, ICON2_HEIGHT, NULL,                TYPE_BUTTON, EVENT_ALL,  onConfigurationThermograph },
-  { 226,  10, ICON2_WIDTH, ICON2_HEIGHT, NULL,                TYPE_BUTTON, EVENT_ALL,  onConfigurationFileManager },
-  {  22, 100, ICON2_WIDTH, ICON2_HEIGHT, NULL,                TYPE_BUTTON, EVENT_ALL,  onConfigurationCaptureMode },
-  { 124, 100, ICON2_WIDTH, ICON2_HEIGHT, NULL,                TYPE_BUTTON, EVENT_ALL,  onConfigurationCalibration },
-  { 226, 100, ICON2_WIDTH, ICON2_HEIGHT, NULL,                TYPE_BUTTON, EVENT_ALL,  onConfigurationInformation },
-  { 134, 192, ICON1_WIDTH, ICON1_HEIGHT, NULL,                TYPE_BUTTON, EVENT_ALL,  onConfigurationReturn      },
+  {   0,   0, 320,         240,          image_configuration, EVENT_NONE, onConfigurationScreen      },
+  {  22,  10, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationResolution  },
+  { 124,  10, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationThermograph },
+  { 226,  10, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationFileManager },
+  {  22, 100, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationCaptureMode },
+  { 124, 100, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationCalibration },
+  { 226, 100, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationInformation },
+  { 134, 192, ICON1_WIDTH, ICON1_HEIGHT, NULL,                EVENT_ALL,  onConfigurationReturn      },
 };
 
 // Screen - Resolution
@@ -109,11 +109,11 @@ static void onResolutionClose   (const void *w, Touch_t &touch);
 static void onResolutionApply   (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_resolution[] = {
-  {   0,   0, 320, 240, image_resolution, TYPE_SCREEN, EVENT_NONE,  onResolutionScreen  },
-  { 138,  45, 160,  26, image_slider1,    TYPE_SLIDER, EVENT_DRAG,  onResolutionSlider1 },
-  { 138, 105, 160,  26, image_slider1,    TYPE_SLIDER, EVENT_DRAG,  onResolutionSlider2 },
-  {  55, 200,  45,  45, NULL,             TYPE_BUTTON, EVENT_ALL,   onResolutionClose   },
-  { 222, 200,  45,  45, NULL,             TYPE_PRESS,  EVENT_CLICK, onResolutionApply   },
+  {   0,   0, 320, 240, image_resolution, EVENT_NONE,  onResolutionScreen  },
+  { 138,  45, 160,  26, image_slider1,    EVENT_DRAG,  onResolutionSlider1 },
+  { 138, 105, 160,  26, image_slider1,    EVENT_DRAG,  onResolutionSlider2 },
+  {  55, 200,  45,  45, NULL,             EVENT_ALL,   onResolutionClose   },
+  { 222, 200,  45,  45, NULL,             EVENT_CLICK, onResolutionApply   },
 };
 
 // Screen - Thermograph
@@ -128,15 +128,15 @@ static void onThermographClose    (const void *w, Touch_t &touch);
 static void onThermographApply    (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_thermograph[] = {
-  {   0,   0, 320, 240, image_thermograph, TYPE_SCREEN, EVENT_NONE,  onThermographScreen  },
-  { 137,   5, 110,  26, image_radio,       TYPE_RADIO,  EVENT_DOWN,  onThermographRadio1  },
-  { 137,  38, 110,  26, image_radio,       TYPE_RADIO,  EVENT_DOWN,  onThermographRadio2  },
-  { 137,  71, 170,  26, image_toggle,      TYPE_TOGGLE, EVENT_DOWN,  onThermographToggle1 },
-  { 137, 103, 170,  26, image_toggle,      TYPE_TOGGLE, EVENT_DOWN,  onThermographToggle2 },
-  {  60, 136, 213,  26, image_slider2,     TYPE_SLIDER, EVENT_DRAG,  onThermographSlider1 },
-  {  60, 174, 213,  26, image_slider2,     TYPE_SLIDER, EVENT_DRAG,  onThermographSlider2 },
-  {  55, 200,  45,  45, NULL,              TYPE_BUTTON, EVENT_ALL,   onThermographClose   },
-  { 222, 200,  45,  45, NULL,              TYPE_PRESS,  EVENT_CLICK, onThermographApply   },
+  {   0,   0, 320, 240, image_thermograph, EVENT_NONE,  onThermographScreen  },
+  { 137,   5, 110,  26, image_radio,       EVENT_DOWN,  onThermographRadio1  },
+  { 137,  38, 110,  26, image_radio,       EVENT_DOWN,  onThermographRadio2  },
+  { 137,  71, 170,  26, image_toggle,      EVENT_DOWN,  onThermographToggle1 },
+  { 137, 103, 170,  26, image_toggle,      EVENT_DOWN,  onThermographToggle2 },
+  {  60, 136, 213,  26, image_slider2,     EVENT_DRAG,  onThermographSlider1 },
+  {  60, 174, 213,  26, image_slider2,     EVENT_DRAG,  onThermographSlider2 },
+  {  55, 200,  45,  45, NULL,              EVENT_ALL,   onThermographClose   },
+  { 222, 200,  45,  45, NULL,              EVENT_CLICK, onThermographApply   },
 };
 
 // Screen - File manager
@@ -150,14 +150,14 @@ static void onFileManagerClose    (const void *w, Touch_t &touch);
 static void onFileManagerApply    (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_file_manager[] = {
-  {   0,   0, 320, 240, image_file_manager, TYPE_SCREEN, EVENT_NONE,  onFileManagerScreen   },
-  {  12,  30, 112,  18, image_checkbox,     TYPE_CHECK,  EVENT_DOWN,  onFileManagerCheckAll },
-  {  30,  52, 128, 110, NULL,               TYPE_SCREEN, EVENT_DOWN,  onFileManagerList1    },
-  { 168,  52, 128, 110, NULL,               TYPE_SCREEN, EVENT_DOWN,  onFileManagerList2    },
-  { 110, 175,  26,  32, image_arrowL,       TYPE_PRESS,  EVENT_CLICK, onFileManagerPrev     },
-  { 180, 175,  26,  32, image_arrowR,       TYPE_PRESS,  EVENT_CLICK, onFileManagerNext     },
-  {  55, 200,  45,  45, NULL,               TYPE_BUTTON, EVENT_ALL,   onFileManagerClose    },
-  { 222, 200,  45,  45, NULL,               TYPE_PRESS,  EVENT_CLICK, onFileManagerApply    },
+  {   0,   0, 320, 240, image_file_manager, EVENT_NONE,  onFileManagerScreen   },
+  {  12,  30, 112,  18, image_checkbox,     EVENT_DOWN,  onFileManagerCheckAll },
+  {  30,  52, 128, 110, NULL,               EVENT_DOWN,  onFileManagerList1    },
+  { 168,  52, 128, 110, NULL,               EVENT_DOWN,  onFileManagerList2    },
+  { 110, 175,  26,  32, image_arrowL,       EVENT_CLICK, onFileManagerPrev     },
+  { 180, 175,  26,  32, image_arrowR,       EVENT_CLICK, onFileManagerNext     },
+  {  55, 200,  45,  45, NULL,               EVENT_ALL,   onFileManagerClose    },
+  { 222, 200,  45,  45, NULL,               EVENT_CLICK, onFileManagerApply    },
 };
 
 // Screen - Capture mode
@@ -167,10 +167,10 @@ static void onCaptureModeVideo  (const void *w, Touch_t &touch);
 static void onCaptureModeApply  (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_capture_mode[] = {
-  {   0,   0, 320, 240, image_capture_mode, TYPE_SCREEN, EVENT_NONE, onCaptureModeScreen   },
-  {  48,  50, 240,  26, image_radio,        TYPE_RADIO,  EVENT_DOWN, onCaptureModeCamera   },
-  {  48, 126, 240,  26, image_radio,        TYPE_RADIO,  EVENT_DOWN, onCaptureModeVideo    },
-  { 136, 200,  45,  45, NULL,               TYPE_BUTTON, EVENT_ALL,  onCaptureModeApply    },
+  {   0,   0, 320, 240, image_capture_mode, EVENT_NONE, onCaptureModeScreen   },
+  {  48,  50, 240,  26, image_radio,        EVENT_DOWN, onCaptureModeCamera   },
+  {  48, 126, 240,  26, image_radio,        EVENT_DOWN, onCaptureModeVideo    },
+  { 136, 200,  45,  45, NULL,               EVENT_ALL,  onCaptureModeApply    },
 };
 
 // Screen - Calibration
@@ -181,11 +181,11 @@ static void onCalibrationClose  (const void *w, Touch_t &touch);
 static void onCalibrationApply  (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_calibration[] = {
-  {   0,   0, 320, 240, image_calibration,  TYPE_SCREEN, EVENT_NONE,  onCalibrationScreen   },
-  {  80,  24,  52,  52, NULL,               TYPE_BUTTON, EVENT_UP,    onCalibrationExec     },
-  { 186,  24,  52,  52, image_save_eeprom,  TYPE_BUTTON, EVENT_UP,    onCalibrationSave     },
-  {  55, 200,  45,  45, NULL,               TYPE_BUTTON, EVENT_ALL,   onCalibrationClose    },
-  { 222, 200,  45,  45, NULL,               TYPE_PRESS,  EVENT_CLICK, onCalibrationApply    },
+  {   0,   0, 320, 240, image_calibration,  EVENT_NONE,  onCalibrationScreen   },
+  {  80,  24,  52,  52, NULL,               EVENT_UP,    onCalibrationExec     },
+  { 186,  24,  52,  52, image_save_eeprom,  EVENT_UP,    onCalibrationSave     },
+  {  55, 200,  45,  45, NULL,               EVENT_ALL,   onCalibrationClose    },
+  { 222, 200,  45,  45, NULL,               EVENT_CLICK, onCalibrationApply    },
 };
 
 // Screen - Information
@@ -193,8 +193,8 @@ static void onInformationScreen (const void *w, Touch_t &touch);
 static void onInformationClose  (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_information[] = {
-  {   0,   0, 320, 240, image_information, TYPE_SCREEN, EVENT_NONE, onInformationScreen   },
-  { 136, 200,  45,  45, NULL,              TYPE_BUTTON, EVENT_ALL,  onInformationClose    },
+  {   0,   0, 320, 240, image_information, EVENT_NONE, onInformationScreen   },
+  { 136, 200,  45,  45, NULL,              EVENT_ALL,  onInformationClose    },
 };
 
 /*--------------------------------------------------------------------------------

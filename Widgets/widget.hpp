@@ -24,16 +24,6 @@ static State_t state = STATE_ON;
 /*--------------------------------------------------------------------------------
  * Widget
  *--------------------------------------------------------------------------------*/
-typedef enum {
-  TYPE_SCREEN = 0,
-  TYPE_BUTTON,
-  TYPE_SLIDER,
-  TYPE_TOGGLE,
-  TYPE_RADIO,
-  TYPE_CHECK,
-  TYPE_PRESS,
-} Type_t;
-
 typedef struct {
   const uint8_t   *data;  // pointer to the image
   const size_t    size;   // size of image data
@@ -43,7 +33,6 @@ typedef struct {
   const uint16_t  x, y;   // The top left coordinate of the widget
   const uint16_t  w, h;   // Widget width and height
   const Image_t   *image; // Widget image data
-  const Type_t    type;   // type of widget
   const Event_t   event;  // The touch event to detect
   void            (*callback)(const void *widget, Touch_t &touch);  // Callback event handler
 } Widget_t;
