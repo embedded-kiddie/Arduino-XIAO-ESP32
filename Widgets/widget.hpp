@@ -53,6 +53,7 @@ typedef struct {
  * Prototype Declaration for drawing widget
  *--------------------------------------------------------------------------------*/
 State_t widget_state(State_t s);
+static void DrawWidget(const Widget_t *widget, int8_t offset = 0);
 static void DrawScreen(const Widget_t *widget, int8_t offset = 0);
 static void DrawButton(const Widget_t *widget, int8_t offset = 0);
 static void DrawSlider(const Widget_t *widget, int8_t offset = 0);
@@ -132,9 +133,9 @@ uint32_t swap_endian(uint32_t v) {
 #endif // __BYTE_ORDER__
 
 /*--------------------------------------------------------------------------------
- * Draw screen
+ * Draw widget
  *--------------------------------------------------------------------------------*/
-static void DrawScreen(const Widget_t *widget, int8_t offset /* = 0 */) {
+static void DrawWidget(const Widget_t *widget, int8_t offset /* = 0 */) {
   const Image_t *image = &widget->image[offset];
 
   if (image) {
@@ -153,6 +154,13 @@ static void DrawScreen(const Widget_t *widget, int8_t offset /* = 0 */) {
     POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());
   }
+}
+
+/*--------------------------------------------------------------------------------
+ * Draw screen
+ *--------------------------------------------------------------------------------*/
+static void DrawScreen(const Widget_t *widget, int8_t offset /* = 0 */) {
+  DrawWidget(widget, offset);
 }
 
 /*--------------------------------------------------------------------------------
