@@ -92,13 +92,13 @@ static void onConfigurationReturn       (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_configuration[] = {
   {   0,   0, 320,         240,          image_configuration, EVENT_NONE, onConfigurationScreen      },
-  {  22,  10, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationResolution  },
-  { 124,  10, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationThermograph },
+  {  24,  10, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationResolution  },
+  { 125,  10, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationThermograph },
   { 226,  10, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationFileManager },
-  {  22, 100, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationCaptureMode },
-  { 124, 100, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationCalibration },
+  {  24, 100, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationCaptureMode },
+  { 125, 100, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationCalibration },
   { 226, 100, ICON2_WIDTH, ICON2_HEIGHT, NULL,                EVENT_ALL,  onConfigurationInformation },
-  { 134, 192, ICON1_WIDTH, ICON1_HEIGHT, NULL,                EVENT_ALL,  onConfigurationReturn      },
+  { 137, 200, 45,          45,           NULL,                EVENT_ALL,  onConfigurationReturn      },
 };
 
 // Screen - Resolution
@@ -112,7 +112,7 @@ static constexpr Widget_t widget_resolution[] = {
   {   0,   0, 320, 240, image_resolution, EVENT_NONE,  onResolutionScreen  },
   { 138,  45, 160,  26, image_slider1,    EVENT_DRAG,  onResolutionSlider1 },
   { 138, 105, 160,  26, image_slider1,    EVENT_DRAG,  onResolutionSlider2 },
-  {  55, 200,  45,  45, NULL,             EVENT_ALL,   onResolutionClose   },
+  {  53, 200,  45,  45, NULL,             EVENT_ALL,   onResolutionClose   },
   { 222, 200,  45,  45, NULL,             EVENT_CLICK, onResolutionApply   },
 };
 
@@ -133,9 +133,9 @@ static constexpr Widget_t widget_thermograph[] = {
   { 137,  38, 110,  26, image_radio,       EVENT_DOWN,  onThermographRadio2  },
   { 137,  71, 170,  26, image_toggle,      EVENT_DOWN,  onThermographToggle1 },
   { 137, 103, 170,  26, image_toggle,      EVENT_DOWN,  onThermographToggle2 },
-  {  60, 136, 213,  26, image_slider2,     EVENT_DRAG,  onThermographSlider1 },
-  {  60, 174, 213,  26, image_slider2,     EVENT_DRAG,  onThermographSlider2 },
-  {  55, 200,  45,  45, NULL,              EVENT_ALL,   onThermographClose   },
+  {  60, 136, 216,  26, image_slider2,     EVENT_DRAG,  onThermographSlider1 },
+  {  60, 174, 216,  26, image_slider2,     EVENT_DRAG,  onThermographSlider2 },
+  {  53, 200,  45,  45, NULL,              EVENT_ALL,   onThermographClose   },
   { 222, 200,  45,  45, NULL,              EVENT_CLICK, onThermographApply   },
 };
 
@@ -156,7 +156,7 @@ static constexpr Widget_t widget_file_manager[] = {
   { 168,  52, 128, 110, NULL,               EVENT_DOWN,  onFileManagerList2    },
   { 110, 175,  26,  32, image_arrowL,       EVENT_CLICK, onFileManagerPrev     },
   { 180, 175,  26,  32, image_arrowR,       EVENT_CLICK, onFileManagerNext     },
-  {  55, 200,  45,  45, NULL,               EVENT_ALL,   onFileManagerClose    },
+  {  53, 200,  45,  45, NULL,               EVENT_ALL,   onFileManagerClose    },
   { 222, 200,  45,  45, NULL,               EVENT_CLICK, onFileManagerApply    },
 };
 
@@ -182,9 +182,9 @@ static void onCalibrationApply  (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_calibration[] = {
   {   0,   0, 320, 240, image_calibration,  EVENT_NONE,  onCalibrationScreen   },
-  {  80,  24,  52,  52, NULL,               EVENT_UP,    onCalibrationExec     },
+  {  82,  24,  52,  52, NULL,               EVENT_UP,    onCalibrationExec     },
   { 186,  24,  52,  52, image_save_eeprom,  EVENT_UP,    onCalibrationSave     },
-  {  55, 200,  45,  45, NULL,               EVENT_ALL,   onCalibrationClose    },
+  {  53, 200,  45,  45, NULL,               EVENT_ALL,   onCalibrationClose    },
   { 222, 200,  45,  45, NULL,               EVENT_CLICK, onCalibrationApply    },
 };
 
@@ -194,7 +194,7 @@ static void onInformationClose  (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_information[] = {
   {   0,   0, 320, 240, image_information, EVENT_NONE, onInformationScreen   },
-  { 136, 200,  45,  45, NULL,              EVENT_ALL,  onInformationClose    },
+  { 137, 200,  45,  45, NULL,              EVENT_ALL,  onInformationClose    },
 };
 
 /*--------------------------------------------------------------------------------
@@ -336,13 +336,21 @@ static void onResolutionScreen(const void *w, Touch_t &touch) {
 static void onResolutionSlider1(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("onResolutionSlider1\n"));
 
-  DrawSlider((const Widget_t*)w);
+  const Widget_t *widget = (const Widget_t*)w;
+  int16_t X = touch.x   - widget->x;
+  int16_t W = widget->w - widget->h - SLIDER_KNOB_OFFSET;
+  X = constrain(X, SLIDER_KNOB_OFFSET, W);
+  DrawSlider(widget, X);
 }
 
 static void onResolutionSlider2(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("onResolutionSlider2\n"));
 
-  DrawSlider((const Widget_t*)w);
+  const Widget_t *widget = (const Widget_t*)w;
+  int16_t X = touch.x   - widget->x;
+  int16_t W = widget->w - widget->h - SLIDER_KNOB_OFFSET;
+  X = constrain(X, SLIDER_KNOB_OFFSET, W);
+  DrawSlider(widget, X);
 }
 
 static void onResolutionClose(const void *w, Touch_t &touch) {
@@ -409,13 +417,21 @@ static void onThermographToggle2(const void *w, Touch_t &touch) {
 static void onThermographSlider1(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("onThermographSlider1\n"));
 
-  DrawSlider((const Widget_t*)w);
+  const Widget_t *widget = (const Widget_t*)w;
+  int16_t X = touch.x   - widget->x;
+  int16_t W = widget->w - widget->h - SLIDER_KNOB_OFFSET;
+  X = constrain(X, SLIDER_KNOB_OFFSET, W);
+  DrawSlider(widget, X);
 }
 
 static void onThermographSlider2(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("onThermographSlider2\n"));
 
-  DrawSlider((const Widget_t*)w);
+  const Widget_t *widget = (const Widget_t*)w;
+  int16_t X = touch.x   - widget->x;
+  int16_t W = widget->w - widget->h - SLIDER_KNOB_OFFSET;
+  X = constrain(X, SLIDER_KNOB_OFFSET, W);
+  DrawSlider(widget, X);
 }
 
 static void onThermographClose(const void *w, Touch_t &touch) {

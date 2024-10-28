@@ -17,8 +17,9 @@ XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);  // Param 2 - Touch IRQ Pin - inter
 /*--------------------------------------------------------------------------------
  * Definition of events
  *--------------------------------------------------------------------------------*/
-#define PERIOD_DEBOUNCE 25  // [msec]
-#define PERIOD_DOWN     50  // [msec]
+#define PERIOD_DEBOUNCE     25  // [msec]
+#define PERIOD_CONFIRM_DOWN 50  // [msec]
+#define PERIOD_CLEAR_EVENT  100 // [msec]
 
 typedef enum {
   EVENT_NONE    = (0x00),
@@ -38,6 +39,13 @@ typedef struct {
   Event_t     event;  // Detected event
   uint16_t    x, y;   // The coordinates where the event fired
 } Touch_t;
+
+typedef struct {
+  uint16_t  params[8];
+  int8_t    offset[2];
+} Calibration_t;
+
+static Calibration_t cal;
 
 /*--------------------------------------------------------------------------------
  * Setup touch manager
@@ -59,8 +67,11 @@ bool touch_setup(void) {
 
 #ifdef LOVYANGFX_HPP_
   // https://github.com/lovyan03/LovyanGFX/discussions/539
-  uint16_t cal[8] = {319, 384, 3866, 355, 277, 3729, 3832, 3785};
-  GFX_EXEC(setTouchCalibrate(cal));
+  cal = {
+    {319, 384, 3866, 355, 277, 3729, 3832, 3785},
+    {-10, 0},
+  };
+  GFX_EXEC(setTouchCalibrate(cal.params));
 #endif
 
   return true;
@@ -113,7 +124,7 @@ bool touch_event(Touch_t &touch) {
 
   // touch --> touch
   if (prev_stat == true && stat == true) {
-    event = time > PERIOD_DOWN ? EVENT_TOUCHED : EVENT_NONE;
+    event = time > PERIOD_CONFIRM_DOWN ? EVENT_TOUCHED : EVENT_NONE;
   } /*else
 
   // untouch --> untouch
@@ -124,12 +135,14 @@ bool touch_event(Touch_t &touch) {
   prev_stat = stat;
 
   if (event != EVENT_NONE) {
-    // DBG_EXEC(printf("event: %d, x: %d, y: %d\n", event, x, y));
- 
     if (stat) {
+        x += cal.offset[0];
+        y += cal.offset[1];
         x = constrain(x, 0, 319);
         y = constrain(y, 0, 239);
     }
+
+    DBG_EXEC(printf("event: %d, x: %d, y: %d\n", event, x, y));
 
     touch.event = event;
     touch.x = x;
@@ -138,18 +151,11 @@ bool touch_event(Touch_t &touch) {
     return true;
   }
 
-#if     DEBUG
-  // Capture screen
-  else if (Serial.available()) {
-    Serial.readStringUntil('\n');
-    sdcard_save();
-  }
-#endif
-
   return false;
 }
 
 void touch_clear(void) {
   Touch_t touch;
+  delay(PERIOD_CLEAR_EVENT);
   while(touch_event(touch));
 }

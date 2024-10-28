@@ -52,11 +52,13 @@ typedef struct {
 /*--------------------------------------------------------------------------------
  * Prototype Declaration for drawing widget
  *--------------------------------------------------------------------------------*/
+#define SLIDER_KNOB_OFFSET  6 // offset from BAR
+
 State_t widget_state(State_t s);
-static void DrawWidget(const Widget_t *widget, int8_t offset = 0);
-static void DrawScreen(const Widget_t *widget, int8_t offset = 0);
-static void DrawButton(const Widget_t *widget, int8_t offset = 0);
-static void DrawSlider(const Widget_t *widget, int8_t offset = 0);
+static void DrawWidget(const Widget_t *widget, uint8_t offset = 0);
+static void DrawScreen(const Widget_t *widget, uint8_t offset = 0);
+static void DrawButton(const Widget_t *widget, uint8_t offset = 0);
+static void DrawSlider(const Widget_t *widget, int16_t offset = 0);
 static void DrawToggle(const Widget_t *widget, bool check = false);
 static void DrawCheck (const Widget_t *widget, bool check = false);
 static void DrawPress (const Widget_t *widget, Event_t event = EVENT_NONE);
@@ -135,7 +137,7 @@ uint32_t swap_endian(uint32_t v) {
 /*--------------------------------------------------------------------------------
  * Draw widget
  *--------------------------------------------------------------------------------*/
-static void DrawWidget(const Widget_t *widget, int8_t offset /* = 0 */) {
+static void DrawWidget(const Widget_t *widget, uint8_t offset /* = 0 */) {
   const Image_t *image = &widget->image[offset];
 
   if (image) {
@@ -159,14 +161,14 @@ static void DrawWidget(const Widget_t *widget, int8_t offset /* = 0 */) {
 /*--------------------------------------------------------------------------------
  * Draw screen
  *--------------------------------------------------------------------------------*/
-static void DrawScreen(const Widget_t *widget, int8_t offset /* = 0 */) {
+static void DrawScreen(const Widget_t *widget, uint8_t offset /* = 0 */) {
   DrawWidget(widget, offset);
 }
 
 /*--------------------------------------------------------------------------------
  * Draw a button-like icon
  *--------------------------------------------------------------------------------*/
-static void DrawButton(const Widget_t *widget, int8_t offset /* = 0 */) {
+static void DrawButton(const Widget_t *widget, uint8_t offset /* = 0 */) {
 #if 1
 
   // faster
@@ -202,11 +204,9 @@ static void DrawButton(const Widget_t *widget, int8_t offset /* = 0 */) {
 /*--------------------------------------------------------------------------------
  * Draw slider
  *--------------------------------------------------------------------------------*/
-#define SLIDER_KNOB_OFFSET  7 // offset from BAR
-
-static void DrawSlider(const Widget_t *widget, int8_t offset /* = 0 */) {
-  const Image_t *bar  = &widget->image[offset + 0];
-  const Image_t *knob = &widget->image[offset + 1];
+static void DrawSlider(const Widget_t *widget, int16_t offset /* = 0 */) {
+  const Image_t *bar  = &widget->image[0];
+  const Image_t *knob = &widget->image[1];
 
   if (bar && knob) {
     GFX_EXEC(startWrite());
@@ -214,8 +214,8 @@ static void DrawSlider(const Widget_t *widget, int8_t offset /* = 0 */) {
 #if 0
 
     // faster but flickering
-    GFX_EXEC(drawPng(bar->data,  bar->size,  widget->x,                      widget->y));
-    GFX_EXEC(drawPng(knob->data, knob->size, widget->x + SLIDER_KNOB_OFFSET, widget->y));
+    GFX_EXEC(drawPng(bar->data,  bar->size,  widget->x, widget->y));
+    GFX_EXEC(drawPng(knob->data, knob->size, widget->x + (widget->w - widget->h) - SLIDER_KNOB_OFFSET, widget->y));
 
 #else
 
@@ -238,7 +238,7 @@ static void DrawSlider(const Widget_t *widget, int8_t offset /* = 0 */) {
     sprite_knob.createSprite(w, h);
     sprite_knob.drawPng(knob->data, knob->size, 0, 0);
 
-    sprite_knob.pushSprite(SLIDER_KNOB_OFFSET, 0);
+    sprite_knob.pushSprite(offset, 0);
     sprite_bar.pushSprite(widget->x, widget->y);
 
     sprite_knob.deleteSprite();
@@ -305,6 +305,10 @@ static void DrawPress(const Widget_t *widget, Event_t event) {
 
     POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());
+  }
+
+  if (event == EVENT_RISING) {
+    touch_clear();
   }
 }
 

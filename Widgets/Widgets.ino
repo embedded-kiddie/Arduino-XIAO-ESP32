@@ -100,8 +100,8 @@ void gfx_setup(void) {
 #include "widget.hpp"
 
 void setup() {
-  Serial.begin(115200);
-  while (!Serial && millis() <= 1000);
+  DBG_EXEC(Serial.begin(115200));
+  DBG_EXEC(while (!Serial && millis() <= 1000));
 
   gfx_setup();
   touch_setup();
