@@ -492,7 +492,9 @@ static void onFileManagerList2(const void *w, Touch_t &touch) {
 static void onFileManagerPrev(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("onFileManagerPrev\n"));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event == EVENT_NONE) {
+    DrawButton((const Widget_t*)w, 1);
+  } else {
     DrawPress((const Widget_t*)w, touch.event);
   }
 }
@@ -500,7 +502,9 @@ static void onFileManagerPrev(const void *w, Touch_t &touch) {
 static void onFileManagerNext(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("onFileManagerNext\n"));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event == EVENT_NONE) {
+    DrawButton((const Widget_t*)w, 1);
+  } else {
     DrawPress((const Widget_t*)w, touch.event);
   }
 }
