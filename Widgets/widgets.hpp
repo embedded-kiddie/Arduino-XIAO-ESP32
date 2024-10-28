@@ -66,7 +66,6 @@ static constexpr Image_t image_checkbox[] = {
 static constexpr Image_t image_save_eeprom[] = {
   { save_eeprom_off, sizeof(save_eeprom_off) }, // 70 x 70
   { save_eeprom_on,  sizeof(save_eeprom_on ) }, // 70 x 70
-  { save_eeprom_org, sizeof(save_eeprom_org) }, // 70 x 70
   { save_eeprom_red, sizeof(save_eeprom_red) }, // 70 x 70
 };
 
@@ -574,7 +573,7 @@ static void onCalibrationExec   (const void *w, Touch_t &touch) {
 static void onCalibrationSave   (const void *w, Touch_t &touch) {
   DBG_EXEC(printf("onCalibrationSave\n"));
 
-  DrawButton((const Widget_t*)w, 3);
+  DrawButton((const Widget_t*)w, 2);
 }
 
 static void onCalibrationXup(const void *w, Touch_t &touch) {
