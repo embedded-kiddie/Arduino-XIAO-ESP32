@@ -18,7 +18,7 @@ XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);  // Param 2 - Touch IRQ Pin - inter
  * Definition of events
  *--------------------------------------------------------------------------------*/
 #define PERIOD_DEBOUNCE     25  // [msec]
-#define PERIOD_CONFIRM_DOWN 50  // [msec]
+#define PERIOD_TOUCHED      50  // [msec]
 #define PERIOD_CLEAR_EVENT  100 // [msec]
 
 typedef enum {
@@ -40,10 +40,12 @@ typedef struct {
   uint16_t    x, y;   // The coordinates where the event fired
 } Touch_t;
 
+#ifdef LOVYANGFX_HPP_
 typedef struct {
   uint16_t  params[8];
   int8_t    offset[2];
 } Calibration_t;
+#endif
 
 static Calibration_t cal;
 
@@ -124,7 +126,7 @@ bool touch_event(Touch_t &touch) {
 
   // touch --> touch
   if (prev_stat == true && stat == true) {
-    event = time > PERIOD_CONFIRM_DOWN ? EVENT_TOUCHED : EVENT_NONE;
+    event = time > PERIOD_TOUCHED ? EVENT_TOUCHED : EVENT_NONE;
   } /*else
 
   // untouch --> untouch
@@ -150,6 +152,16 @@ bool touch_event(Touch_t &touch) {
 
     return true;
   }
+
+#if     DEBUG
+  // Capture screen
+  else if (Serial.available()) {
+    Serial.readStringUntil('\n');
+    Serial.println("saving screenshot...");
+    sdcard_save();
+    Serial.println("done.");
+  }
+#endif
 
   return false;
 }

@@ -51,13 +51,21 @@ static constexpr Image_t image_arrowR[] = {
   { icon_arrow_Roff, sizeof(icon_arrow_Roff) }, // 26 x 26
   { icon_arrow_Ron,  sizeof(icon_arrow_Ron ) }, // 26 x 26
 };
+static constexpr Image_t image_arrowU[] = {
+  { icon_arrow_Uoff, sizeof(icon_arrow_Uoff) }, // 26 x 26
+  { icon_arrow_Uon,  sizeof(icon_arrow_Uon ) }, // 26 x 26
+};
+static constexpr Image_t image_arrowD[] = {
+  { icon_arrow_Doff, sizeof(icon_arrow_Doff) }, // 26 x 26
+  { icon_arrow_Don,  sizeof(icon_arrow_Don ) }, // 26 x 26
+};
 static constexpr Image_t image_checkbox[] = {
   { icon_checkbox_off, sizeof(icon_checkbox_off) }, // 18 x 18
   { icon_checkbox_on,  sizeof(icon_checkbox_on ) }, // 18 x 18
 };
 static constexpr Image_t image_save_eeprom[] = {
-  { save_eeprom_off, sizeof(save_eeprom_off) }, // 52 x 52
-  { save_eeprom_on,  sizeof(save_eeprom_on ) }, // 52 x 52
+  { save_eeprom_off, sizeof(save_eeprom_off) }, // 70 x 70
+  { save_eeprom_on,  sizeof(save_eeprom_on ) }, // 70 x 70
 };
 
 /*--------------------------------------------------------------------------------
@@ -177,13 +185,21 @@ static constexpr Widget_t widget_capture_mode[] = {
 static void onCalibrationScreen (const void *w, Touch_t &touch);
 static void onCalibrationExec   (const void *w, Touch_t &touch);
 static void onCalibrationSave   (const void *w, Touch_t &touch);
+static void onCalibrationXup    (const void *w, Touch_t &touch);
+static void onCalibrationXdown  (const void *w, Touch_t &touch);
+static void onCalibrationYup    (const void *w, Touch_t &touch);
+static void onCalibrationYdown  (const void *w, Touch_t &touch);
 static void onCalibrationClose  (const void *w, Touch_t &touch);
 static void onCalibrationApply  (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_calibration[] = {
   {   0,   0, 320, 240, image_calibration,  EVENT_NONE,  onCalibrationScreen   },
-  {  82,  24,  52,  52, NULL,               EVENT_UP,    onCalibrationExec     },
-  { 186,  24,  52,  52, image_save_eeprom,  EVENT_UP,    onCalibrationSave     },
+  {  72,  16,  70,  70, NULL,               EVENT_UP,    onCalibrationExec     },
+  { 178,  16,  70,  70, image_save_eeprom,  EVENT_UP,    onCalibrationSave     },
+  { 164, 148,  26,  26, image_arrowU,       EVENT_CLICK, onCalibrationXup      },
+  { 164, 174,  26,  26, image_arrowD,       EVENT_CLICK, onCalibrationXdown    },
+  { 262, 148,  26,  26, image_arrowU,       EVENT_CLICK, onCalibrationYup      },
+  { 262, 174,  26,  26, image_arrowD,       EVENT_CLICK, onCalibrationYdown    },
   {  53, 200,  45,  45, NULL,               EVENT_ALL,   onCalibrationClose    },
   { 222, 200,  45,  45, NULL,               EVENT_CLICK, onCalibrationApply    },
 };
@@ -553,6 +569,46 @@ static void onCalibrationSave   (const void *w, Touch_t &touch) {
   DBG_EXEC(printf("onCalibrationSave\n"));
 
   DrawButton((const Widget_t*)w);
+}
+
+static void onCalibrationXup(const void *w, Touch_t &touch) {
+  DBG_EXEC(printf("onCalibrationXup\n"));
+
+  if (touch.event == EVENT_NONE) {
+    DrawButton((const Widget_t*)w, 1);
+  } else {
+    DrawPress((const Widget_t*)w, touch.event);
+  }
+}
+
+static void onCalibrationXdown(const void *w, Touch_t &touch) {
+  DBG_EXEC(printf("onCalibrationXdown\n"));
+
+  if (touch.event == EVENT_NONE) {
+    DrawButton((const Widget_t*)w, 1);
+  } else {
+    DrawPress((const Widget_t*)w, touch.event);
+  }
+}
+
+static void onCalibrationYup(const void *w, Touch_t &touch) {
+  DBG_EXEC(printf("onCalibrationYup\n"));
+
+  if (touch.event == EVENT_NONE) {
+    DrawButton((const Widget_t*)w, 1);
+  } else {
+    DrawPress((const Widget_t*)w, touch.event);
+  }
+}
+
+static void onCalibrationYdown(const void *w, Touch_t &touch) {
+  DBG_EXEC(printf("onCalibrationYdown\n"));
+
+  if (touch.event == EVENT_NONE) {
+    DrawButton((const Widget_t*)w, 1);
+  } else {
+    DrawPress((const Widget_t*)w, touch.event);
+  }
 }
 
 static void onCalibrationClose  (const void *w, Touch_t &touch) {

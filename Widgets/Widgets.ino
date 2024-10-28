@@ -24,7 +24,9 @@ typedef struct {
   bool          range_auto;
   int16_t       range_min;
   int16_t       range_max;
-  uint16_t      calibration[8];
+#ifdef LOVYANGFX_HPP_
+  Calibration_t calibration;
+#endif
 } MLXConfig_t;
 
 MLXConfig_t cnf = {
@@ -37,7 +39,11 @@ MLXConfig_t cnf = {
   .range_auto     = false,
   .range_min      = 20,
   .range_max      = 35,
-  .calibration    = {319, 384, 3866, 355, 277, 3729, 3832, 3785},
+#ifdef LOVYANGFX_HPP_
+  .calibration    = {
+    {319, 384, 3866, 355, 277, 3729, 3832, 3785},
+    {-10, 0},
+#endif
 };
 
 /*=============================================================
@@ -119,15 +125,5 @@ void setup() {
 
 void loop() {
   widget_control();
-
-	if (Serial.available() > 0) {
-    while (Serial.available() > 0) {
-  		Serial.read();
-    }
-    Serial.println("saving screenshot...");
-    sdcard_save();
-    Serial.println("done.");
-	}
-
   delay(1);
 }

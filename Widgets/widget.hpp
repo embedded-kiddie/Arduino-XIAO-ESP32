@@ -269,7 +269,7 @@ static void DrawRadio(const Widget_t *widget, uint8_t n_widget, uint8_t selected
  * Rendering the pressed effects
  *--------------------------------------------------------------------------------*/
 #define PRESSED_BUFFER_LEN  64
-#define PRESSED_OFFSET      2
+#define PRESSED_OFFSET      1 // 1 or 2
 
 static void DrawPress(const Widget_t *widget, Event_t event) {
   int16_t offset;
