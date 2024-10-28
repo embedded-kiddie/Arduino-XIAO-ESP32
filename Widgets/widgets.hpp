@@ -8,7 +8,6 @@
 /*--------------------------------------------------------------------------------
  * Image data of widget
  *--------------------------------------------------------------------------------*/
-static constexpr Image_t image_black[]              = { { screen_black,         sizeof(screen_black        ) }, }; // 320 x 240
 static constexpr Image_t image_main[]               = { { screen_main,          sizeof(screen_main         ) }, }; // 320 x 240
 static constexpr Image_t image_configuration[]      = { { screen_configuration, sizeof(screen_configuration) }, }; // 320 x 240
 static constexpr Image_t image_resolution[]         = { { screen_resolution,    sizeof(screen_resolution   ) }, }; // 320 x 240
