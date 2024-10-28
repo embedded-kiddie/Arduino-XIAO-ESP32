@@ -97,11 +97,11 @@ static void pngDraw(PNGDRAW *pDraw) {
   }
 }
 
-static void DrawPNG(uint8_t *img, size_t size, uint16_t x, uint16_t y) {
+static void DrawPNG(const uint8_t *img, size_t size, uint16_t x, uint16_t y) {
   xpos = x;
   ypos = y;
 
-  if (png.openFLASH(img, size, pngDraw) == PNG_SUCCESS) {
+  if (png.openFLASH((uint8_t*)img, size, pngDraw) == PNG_SUCCESS) {
     png.decode(NULL, 0);
     // png.close(); // Required for files, not needed for FLASH arrays
   }
@@ -219,9 +219,18 @@ static void DrawSlider(const Widget_t *widget, int16_t offset /* = 0 */) {
 
 #else
 
+#if defined(_TFT_eSPIH_)
+
+    TFT_eSprite sprite_bar  = TFT_eSprite(&tft);
+    TFT_eSprite sprite_knob = TFT_eSprite(&sprite_bar);
+
+#elif defined(LOVYANGFX_HPP_)
+
     // slower but no flickering
     LGFX_Sprite sprite_bar(&lcd);
     LGFX_Sprite sprite_knob(&sprite_bar);
+
+#endif
 
     uint32_t w, h;
     w = swap_endian(*(uint32_t*)(bar->data + PNG_HEADER_WIDTH));

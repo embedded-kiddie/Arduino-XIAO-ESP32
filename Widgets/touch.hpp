@@ -40,14 +40,9 @@ typedef struct {
   uint16_t    x, y;   // The coordinates where the event fired
 } Touch_t;
 
-#ifdef LOVYANGFX_HPP_
-typedef struct {
-  uint16_t  params[8];
-  int8_t    offset[2];
-} Calibration_t;
-#endif
-
-static Calibration_t cal;
+extern uint16_t lcd_width;
+extern uint16_t lcd_height;
+extern MLXConfig_t cnf;
 
 /*--------------------------------------------------------------------------------
  * Setup touch manager
@@ -56,7 +51,7 @@ static Calibration_t cal;
 
 bool touch_setup(void) {
   if (ts.begin()) {
-    ts.setRotation(3);
+    ts.setRotation(SCREEN_ROTATION);
     return true;
   } else {
     return false;
@@ -69,11 +64,8 @@ bool touch_setup(void) {
 
 #ifdef LOVYANGFX_HPP_
   // https://github.com/lovyan03/LovyanGFX/discussions/539
-  cal = {
-    {319, 384, 3866, 355, 277, 3729, 3832, 3785},
-    {-10, 0},
-  };
-  GFX_EXEC(setTouchCalibrate(cal.params));
+  uint16_t cal[8] = {319, 384, 3866, 355, 277, 3729, 3832, 3785};
+  GFX_EXEC(setTouchCalibrate(cal));
 #endif
 
   return true;
@@ -138,10 +130,10 @@ bool touch_event(Touch_t &touch) {
 
   if (event != EVENT_NONE) {
     if (stat) {
-        x += cal.offset[0];
-        y += cal.offset[1];
-        x = constrain(x, 0, 319);
-        y = constrain(y, 0, 239);
+        x += cnf.touch_offset[0];
+        y += cnf.touch_offset[1];
+        x = constrain(x, 0, lcd_width  - 1);
+        y = constrain(y, 0, lcd_height - 1);
     }
 
     DBG_EXEC(printf("event: %d, x: %d, y: %d\n", event, x, y));

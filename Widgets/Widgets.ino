@@ -24,9 +24,7 @@ typedef struct {
   bool          range_auto;
   int16_t       range_min;
   int16_t       range_max;
-#ifdef LOVYANGFX_HPP_
-  Calibration_t calibration;
-#endif
+  int8_t        touch_offset[2];
 } MLXConfig_t;
 
 MLXConfig_t cnf = {
@@ -39,16 +37,15 @@ MLXConfig_t cnf = {
   .range_auto     = false,
   .range_min      = 20,
   .range_max      = 35,
-#ifdef LOVYANGFX_HPP_
-  .calibration    = {
-    {319, 384, 3866, 355, 277, 3729, 3832, 3785},
-    {-10, 0},
-#endif
+  .touch_offset   = {-10, 0},
 };
 
 /*=============================================================
  * Step 1: Select GFX Library
  *=============================================================*/
+uint16_t lcd_width;
+uint16_t lcd_height;
+
 #if 1
 /*---------------------------------------------------
  * LovyanGFX Library
@@ -59,12 +56,15 @@ MLXConfig_t cnf = {
 
 LGFX lcd;
 
-#define GFX_EXEC(x) lcd.x
+#define GFX_EXEC(x)     lcd.x
+#define SCREEN_ROTATION 3
 
 void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(clear(0));
   GFX_EXEC(setRotation(3));
+  lcd_width  = GFX_EXEC(width());
+  lcd_height = GFX_EXEC(height());
 }
 
 #else
@@ -76,12 +76,15 @@ void gfx_setup(void) {
 
 TFT_eSPI tft = TFT_eSPI();
 
-#define GFX_EXEC(x) tft.x
+#define GFX_EXEC(x)     tft.x
+#define SCREEN_ROTATION 3
 
 void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(fillScreen(0));
   GFX_EXEC(setRotation(3));
+  lcd_width  = GFX_EXEC(width());
+  lcd_height = GFX_EXEC(height());
 }
 #endif
 
