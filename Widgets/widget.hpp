@@ -23,11 +23,11 @@ typedef enum {
 static State_t state = STATE_ON;
 
 /*--------------------------------------------------------------------------------
- * Widget
+ * Widget data definition
  *--------------------------------------------------------------------------------*/
 typedef struct {
   const uint8_t   *data;  // pointer to the image
-  const size_t    size;   // size of image data
+  const size_t    size;   // size of image data (only for TFT_eSPI with bitbank2/PNGdec)
 } Image_t;
 
 typedef struct {
@@ -53,7 +53,7 @@ typedef struct {
 /*--------------------------------------------------------------------------------
  * Prototype Declaration for drawing widget
  *--------------------------------------------------------------------------------*/
-#define SLIDER_KNOB_OFFSET  6 // offset from BAR
+#define SLIDER_KNOB_OFFSET  6 // Offset from both ends of the bar
 
 State_t widget_state(State_t s);
 static void DrawWidget(const Widget_t *widget, uint8_t offset = 0);
@@ -70,10 +70,11 @@ static void DrawRadio (const Widget_t *widget, uint8_t n_widget, uint8_t selecte
  *--------------------------------------------------------------------------------*/
 #include "widgets.hpp"
 
+/*--------------------------------------------------------------------------------
+ * Functions for drawing widget
+ *--------------------------------------------------------------------------------*/
 #ifdef _TFT_eSPIH_
-//=========================================v==========================================
-//  pngDraw: Callback function to draw pixels to the display
-//====================================================================================
+// pngDraw: Callback function to draw pixels to the display
 // https://github.com/Bodmer/TFT_eSPI/tree/master/examples/PNG%20Images
 // Include the PNG decoder library, available via the IDE library manager
 #include <PNGdec.h>
@@ -110,11 +111,8 @@ static void DrawPNG(const uint8_t *img, size_t size, uint16_t x, uint16_t y) {
 #endif // _TFT_eSPIH_
 
 /*--------------------------------------------------------------------------------
- * Functions for drawing widget
+ * Converting byte order according to MCU architecture
  *--------------------------------------------------------------------------------*/
-#define PNG_HEADER_WIDTH    16 // PNG file signature + offset from chunk data
-#define PNG_HEADER_HEIGHT   20 // PNG file signature + offset from chunk data
-
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 
 #define SWAP(type, a, b)  { type tmp = a; a = b; b = tmp; }
@@ -169,6 +167,9 @@ static void DrawScreen(const Widget_t *widget, uint8_t offset /* = 0 */) {
 /*--------------------------------------------------------------------------------
  * Draw a button-like icon
  *--------------------------------------------------------------------------------*/
+#define PNG_HEADER_WIDTH    16 // PNG file signature + offset from chunk data
+#define PNG_HEADER_HEIGHT   20 // PNG file signature + offset from chunk data
+
 static void DrawButton(const Widget_t *widget, uint8_t offset /* = 0 */) {
 #if 1
 
@@ -323,7 +324,7 @@ static void DrawPress(const Widget_t *widget, Event_t event) {
 }
 
 /*--------------------------------------------------------------------------------
- * Draw the legend and icons at STATE_ON
+ * Draw all widgets at the start of each state
  *--------------------------------------------------------------------------------*/
 void widget_setup(State_t screen = STATE_OFF) {
   int n = 0;
@@ -423,7 +424,7 @@ void widget_setup(State_t screen = STATE_OFF) {
 }
 
 /*--------------------------------------------------------------------------------
- * State controller
+ * Change state
  *--------------------------------------------------------------------------------*/
 State_t widget_state(State_t s = STATE_OFF) {
   if (s != state) {
@@ -458,6 +459,9 @@ bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_t &touc
   return false;
 }
 
+/*--------------------------------------------------------------------------------
+ * Monitor events for a specific widget
+ *--------------------------------------------------------------------------------*/
 bool widget_monitor(const Widget_t *widgets, const size_t n_widgets) {
   Touch_t touch;
 
@@ -471,6 +475,9 @@ bool widget_monitor(const Widget_t *widgets, const size_t n_widgets) {
   return false;
 }
 
+/*--------------------------------------------------------------------------------
+ * Finite State Machines
+ *--------------------------------------------------------------------------------*/
 void widget_control(void) {
   switch (state) {
     case STATE_ON:

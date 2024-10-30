@@ -1,6 +1,6 @@
 
 /*================================================================================
- * Wedget manager
+ * Wedget data
  *================================================================================*/
 #include <Arduino.h>
 #include "widgets.h"
@@ -79,7 +79,7 @@ static constexpr Image_t image_target[] = {
 };
 
 /*--------------------------------------------------------------------------------
- * List of widget instances on the screen
+ * List of widget data based on the screen
  *--------------------------------------------------------------------------------*/
 // Screen - Main
 static void onMainScreen        (const void *w, Touch_t &touch);
