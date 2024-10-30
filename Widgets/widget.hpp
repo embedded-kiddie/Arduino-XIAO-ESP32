@@ -16,6 +16,7 @@ typedef enum {
   STATE_FILE_MANAGER,
   STATE_CAPTURE_MODE,
   STATE_CALIBRATION,
+  STATE_ADJUST_OFFSET,
   STATE_INFORMATION,
 } State_t;
 
@@ -365,6 +366,11 @@ void widget_setup(State_t screen = STATE_OFF) {
       n = N_WIDGETS(widget_calibration);
       break;
 
+    case STATE_ADJUST_OFFSET:
+      widget = widget_adjust_offset;
+      n = N_WIDGETS(widget_adjust_offset);
+      break;
+
     case STATE_INFORMATION:
       widget = widget_information;
       n = N_WIDGETS(widget_information);
@@ -417,26 +423,6 @@ void widget_setup(State_t screen = STATE_OFF) {
 }
 
 /*--------------------------------------------------------------------------------
- * Manage widget events
- *--------------------------------------------------------------------------------*/
-void widget_event(const Widget_t *widgets, size_t size, Touch_t &touch) {
-  for (int i = 0; i < size; i++) {
-
-    // In case the touch event to be detected
-    if ((widgets[i].event & touch.event) && widgets[i].callback) {
-
-      // Find the widget where the event fired
-      if (widgets[i].x <= touch.x && touch.x <= widgets[i].x + widgets[i].w &&
-          widgets[i].y <= touch.y && touch.y <= widgets[i].y + widgets[i].h) {
-
-        DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, widgets[i].event, touch.x, touch.y));
-        widgets[i].callback((void*)&widgets[i], touch);
-      }
-    }
-  }
-}
-
-/*--------------------------------------------------------------------------------
  * State controller
  *--------------------------------------------------------------------------------*/
 State_t widget_state(State_t s = STATE_OFF) {
@@ -449,84 +435,110 @@ State_t widget_state(State_t s = STATE_OFF) {
   return state;
 }
 
-void widget_control(void) {
+/*--------------------------------------------------------------------------------
+ * Manage widget events
+ *--------------------------------------------------------------------------------*/
+bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_t &touch) {
+  for (int i = 0; i < n_widgets; i++) {
+
+    // In case the touch event to be detected
+    if ((widgets[i].event & touch.event) && widgets[i].callback) {
+
+      // Find the widget where the event fired
+      if (widgets[i].x <= touch.x && touch.x <= widgets[i].x + widgets[i].w &&
+          widgets[i].y <= touch.y && touch.y <= widgets[i].y + widgets[i].h) {
+
+        DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, widgets[i].event, touch.x, touch.y));
+        widgets[i].callback((void*)&widgets[i], touch);
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+bool widget_monitor(const Widget_t *widgets, const size_t n_widgets) {
   Touch_t touch;
 
+  if (touch_event(touch)) {
+    // when icon 'configuration' is clicked then state becomes 'STATE_CONFIGURATION'
+    if (widget_event(widgets, n_widgets, touch) == true) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void widget_control(void) {
   switch (state) {
     case STATE_ON:
       widget_setup(state = STATE_MAIN);
       break;
 
     case STATE_MAIN:
-      if (touch_event(touch)) {
-        // when icon 'configuration' is clicked then state becomes 'STATE_CONFIGURATION'
-        widget_event(widget_main, N_WIDGETS(widget_main), touch);
-      }
+      // when icon 'configuration' is clicked then state becomes 'STATE_CONFIGURATION'
+      widget_monitor(widget_main, N_WIDGETS(widget_main));
       break;
 
     case STATE_CONFIGURATION:
       do {
-        if (touch_event(touch)) {
-          // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-          widget_event(widget_configuration, N_WIDGETS(widget_configuration), touch);
-        }
+        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
+        widget_monitor(widget_configuration, N_WIDGETS(widget_configuration));
         delay(1); // reset wdt
       } while (state == STATE_CONFIGURATION);
       break;
 
     case STATE_RESOLUTION:
       do {
-        if (touch_event(touch)) {
-          // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-          widget_event(widget_resolution, N_WIDGETS(widget_resolution), touch);
-        }
+        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
+        widget_monitor(widget_resolution, N_WIDGETS(widget_resolution));
         delay(1); // reset wdt
       } while (state == STATE_RESOLUTION);
       break;
 
     case STATE_THERMOGRAPH:
-      if (touch_event(touch)) {
-        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-        widget_event(widget_thermograph, N_WIDGETS(widget_thermograph), touch);
-      }
+      // when icon 'back' is clicked then state becomes 'STATE_MAIN'
+      widget_monitor(widget_thermograph, N_WIDGETS(widget_thermograph));
       break;
 
     case STATE_FILE_MANAGER:
       do {
-        if (touch_event(touch)) {
-          // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-          widget_event(widget_file_manager, N_WIDGETS(widget_file_manager), touch);
-        }
+        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
+        widget_monitor(widget_file_manager, N_WIDGETS(widget_file_manager));
         delay(1); // reset wdt
       } while (state == STATE_FILE_MANAGER);
       break;
 
     case STATE_CAPTURE_MODE:
       do {
-        if (touch_event(touch)) {
-          // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-          widget_event(widget_capture_mode, N_WIDGETS(widget_capture_mode), touch);
-        }
+        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
+        widget_monitor(widget_capture_mode, N_WIDGETS(widget_capture_mode));
         delay(1); // reset wdt
       } while (state == STATE_CAPTURE_MODE);
       break;
 
     case STATE_CALIBRATION:
       do {
-        if (touch_event(touch)) {
-          // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-          widget_event(widget_calibration, N_WIDGETS(widget_calibration), touch);
-        }
+        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
+        widget_monitor(widget_calibration, N_WIDGETS(widget_calibration));
         delay(1); // reset wdt
       } while (state == STATE_CALIBRATION);
       break;
 
+    case STATE_ADJUST_OFFSET:
+      do {
+        // when icon 'back' is clicked then state becomes 'STATE_CALIBRATION'
+        widget_monitor(widget_adjust_offset, N_WIDGETS(widget_adjust_offset));
+        delay(1); // reset wdt
+      } while (state == STATE_ADJUST_OFFSET);
+      break;
+
     case STATE_INFORMATION:
       do {
-        if (touch_event(touch)) {
-          // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-          widget_event(widget_information, N_WIDGETS(widget_information), touch);
-        }
+        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
+        widget_monitor(widget_information, N_WIDGETS(widget_information));
         delay(1); // reset wdt
       } while (state == STATE_INFORMATION);
       break;

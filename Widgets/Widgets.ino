@@ -37,7 +37,7 @@ MLXConfig_t cnf = {
   .range_auto     = false,
   .range_min      = 20,
   .range_max      = 35,
-  .touch_offset   = {-10, 0},
+  .touch_offset   = {0, 0},//{-10, +5}
 };
 
 /*=============================================================
