@@ -45,7 +45,11 @@ void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   len = vsnprintf(buf, sizeof(buf), fmt, arg_ptr);
   va_end(arg_ptr);
 
+#if 0
   GFX_EXEC(fillRect(x, y, len * FONT_WIDTH, FONT_HEIGHT, BLACK));
+#else
+//GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
+#endif
   GFX_EXEC(setCursor(x, y));
   GFX_EXEC(print(buf));
 }

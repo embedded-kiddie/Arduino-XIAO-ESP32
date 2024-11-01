@@ -309,6 +309,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 
   if (widget_state() == STATE_RUN) {
     // MLX90640
+    GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
     gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
 
     // Interpolation

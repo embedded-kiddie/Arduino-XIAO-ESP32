@@ -87,6 +87,7 @@ SdFs SD;
  * File name and size for GetFileList()
  */
 #include <string>
+#include <vector>
 typedef struct {
   std::string name;
   std::size_t size;
@@ -365,8 +366,7 @@ bool sdcard_save(void) {
     return false;
   }
 
-  // SD: 6264 msec, SdFat: 4202 msec
-  DBG_EXEC(printf("Elapsed time: %d msec\n", millis() - start));
+  DBG_EXEC(printf("Elapsed time: %d msec\n", millis() - start)); // SD: 6264 msec, SdFat: 4202 msec
 #endif
 
   std::vector<FileInfo_t> files;
