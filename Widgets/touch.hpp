@@ -27,12 +27,12 @@ typedef enum {
   EVENT_RISING  = (0x02), //   touch --> untouch
   EVENT_TOUCHED = (0x04), //   touch -->   touch
   // alias
-  EVENT_DOWN    = (EVENT_FALLING),
   EVENT_UP      = (EVENT_RISING),
-  EVENT_DRAG    = (EVENT_RISING | EVENT_TOUCHED),
-  EVENT_CLICK   = (EVENT_RISING | EVENT_FALLING),
-  EVENT_CHANGE  = (EVENT_RISING | EVENT_FALLING),
-  EVENT_ALL     = (EVENT_RISING | EVENT_FALLING | EVENT_TOUCHED),
+  EVENT_DOWN    = (EVENT_FALLING),
+  EVENT_DRAG    = (EVENT_FALLING | EVENT_TOUCHED),
+  EVENT_CLICK   = (EVENT_FALLING | EVENT_RISING),
+  EVENT_CHANGE  = (EVENT_FALLING | EVENT_RISING),
+  EVENT_ALL     = (EVENT_FALLING | EVENT_RISING | EVENT_TOUCHED),
 } Event_t;
 
 typedef struct {
@@ -136,7 +136,7 @@ bool touch_event(Touch_t &touch) {
         y = constrain(y, 0, lcd_height - 1);
     }
 
-    DBG_EXEC(printf("event: %d, x: %d, y: %d\n", event, x, y));
+    //DBG_EXEC(printf("event: %d, x: %d, y: %d\n", event, x, y));
 
     touch.event = event;
     touch.x = x;

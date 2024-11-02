@@ -384,11 +384,10 @@ void widget_setup(State_t screen = STATE_OFF) {
   if (n && widget) {
     Touch_t touch = { EVENT_NONE, 0, 0 };
     for (int i = 0; i < n; i++, widget++) {
-      if (widget->image && widget->callback) {
+      if (widget->callback) {
         widget->callback(widget, touch);
-      } else {
-        POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
       }
+      POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     }
   }
 

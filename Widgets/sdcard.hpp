@@ -88,9 +88,12 @@ SdFs SD;
  */
 #include <string>
 #include <vector>
+
 typedef struct {
   std::string name;
-  std::size_t size;
+  size_t      size;
+  bool        isSelected;
+  bool        isDirectory;
 } FileInfo_t;
 
 /*
@@ -343,8 +346,9 @@ void sdcard_setup(void) {
 #endif
 }
 
-bool sdcard_save(void) {
+bool sd_open(void) {
   uint8_t retry = 0;
+
   while (!SD.begin(SD_CONFIG)) {
     if (++retry >= 2) {
       DBG_EXEC(printf("Card mount failed.\n"));
@@ -354,6 +358,23 @@ bool sdcard_save(void) {
   }
 
   DBG_EXEC(printf("The card was mounted successfully.\n"));
+  return true;
+}
+
+void sd_get_size(uint32_t *total, uint32_t *free) {
+#if USE_SDFAT
+  *total = (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5);
+  *free  = (uint32_t)((SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
+#else
+  *total = (uint32_t)(SD.totalBytes() / (1024 * 1024));
+  *free  = (uint32_t)(*total - SD.usedBytes()  / (1024 * 1024));
+#endif
+}
+
+bool sdcard_save(void) {
+  if (!sd_open()) {
+    return false;
+  }
 
 #if CAPTURE_SCREEN
   int no = GetFileNo(SD);

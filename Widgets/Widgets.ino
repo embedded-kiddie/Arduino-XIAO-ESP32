@@ -19,7 +19,7 @@ typedef struct {
   uint8_t       color_scheme;
   uint8_t       capture_mode; // 0: camera, 1: video
   bool          video_recording;
-  bool          file_checkbox;
+  bool          file_selected;
   bool          minmax_auto;
   bool          range_auto;
   int16_t       range_min;
@@ -32,7 +32,7 @@ MLXConfig_t cnf = {
   .block_size     = 1,
   .color_scheme   = 0,
   .capture_mode   = 0,
-  .file_checkbox  = false,
+  .file_selected  = false,
   .minmax_auto    = false,
   .range_auto     = false,
   .range_min      = 20,
