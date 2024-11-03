@@ -43,7 +43,7 @@ typedef struct {
 /*--------------------------------------------------------------------------------
  * Check the position of widget by RED rectangle
  *--------------------------------------------------------------------------------*/
-#define POSTION_CHECK false
+#define POSTION_CHECK true
 #if     POSTION_CHECK
 #define POS_CHECK(x)  x
 #else

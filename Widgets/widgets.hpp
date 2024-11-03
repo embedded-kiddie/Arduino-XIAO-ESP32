@@ -119,8 +119,8 @@ static constexpr Widget_t widget_main[] = {
 static void onConfigurationScreen       (const void *w, Touch_t &touch);
 static void onConfigurationResolution   (const void *w, Touch_t &touch);
 static void onConfigurationThermograph  (const void *w, Touch_t &touch);
-static void onConfigurationFileManager  (const void *w, Touch_t &touch);
 static void onConfigurationCaptureMode  (const void *w, Touch_t &touch);
+static void onConfigurationFileManager  (const void *w, Touch_t &touch);
 static void onConfigurationCalibration  (const void *w, Touch_t &touch);
 static void onConfigurationInformation  (const void *w, Touch_t &touch);
 static void onConfigurationReturn       (const void *w, Touch_t &touch);
@@ -129,8 +129,8 @@ static constexpr Widget_t widget_configuration[] = {
   {   0,   0, 320, 240, image_configuration, EVENT_NONE, onConfigurationScreen      },
   {  24,  12,  70,  70, NULL,                EVENT_ALL,  onConfigurationResolution  },
   { 125,  12,  70,  70, NULL,                EVENT_ALL,  onConfigurationThermograph },
-  { 226,  12,  70,  70, NULL,                EVENT_ALL,  onConfigurationFileManager },
-  {  24, 104,  70,  70, NULL,                EVENT_ALL,  onConfigurationCaptureMode },
+  { 226,  12,  70,  70, NULL,                EVENT_ALL,  onConfigurationCaptureMode },
+  {  24, 104,  70,  70, NULL,                EVENT_ALL,  onConfigurationFileManager },
   { 125, 104,  70,  70, NULL,                EVENT_ALL,  onConfigurationCalibration },
   { 226, 104,  70,  70, NULL,                EVENT_ALL,  onConfigurationInformation },
   { 145, 206,  30,  30, NULL,                EVENT_ALL,  onConfigurationReturn      },
@@ -281,6 +281,7 @@ static void onMainInside(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_NONE) {
+    // pick up the point
   }
 }
 
@@ -288,6 +289,7 @@ static void onMainOutside(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_NONE) {
+    // Reset the picked up point
   }
 }
 
@@ -365,19 +367,19 @@ static void onConfigurationThermograph(const void *w, Touch_t &touch) {
   }
 }
 
-static void onConfigurationFileManager(const void *w, Touch_t &touch) {
-  DBG_EXEC(printf("%s\n", __func__));
-
-  if (touch.event != EVENT_NONE) {
-    widget_state(STATE_FILE_MANAGER);
-  }
-}
-
 static void onConfigurationCaptureMode(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_NONE) {
     widget_state(STATE_CAPTURE_MODE);
+  }
+}
+
+static void onConfigurationFileManager(const void *w, Touch_t &touch) {
+  DBG_EXEC(printf("%s\n", __func__));
+
+  if (touch.event != EVENT_NONE) {
+    widget_state(STATE_FILE_MANAGER);
   }
 }
 
@@ -620,16 +622,6 @@ static void onFileManagerCheckAll(const void *w, Touch_t &touch) {
 
 static void onFileManagerFileList(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
-
-  const Widget_t *widget = static_cast<const Widget_t*>(w);
-
-  if (touch.event == EVENT_NONE) {
-    // Draw border box
-//  GFX_EXEC(drawRect(widget->x - 2, widget->y - 2, VIEW_WIDTH + BORDER_OFFSET * 2 + 4, VIEW_HEIGHT + BORDER_OFFSET * 2 + 4, LIGHTGREY)); // 147 x 229
-//  GFX_EXEC(drawRect(widget->x - 1, widget->y - 1, VIEW_WIDTH + BORDER_OFFSET * 2 + 2, VIEW_HEIGHT + BORDER_OFFSET * 2 + 2, DARKGREY )); // 145 x 227
-  }
-
-//ScrollView(widget, scroll_pos);
 }
 
 static void onFileManagerScroll(const void *w, Touch_t &touch) {
@@ -640,10 +632,6 @@ static void onFileManagerScroll(const void *w, Touch_t &touch) {
   const Widget_t *widget = static_cast<const Widget_t*>(w);
 
   if (touch.event == EVENT_NONE) {
-    // Draw border box
-//  GFX_EXEC(drawRect(widget->x - 2, widget->y - 2, widget->w + 4, VIEW_HEIGHT + BORDER_OFFSET * 2 + 4, LIGHTGREY));
-//  GFX_EXEC(drawRect(widget->x - 1, widget->y - 1, widget->w + 2, VIEW_HEIGHT + BORDER_OFFSET * 2 + 2, DARKGREY ));
-
     scroll_pos = drag_pos = 0;
     if (n_files > VIEW_ITEMS) {
       scroll_height = (widget->h * (VIEW_ITEMS - 1)) / n_files;
@@ -677,9 +665,6 @@ static void onFileManagerScroll(const void *w, Touch_t &touch) {
 
 static void onFileManagerThumbnail(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
-
-  if (touch.event == EVENT_NONE) {
-  }
 }
 
 static void onFileManagerMovie(const void *w, Touch_t &touch) {
@@ -716,6 +701,7 @@ static void onFileManagerApply(const void *w, Touch_t &touch) {
   DrawPress(static_cast<const Widget_t*>(w), touch.event);
 
   if (touch.event != EVENT_NONE) {
+    // Remove files
   }
 }
 
@@ -789,9 +775,6 @@ static void onCalibrationScreen (const void *w, Touch_t &touch) {
 
 static void onCalibrationExec(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
-
-  if (touch.event != EVENT_NONE) {
-  }
 }
 
 static void onCalibrationAdjust(const void *w, Touch_t &touch) {
