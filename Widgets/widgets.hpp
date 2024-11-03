@@ -185,11 +185,22 @@ static void onFileManagerFolder   (const void *w, Touch_t &touch);
 static void onFileManagerClose    (const void *w, Touch_t &touch);
 static void onFileManagerApply    (const void *w, Touch_t &touch);
 
+// Setting for the scroll area
+#define FONT_WIDTH    12  // [px] (for setTextSize(2))
+#define FONT_HEIGHT   16  // [px] (for setTextSize(2))
+#define FONT_MARGIN   3   // [px] (margin for each top, right, bottom, left)
+#define VIEW_ITEMS    10  // number of items in a view
+#define ITEM_HEIGHT   (FONT_HEIGHT + FONT_MARGIN * 2)
+#define VIEW_WIDTH    (FONT_WIDTH * (VIEW_ITEMS + 1) + FONT_MARGIN * 2) // 138
+#define VIEW_HEIGHT   (ITEM_HEIGHT * VIEW_ITEMS) // 220
+#define BORDER_OFFSET 2   // offset for borders
+#define SCROLL_COLOR  RGB565(0x01, 0xA1, 0xFF)
+
 static constexpr Widget_t widget_file_manager[] = {
   {   0,   0, 320, 240, image_file_manager, EVENT_NONE,  onFileManagerScreen    },
   {   1,   8,  26,  26, image_checkbox,     EVENT_DOWN,  onFileManagerCheckAll  },
-  {  30,   8, 142, 224, NULL,               EVENT_DOWN,  onFileManagerFileList  },
-  { 174,   8,  15, 224, NULL,               EVENT_DRAG,  onFileManagerScroll    },
+  {  32,  10, 138, 220, NULL,               EVENT_DOWN,  onFileManagerFileList  }, // VIEW_WIDTH x VIEW_HEIGHT
+  { 176,  10,  15, 224, NULL,               EVENT_DRAG,  onFileManagerScroll    }, // scroll bar x VIEW_HEIGHT + ??
   { 198,  69, 120,  90, NULL,               EVENT_NONE,  onFileManagerThumbnail },
   { 207, 165,  32,  26, image_movie,        EVENT_CLICK, onFileManagerMovie     },
   { 276, 165,  32,  26, image_folder,       EVENT_CLICK, onFileManagerFolder    },
@@ -254,11 +265,11 @@ static void onInformationClose (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_information[] = {
   {   0,   0, 320, 240, image_information, EVENT_NONE, onInformationScreen   },
-  { 145, 206, 30,  30,  NULL,              EVENT_ALL,  onInformationClose    },
+  { 145, 206,  30,  30, NULL,              EVENT_ALL,  onInformationClose    },
 };
 
 /*--------------------------------------------------------------------------------
- * Widget callback functions for Main
+ * Callback functions - Main
  *--------------------------------------------------------------------------------*/
 static void onMainScreen(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
@@ -330,7 +341,7 @@ static void onMainConfiguration(const void *w, Touch_t &touch) {
 }
 
 /*--------------------------------------------------------------------------------
- * Widget callback functions for Configuration
+ * Callback functions - Configuration
  *--------------------------------------------------------------------------------*/
 static void onConfigurationScreen(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
@@ -395,7 +406,7 @@ static void onConfigurationReturn(const void *w, Touch_t &touch) {
 }
 
 /*--------------------------------------------------------------------------------
- * Widget callback functions for Resolution
+ * Callback functions - Resolution
  *--------------------------------------------------------------------------------*/
 static void onResolutionScreen(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
@@ -440,7 +451,7 @@ static void onResolutionApply(const void *w, Touch_t &touch) {
 }
 
 /*--------------------------------------------------------------------------------
- * Widget callback functions for Thermograph
+ * Callback functions - Thermograph
  *--------------------------------------------------------------------------------*/
 static void onThermographScreen(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
@@ -525,27 +536,20 @@ static void onThermographApply(const void *w, Touch_t &touch) {
 }
 
 /*--------------------------------------------------------------------------------
- * Widget callback functions for File Manager
+ * Callback functions - File Manager
  *--------------------------------------------------------------------------------*/
-// Font size for setTextSize(2)
-#define FONT_WIDTH    12  // [px] (Device coordinate system)
-#define FONT_HEIGHT   16  // [px] (Device coordinate system)
-#define FONT_MARGIN   3   // [px] (Top, Right, Bottom, Left margins)
-#define ITEM_HEIGHT   (FONT_HEIGHT + FONT_MARGIN * 2) // + Top and Buttom margins
-#define VIEW_ITEMS    10  // The number of items in a view
-#define VIEW_WIDTH    (FONT_WIDTH * 11 + FONT_MARGIN * 2) // + Left and Right margins
-#define VIEW_HEIGHT   (ITEM_HEIGHT * VIEW_ITEMS)
-#define BORDER_OFFSET 2
-#define SCROLL_COLOR  RGB565(0x01, 0xA1, 0xFF)
-
 static std::vector<FileInfo_t> files;
 static int n_files;
-static LGFX_Sprite view;
 static int scroll_pos, scroll_max, scroll_height;
 
 static void ScrollView(const Widget_t *widget, int scroll_pos) {
+  static LGFX_Sprite sprite_view;
   bool invert = false;
-  
+
+  sprite_view.setTextSize(2);
+  sprite_view.setTextColor(WHITE);
+  sprite_view.createSprite(VIEW_WIDTH, VIEW_HEIGHT);
+
   int item_head = scroll_pos / ITEM_HEIGHT;
   int item_tail = item_head + (VIEW_ITEMS + 1);
   item_tail = min(item_tail, n_files);
@@ -558,25 +562,24 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
 
     if (invert == false && files[i].isSelected == true) {
       invert = true;
-      view.setTextColor(BLACK);
+      sprite_view.setTextColor(BLACK);
     } else
 
     if (invert == true && files[i].isSelected == false) {
       invert = false;
-      view.setTextColor(WHITE);
+      sprite_view.setTextColor(WHITE);
     }
 
     if (invert == true) {
-      view.fillRect(0, delta_pos - FONT_MARGIN, VIEW_WIDTH, ITEM_HEIGHT, WHITE);
+      sprite_view.fillRect(0, delta_pos - FONT_MARGIN, VIEW_WIDTH, ITEM_HEIGHT, WHITE);
     }
 
-    view.setCursor(FONT_MARGIN, delta_pos);
-    view.print(files[i].name.c_str());
+    sprite_view.setCursor(FONT_MARGIN, delta_pos);
+    sprite_view.print(files[i].name.c_str());
   }
 
-  lcd.beginTransaction();
-  view.pushSprite(&lcd, widget->x + BORDER_OFFSET, widget->y + BORDER_OFFSET);
-  lcd.endTransaction();
+  sprite_view.pushSprite(&lcd, widget->x, widget->y);
+  sprite_view.deleteSprite();
 }
 
 static void onFileManagerScreen(const void *w, Touch_t &touch) {
@@ -594,8 +597,10 @@ static void onFileManagerScreen(const void *w, Touch_t &touch) {
     files.clear();
     GetFileList(SD, "/", 1, files);
     n_files = files.size();
+  
     files[0].isSelected = true;
     files[9].isSelected = true;
+    files[n_files-1].isSelected = true;
   }
 }
 
@@ -604,6 +609,10 @@ static void onFileManagerCheckAll(const void *w, Touch_t &touch) {
 
   if (touch.event != EVENT_NONE) {
     cnf.file_selected = !cnf.file_selected;
+    for (auto& file : files) {
+      file.isSelected = cnf.file_selected;
+    }
+    ScrollView(static_cast<const Widget_t*>(w) + 1, scroll_pos);
   }
 
   DrawCheck(static_cast<const Widget_t*>(w), cnf.file_selected);
@@ -616,35 +625,32 @@ static void onFileManagerFileList(const void *w, Touch_t &touch) {
 
   if (touch.event == EVENT_NONE) {
     // Draw border box
-    GFX_EXEC(drawRect(widget->x - 2, widget->y - 2, VIEW_WIDTH + BORDER_OFFSET * 2 + 4, VIEW_HEIGHT + BORDER_OFFSET * 2 + 4, LIGHTGREY)); // 147 x 229
-    GFX_EXEC(drawRect(widget->x - 1, widget->y - 1, VIEW_WIDTH + BORDER_OFFSET * 2 + 2, VIEW_HEIGHT + BORDER_OFFSET * 2 + 2, DARKGREY )); // 145 x 227
-
-    view.setTextSize(2);
-    view.setTextColor(WHITE);
-    view.deleteSprite();
-    view.createSprite(VIEW_WIDTH, VIEW_HEIGHT);
-    ScrollView(widget, 0);
+//  GFX_EXEC(drawRect(widget->x - 2, widget->y - 2, VIEW_WIDTH + BORDER_OFFSET * 2 + 4, VIEW_HEIGHT + BORDER_OFFSET * 2 + 4, LIGHTGREY)); // 147 x 229
+//  GFX_EXEC(drawRect(widget->x - 1, widget->y - 1, VIEW_WIDTH + BORDER_OFFSET * 2 + 2, VIEW_HEIGHT + BORDER_OFFSET * 2 + 2, DARKGREY )); // 145 x 227
   }
+
+//ScrollView(widget, scroll_pos);
 }
 
 static void onFileManagerScroll(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   static int drag_pos;
+  static LGFX_Sprite sprite_scroll;
   const Widget_t *widget = static_cast<const Widget_t*>(w);
 
   if (touch.event == EVENT_NONE) {
     // Draw border box
-    GFX_EXEC(drawRect(widget->x - 2, widget->y - 2, widget->w + 4, VIEW_HEIGHT + BORDER_OFFSET * 2 + 4, LIGHTGREY));
-    GFX_EXEC(drawRect(widget->x - 1, widget->y - 1, widget->w + 2, VIEW_HEIGHT + BORDER_OFFSET * 2 + 2, DARKGREY ));
+//  GFX_EXEC(drawRect(widget->x - 2, widget->y - 2, widget->w + 4, VIEW_HEIGHT + BORDER_OFFSET * 2 + 4, LIGHTGREY));
+//  GFX_EXEC(drawRect(widget->x - 1, widget->y - 1, widget->w + 2, VIEW_HEIGHT + BORDER_OFFSET * 2 + 2, DARKGREY ));
 
     scroll_pos = drag_pos = 0;
     if (n_files > VIEW_ITEMS) {
-      scroll_max = (n_files - VIEW_ITEMS) * ITEM_HEIGHT;
-      scroll_height = (widget->h * VIEW_ITEMS) / n_files;
+      scroll_height = (widget->h * (VIEW_ITEMS - 1)) / n_files;
+      scroll_max = VIEW_HEIGHT - scroll_height;
     } else {
-      scroll_max = 0;
       scroll_height = widget->h;
+      scroll_max = 0;
     }
   }
 
@@ -653,11 +659,17 @@ static void onFileManagerScroll(const void *w, Touch_t &touch) {
   } // else drag
 
   // Relative movement from the reference position
-  scroll_pos = touch.y - drag_pos;
+  scroll_pos += touch.y - drag_pos;
   scroll_pos = constrain(scroll_pos, 0, scroll_max);
+  DBG_EXEC(printf("scroll_max: %d, scroll_pos: %d\n", scroll_max, scroll_pos));
 
-  GFX_EXEC(fillRect(widget->x + 1, widget->y + 1 + scroll_pos, widget->w - 2, scroll_height - 2, SCROLL_COLOR));
-  DBG_EXEC(printf("move: %d\n", scroll_pos));
+  lcd.beginTransaction();
+  sprite_scroll.createSprite(widget->w, widget->h);
+  sprite_scroll.fillRect(0, scroll_pos, widget->w, scroll_height, SCROLL_COLOR);
+  sprite_scroll.pushSprite(&lcd, widget->x, widget->y);
+  sprite_scroll.deleteSprite();
+  ScrollView(widget - 1, scroll_pos);
+  lcd.endTransaction();
 
   // Update the reference position
   drag_pos = touch.y;
@@ -708,7 +720,7 @@ static void onFileManagerApply(const void *w, Touch_t &touch) {
 }
 
 /*--------------------------------------------------------------------------------
- * Widget callback functions for Capture Mode
+ * Callback functions - Capture Mode
  *--------------------------------------------------------------------------------*/
 static void onCaptureModeScreen(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
@@ -745,7 +757,7 @@ static void onCaptureModeApply(const void *w, Touch_t &touch) {
 }
 
 /*--------------------------------------------------------------------------------
- * Widget callback functions for Calibration
+ * Callback functions - Calibration
  *--------------------------------------------------------------------------------*/
 #define OFFSET_MIN    (-10)
 #define OFFSET_MAX    ( 10)
@@ -867,7 +879,7 @@ static void onCalibrationApply(const void *w, Touch_t &touch) {
 }
 
 /*--------------------------------------------------------------------------------
- * Widget callback functions for Adjust Offset
+ * Callback functions - Adjust Offset
  *--------------------------------------------------------------------------------*/
 static void onAdjustOffsetScreen(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
@@ -913,7 +925,7 @@ static void onAdjustOffsetApply(const void *w, Touch_t &touch) {
 
 
 /*--------------------------------------------------------------------------------
- * Widget callback functions for Information
+ * Callback functions - Information
  *--------------------------------------------------------------------------------*/
 static void onInformationScreen (const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));

@@ -88,6 +88,7 @@ SdFs SD;
  */
 #include <string>
 #include <vector>
+#include <exception>
 
 typedef struct {
   std::string name;
@@ -173,11 +174,18 @@ static void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::v
     } else {
       // Add full path to vector
       // file.path(), file.name(), file.size()
+      // https://stackoverflow.com/questions/27609839/about-c-vectorpush-back-exceptions-ellipsis-catch-useful
+      // https://cpprefjp.github.io/reference/exception/exception.html
+      try {
 #if USE_SDFAT
-      files.push_back({buf, (uint32_t)file.fileSize()});
+        files.push_back({buf, (uint32_t)file.fileSize()});
 #else
-      files.push_back({file.path(), file.size()});
+        files.push_back({file.path(), file.size()});
 #endif
+      } catch (const std::exception &e) {
+        DBG_EXEC(printf("Exception: %s\n", e.what()));
+        return;
+      }
     }
     file = root.openNextFile();
   }
