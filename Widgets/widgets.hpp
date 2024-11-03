@@ -177,8 +177,8 @@ static constexpr Widget_t widget_thermograph[] = {
 // Screen - File manager
 static void onFileManagerScreen   (const void *w, Touch_t &touch);
 static void onFileManagerCheckAll (const void *w, Touch_t &touch);
-static void onFileManagerFileList (const void *w, Touch_t &touch);
-static void onFileManagerScroll   (const void *w, Touch_t &touch);
+static void onFileManagerScrollBox(const void *w, Touch_t &touch);
+static void onFileManagerScrollBar(const void *w, Touch_t &touch);
 static void onFileManagerThumbnail(const void *w, Touch_t &touch);
 static void onFileManagerMovie    (const void *w, Touch_t &touch);
 static void onFileManagerFolder   (const void *w, Touch_t &touch);
@@ -193,14 +193,13 @@ static void onFileManagerApply    (const void *w, Touch_t &touch);
 #define ITEM_HEIGHT   (FONT_HEIGHT + FONT_MARGIN * 2)
 #define VIEW_WIDTH    (FONT_WIDTH * (VIEW_ITEMS + 1) + FONT_MARGIN * 2) // 138
 #define VIEW_HEIGHT   (ITEM_HEIGHT * VIEW_ITEMS) // 220
-#define BORDER_OFFSET 2   // offset for borders
 #define SCROLL_COLOR  RGB565(0x01, 0xA1, 0xFF)
 
 static constexpr Widget_t widget_file_manager[] = {
   {   0,   0, 320, 240, image_file_manager, EVENT_NONE,  onFileManagerScreen    },
   {   1,   8,  26,  26, image_checkbox,     EVENT_DOWN,  onFileManagerCheckAll  },
-  {  32,  10, 138, 220, NULL,               EVENT_DOWN,  onFileManagerFileList  }, // VIEW_WIDTH x VIEW_HEIGHT
-  { 176,  10,  15, 224, NULL,               EVENT_DRAG,  onFileManagerScroll    }, // scroll bar x VIEW_HEIGHT + ??
+  {  32,  10, 138, 220, NULL,               EVENT_DOWN,  onFileManagerScrollBox }, // VIEW_WIDTH x VIEW_HEIGHT
+  { 176,  10,  15, 224, NULL,               EVENT_DRAG,  onFileManagerScrollBar }, // scroll bar x VIEW_HEIGHT + ??
   { 198,  69, 120,  90, NULL,               EVENT_NONE,  onFileManagerThumbnail },
   { 207, 165,  32,  26, image_movie,        EVENT_CLICK, onFileManagerMovie     },
   { 276, 165,  32,  26, image_folder,       EVENT_CLICK, onFileManagerFolder    },
@@ -555,6 +554,7 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
   int item_head = scroll_pos / ITEM_HEIGHT;
   int item_tail = item_head + (VIEW_ITEMS + 1);
   item_tail = min(item_tail, n_files);
+//DBG_EXEC(printf("item_head: %d, item_tail: %d\n", item_head, item_tail));
 
   int base_pos  = item_head * ITEM_HEIGHT;
   int delta_pos = base_pos - scroll_pos + FONT_MARGIN - ITEM_HEIGHT;
@@ -620,11 +620,18 @@ static void onFileManagerCheckAll(const void *w, Touch_t &touch) {
   DrawCheck(static_cast<const Widget_t*>(w), cnf.file_selected);
 }
 
-static void onFileManagerFileList(const void *w, Touch_t &touch) {
+static void onFileManagerScrollBox(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
+
+  if (touch.event != EVENT_NONE) {
+    const Widget_t *widget = static_cast<const Widget_t*>(w);
+    int sel = (scroll_pos + touch.y - widget->y) / ITEM_HEIGHT;
+    files[sel].isSelected = !files[sel].isSelected;
+    ScrollView(widget, scroll_pos);
+  }
 }
 
-static void onFileManagerScroll(const void *w, Touch_t &touch) {
+static void onFileManagerScrollBar(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   static int drag_pos;
@@ -649,13 +656,15 @@ static void onFileManagerScroll(const void *w, Touch_t &touch) {
   // Relative movement from the reference position
   scroll_pos += touch.y - drag_pos;
   scroll_pos = constrain(scroll_pos, 0, scroll_max);
-  DBG_EXEC(printf("scroll_max: %d, scroll_pos: %d\n", scroll_max, scroll_pos));
+//DBG_EXEC(printf("scroll_pos: %d, scroll_max: %d\n", scroll_pos, scroll_max));
 
   lcd.beginTransaction();
+
   sprite_scroll.createSprite(widget->w, widget->h);
   sprite_scroll.fillRect(0, scroll_pos, widget->w, scroll_height, SCROLL_COLOR);
   sprite_scroll.pushSprite(&lcd, widget->x, widget->y);
   sprite_scroll.deleteSprite();
+
   ScrollView(widget - 1, scroll_pos);
   lcd.endTransaction();
 
