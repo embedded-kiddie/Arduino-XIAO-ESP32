@@ -3,6 +3,7 @@
 
   See end of file for original header text and MIT license info.
 */
+#include "colors.h"
 #include "spi_assign.h"
 
 #if defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_UNOR4_MINIMA) || defined(ESP32)
@@ -18,8 +19,6 @@
  *=============================================================*/
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
-#include <SPI.h>
-#include "colors.h"
 
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
@@ -75,7 +74,6 @@ void gfx_setup(void) {
  *=============================================================*/
 #include <LovyanGFX.hpp>
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
-#include "colors.h"
 
 LGFX lcd;
 
@@ -95,9 +93,7 @@ void gfx_setup(void) {
  * TFT_eSPI Library
  * https://github.com/Bodmer/TFT_eSPI
  *=============================================================*/
-#include "SPI.h"
 #include "TFT_eSPI.h"
-#include "colors.h"
 
 // Use hardware SPI
 TFT_eSPI tft = TFT_eSPI();

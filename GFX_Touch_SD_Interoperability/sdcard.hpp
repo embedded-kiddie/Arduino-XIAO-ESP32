@@ -71,7 +71,7 @@ SdFs SD;
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
-#define FS_TYPE  fs::FS
+#define FS_TYPE  fs::SDFS
 #ifdef _TFT_eSPIH_
 #define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()) //, SPI_READ_FREQUENCY
 #else
@@ -414,10 +414,22 @@ bool SaveBMP24(FS_TYPE &fs, const char *path) {
       // if you are attempting to convert this library to use another display library,
       // this is where you may run into issues
       // the libries must have a readPixel function
-#ifdef _ADAFRUIT_GFX_H
+#if   defined(_ARDUINO_GFX_LIBRARIES_H_)
+
+      rgb = 0; // does not support reading
+
+#elif defined(_ADAFRUIT_GFX_H)
+
       rgb = readPixA(x, y);
-#else
+
+#elif defined(_TFT_eSPIH_)
+
       rgb = GFX_EXEC(readPixel(x, y));
+
+#else // LOVYANGFX_HPP_
+
+      rgb = GFX_EXEC(readPixel(x, y));
+
 #endif
       // convert the 16 bit color to full 24
       // that way we have a legit bmp that can be read into the
