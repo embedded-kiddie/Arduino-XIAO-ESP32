@@ -1,4 +1,3 @@
-
 /*================================================================================
  * Wedget data
  *================================================================================*/
@@ -199,7 +198,7 @@ static constexpr Widget_t widget_file_manager[] = {
   {   0,   0, 320, 240, image_file_manager, EVENT_NONE,  onFileManagerScreen    },
   {   1,   8,  26,  26, image_checkbox,     EVENT_DOWN,  onFileManagerCheckAll  },
   {  32,  10, 138, 220, NULL,               EVENT_DOWN,  onFileManagerScrollBox }, // VIEW_WIDTH x VIEW_HEIGHT
-  { 176,  10,  15, 224, NULL,               EVENT_DRAG,  onFileManagerScrollBar }, // scroll bar x VIEW_HEIGHT + ??
+  { 176,  10,  15, 220, NULL,               EVENT_DRAG,  onFileManagerScrollBar }, // scroll bar x VIEW_HEIGHT
   { 198,  69, 120,  90, NULL,               EVENT_NONE,  onFileManagerThumbnail },
   { 207, 165,  32,  26, image_movie,        EVENT_CLICK, onFileManagerMovie     },
   { 276, 165,  32,  26, image_folder,       EVENT_CLICK, onFileManagerFolder    },
@@ -541,23 +540,25 @@ static void onThermographApply(const void *w, Touch_t &touch) {
  *--------------------------------------------------------------------------------*/
 static std::vector<FileInfo_t> files;
 static int n_files;
-static int scroll_pos, scroll_max, scroll_height;
+static int scroll_pos, scroll_max, bar_height;
 
 static void ScrollView(const Widget_t *widget, int scroll_pos) {
   static LGFX_Sprite sprite_view;
   bool invert = false;
 
   sprite_view.setTextSize(2);
+  sprite_view.setTextWrap(false);
   sprite_view.setTextColor(WHITE);
   sprite_view.createSprite(VIEW_WIDTH, VIEW_HEIGHT);
 
-  int item_head = scroll_pos / ITEM_HEIGHT;
-  int item_tail = item_head + (VIEW_ITEMS + 1);
+  int scaled_pos = scroll_pos * widget->h / bar_height;
+  int item_head  = scaled_pos / ITEM_HEIGHT;
+  int item_tail  = item_head + (VIEW_ITEMS + 1);
   item_tail = min(item_tail, n_files);
-//DBG_EXEC(printf("item_head: %d, item_tail: %d\n", item_head, item_tail));
+  DBG_EXEC(printf("item_head: %d, item_tail: %d\n", item_head, item_tail));
 
   int base_pos  = item_head * ITEM_HEIGHT;
-  int delta_pos = base_pos - scroll_pos + FONT_MARGIN - ITEM_HEIGHT;
+  int delta_pos = base_pos - scaled_pos + FONT_MARGIN - ITEM_HEIGHT;
 
   for (int i = item_head; i < item_tail; i++) {
     delta_pos += ITEM_HEIGHT;
@@ -625,9 +626,27 @@ static void onFileManagerScrollBox(const void *w, Touch_t &touch) {
 
   if (touch.event != EVENT_NONE) {
     const Widget_t *widget = static_cast<const Widget_t*>(w);
-    int sel = (scroll_pos + touch.y - widget->y) / ITEM_HEIGHT;
-    files[sel].isSelected = !files[sel].isSelected;
+    int scaled_pos = scroll_pos * widget->h / bar_height;
+    int selected =  (scaled_pos + touch.y - widget->y - FONT_MARGIN) / ITEM_HEIGHT;
+    files[selected].isSelected = !files[selected].isSelected;
+
     ScrollView(widget, scroll_pos);
+
+    const Widget_t *thumbnail = widget + 2; 
+    if (files[selected].isSelected) {
+      char path[64];
+      sprintf(path, "%s", files[selected].name.c_str());
+      DBG_EXEC(printf("path: %s\n", path));
+      GFX_EXEC(drawBmpFile(
+//      SD,
+        path,
+        thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h,
+        0, 0,
+        0.25, 0.25
+      ));
+    } else {
+      GFX_EXEC(fillRect(thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h, BLACK));
+    }
   }
 }
 
@@ -641,10 +660,10 @@ static void onFileManagerScrollBar(const void *w, Touch_t &touch) {
   if (touch.event == EVENT_NONE) {
     scroll_pos = drag_pos = 0;
     if (n_files > VIEW_ITEMS) {
-      scroll_height = (widget->h * (VIEW_ITEMS - 1)) / n_files;
-      scroll_max = VIEW_HEIGHT - scroll_height;
+      scroll_max = widget->h * (n_files - VIEW_ITEMS) / n_files;
+      bar_height = widget->h - scroll_max;
     } else {
-      scroll_height = widget->h;
+      bar_height = widget->h;
       scroll_max = 0;
     }
   }
@@ -661,7 +680,7 @@ static void onFileManagerScrollBar(const void *w, Touch_t &touch) {
   lcd.beginTransaction();
 
   sprite_scroll.createSprite(widget->w, widget->h);
-  sprite_scroll.fillRect(0, scroll_pos, widget->w, scroll_height, SCROLL_COLOR);
+  sprite_scroll.fillRect(0, scroll_pos, widget->w, bar_height, SCROLL_COLOR);
   sprite_scroll.pushSprite(&lcd, widget->x, widget->y);
   sprite_scroll.deleteSprite();
 
