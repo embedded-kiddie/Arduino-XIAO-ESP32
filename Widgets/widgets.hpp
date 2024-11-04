@@ -578,7 +578,8 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
     }
 
     sprite_view.setCursor(FONT_MARGIN, delta_pos);
-    sprite_view.print(files[i].name.c_str());
+    const char *p = strrchr(files[i].path.c_str(), '/');
+    sprite_view.print(p ? p + 1 : "");
   }
 
   sprite_view.pushSprite(&lcd, widget->x, widget->y);
@@ -590,9 +591,9 @@ static void onFileManagerScreen(const void *w, Touch_t &touch) {
 
   DrawScreen(static_cast<const Widget_t*>(w));
 
-  if (sd_open()) {
+  if (sdcard_open()) {
     uint32_t total, free;
-    sd_get_size(&total, &free);
+    sdcard_size(&total, &free);
     GFX_EXEC(setTextSize(2));
     gfx_printf(247, 14, "%4luMB", total);
     gfx_printf(247, 42, "%4luMB", free);
@@ -634,12 +635,10 @@ static void onFileManagerScrollBox(const void *w, Touch_t &touch) {
 
     const Widget_t *thumbnail = widget + 2; 
     if (files[selected].isSelected) {
-      char path[64];
-      sprintf(path, "%s", files[selected].name.c_str());
-      DBG_EXEC(printf("path: %s\n", path));
+      DBG_EXEC(printf("path: %s\n", files[selected].path.c_str()));
       GFX_EXEC(drawBmpFile(
 //      SD,
-        path,
+        files[selected].path.c_str(),
         thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h,
         0, 0,
         0.25, 0.25

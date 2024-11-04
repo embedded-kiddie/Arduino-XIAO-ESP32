@@ -91,7 +91,7 @@ SdFs SD;
 #include <exception>
 
 typedef struct {
-  std::string name;
+  std::string path;
   size_t      size;
   bool        isSelected;
   bool        isDirectory;
@@ -141,7 +141,7 @@ static int GetFileNo(FS_TYPE &fs) {
  * Basic file I/O and directory related functions
  * ex)  GetFileList(SD, "/", 0);
  *--------------------------------------------------------------------------------*/
-static void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<FileInfo_t> &files) {
+static void getFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<FileInfo_t> &files) {
   File root = fs.open(dirname);
   if (!root) {
     DBG_EXEC(printf("Failed to open directory.\n"));
@@ -154,44 +154,59 @@ static void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::v
 
   File file = root.openNextFile();
   while (file) {
+    bool isDir = file.isDirectory();
+
 #if USE_SDFAT
-    char buf[BUF_SIZE]; // defined in printf.hpp
-    file.getName(buf, sizeof(buf));
+    char name[BUF_SIZE]; // BUF_SIZE is defined in printf.hpp
+    file.getName(name, sizeof(name));
     if (file.isHidden())
 #else
-    if ((file.path())[1] == '.')  // [0] == '/'
+    const char *p = strrchr(file.path(), '/');
+    if (p && p[1] == '.')
 #endif
     {
       ; // skip dot file
-    } else if (file.isDirectory()) {
-      if (levels) {
-#if USE_SDFAT
-        GetFileList(fs, buf, levels - 1, files);
-#else
-        GetFileList(fs, file.path(), levels - 1, files);
-#endif
-      }
-    } else {
+    }
+    
+    else {
       // Add full path to vector
       // file.path(), file.name(), file.size()
       // https://stackoverflow.com/questions/27609839/about-c-vectorpush-back-exceptions-ellipsis-catch-useful
       // https://cpprefjp.github.io/reference/exception/exception.html
       try {
 #if USE_SDFAT
-        files.push_back({buf, (uint32_t)file.fileSize()});
+        char path[BUF_SIZE];
+        sprintf(path, "/%s/%s", dirname, name);
+        files.push_back({path, (uint32_t)file.fileSize(), false, isDir});
 #else
-        files.push_back({file.path(), file.size()});
+        files.push_back({file.path(), file.size(), false, isDir});
 #endif
       } catch (const std::exception &e) {
         DBG_EXEC(printf("Exception: %s\n", e.what()));
         return;
       }
+
+      if (isDir && levels) {
+#if USE_SDFAT
+        getFileList(fs, name, levels - 1, files);
+#else
+        getFileList(fs, file.path(), levels - 1, files);
+#endif
+      }
     }
+
     file = root.openNextFile();
   }
 }
 
-static bool DeleteDir(FS_TYPE &fs, const char *path) {
+void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<FileInfo_t> &files) {
+  getFileList(fs, dirname, levels, files);
+
+  // erase the first file because it's a directory
+  files.erase(files.begin());
+}
+
+bool DeleteDir(FS_TYPE &fs, const char *path) {
   // `path` must be empty
   if (fs.rmdir(path)) {
     DBG_EXEC(printf("Delete %s: done.\n", path));
@@ -202,7 +217,7 @@ static bool DeleteDir(FS_TYPE &fs, const char *path) {
   }
 }
 
-static void DeleteFile(FS_TYPE &fs, const char *path) {
+void DeleteFile(FS_TYPE &fs, const char *path) {
   if (fs.remove(path)) {
     DBG_EXEC(printf("Delete %s: done.\n", path));
   } else {
@@ -354,7 +369,7 @@ void sdcard_setup(void) {
 #endif
 }
 
-bool sd_open(void) {
+bool sdcard_open(void) {
   uint8_t retry = 0;
 
   while (!SD.begin(SD_CONFIG)) {
@@ -369,7 +384,7 @@ bool sd_open(void) {
   return true;
 }
 
-void sd_get_size(uint32_t *total, uint32_t *free) {
+void sdcard_size(uint32_t *total, uint32_t *free) {
 #if USE_SDFAT
   *total = (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5);
   *free  = (uint32_t)((SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
@@ -380,7 +395,7 @@ void sd_get_size(uint32_t *total, uint32_t *free) {
 }
 
 bool sdcard_save(void) {
-  if (!sd_open()) {
+  if (!sdcard_open()) {
     return false;
   }
 
@@ -402,7 +417,7 @@ bool sdcard_save(void) {
   GetFileList(SD, "/", 1, files);
 
   for (const auto& file : files) {
-    DBG_EXEC(printf("%s, %lu\n", file.name.c_str(), file.size));
+    DBG_EXEC(printf("%s, %lu\n", file.path.c_str(), file.size));
   }
 
   // SD.end(); // Activating this line will cause some GFX libraries to stop working.
