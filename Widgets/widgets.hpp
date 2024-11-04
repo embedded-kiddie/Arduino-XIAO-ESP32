@@ -200,10 +200,10 @@ static constexpr Widget_t widget_file_manager[] = {
   {  32,  10, 138, 220, NULL,               EVENT_DOWN,  onFileManagerScrollBox }, // VIEW_WIDTH x VIEW_HEIGHT
   { 176,  10,  15, 220, NULL,               EVENT_DRAG,  onFileManagerScrollBar }, // scroll bar x VIEW_HEIGHT
   { 198,  69, 120,  90, NULL,               EVENT_NONE,  onFileManagerThumbnail },
-  { 207, 165,  32,  26, image_movie,        EVENT_CLICK, onFileManagerMovie     },
-  { 276, 165,  32,  26, image_folder,       EVENT_CLICK, onFileManagerFolder    },
-  { 208, 206,  30,  30, NULL,               EVENT_ALL,   onFileManagerClose     },
-  { 276, 206,  30,  30, NULL,               EVENT_CLICK, onFileManagerApply     },
+  { 207, 165,  32,  28, image_movie,        EVENT_CLICK, onFileManagerMovie     }, // 32 x 26 --> 32 x 28 for DrawPress()
+  { 276, 165,  32,  28, image_folder,       EVENT_CLICK, onFileManagerFolder    }, // 32 x 26 --> 32 x 28 for DrawPress()
+  { 208, 206,  30,  32, NULL,               EVENT_ALL,   onFileManagerClose     }, // 30 x 30 --> 30 x 32 for DrawPress()
+  { 276, 206,  30,  32, NULL,               EVENT_CLICK, onFileManagerApply     }, // 30 x 30 --> 30 x 32 for DrawPress()
 };
 
 // Screen - Capture mode
@@ -601,7 +601,7 @@ static void onFileManagerScreen(const void *w, Touch_t &touch) {
     files.clear();
     GetFileList(SD, "/", 1, files);
     n_files = files.size();
-  
+/*  
     DBG_EXEC({
       for (const auto& file : files) {
         printf("%s, %lu\n", file.path.c_str(), file.size);
@@ -610,7 +610,7 @@ static void onFileManagerScreen(const void *w, Touch_t &touch) {
       files[0].isSelected = true;
       files[9].isSelected = true;
       files[n_files-1].isSelected = true;
-    });
+    });//*/
   }
 }
 
@@ -682,7 +682,7 @@ static void onFileManagerScrollBar(const void *w, Touch_t &touch) {
   scroll_pos = constrain(scroll_pos, 0, scroll_max);
 //DBG_EXEC(printf("scroll_pos: %d, scroll_max: %d\n", scroll_pos, scroll_max));
 
-  lcd.beginTransaction();
+  GFX_EXEC(beginTransaction());
 
   sprite_scroll.createSprite(widget->w, widget->h);
   sprite_scroll.fillRect(0, scroll_pos, widget->w, bar_height, SCROLL_COLOR);
@@ -690,7 +690,7 @@ static void onFileManagerScrollBar(const void *w, Touch_t &touch) {
   sprite_scroll.deleteSprite();
 
   ScrollView(widget - 1, scroll_pos);
-  lcd.endTransaction();
+  GFX_EXEC(endTransaction());
 
   // Update the reference position
   drag_pos = touch.y;
@@ -698,6 +698,12 @@ static void onFileManagerScrollBar(const void *w, Touch_t &touch) {
 
 static void onFileManagerThumbnail(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
+
+  if (touch.event == EVENT_NONE) {
+    const Widget_t *widget = static_cast<const Widget_t*>(w);
+    GFX_EXEC(drawRect(widget->x - 2, widget->y - 2, widget->w + 4, widget->h + 4, LIGHTGREY));
+    GFX_EXEC(drawRect(widget->x - 1, widget->y - 1, widget->w + 2, widget->h + 2, DARKGREY));
+  }
 }
 
 static void onFileManagerMovie(const void *w, Touch_t &touch) {
@@ -785,16 +791,22 @@ static void onCaptureModeApply(const void *w, Touch_t &touch) {
 #define OFFSET_Y_ROW  223
 #define OFFSET_Y_COL  172
 
-static void DrawOffsetX(const Widget_t* widget) {
-  DrawButton(widget,     (cnf.touch_offset[0] < OFFSET_MAX) ? 1 : 0);
-  DrawButton(widget + 1, (cnf.touch_offset[0] > OFFSET_MIN) ? 1 : 0);
+static void DrawOffsetX(const Widget_t* widget, Touch_t &touch) {
+  // draw button when touch.event == EVENT_NONE or EVENT_UP
+  if (touch.event != EVENT_DOWN) {
+    DrawButton(widget,     (cnf.touch_offset[0] < OFFSET_MAX) ? 1 : 0);
+    DrawButton(widget + 1, (cnf.touch_offset[0] > OFFSET_MIN) ? 1 : 0);
+  }
 
   gfx_printf(OFFSET_X_ROW, OFFSET_X_COL, "%3d", (int)cnf.touch_offset[0]);
 }
 
-static void DrawOffsetY(const Widget_t* widget) {
-  DrawButton(widget,     (cnf.touch_offset[1] < OFFSET_MAX) ? 1 : 0);
-  DrawButton(widget + 1, (cnf.touch_offset[1] > OFFSET_MIN) ? 1 : 0);
+static void DrawOffsetY(const Widget_t* widget, Touch_t &touch) {
+  // draw button when touch.event == EVENT_NONE or EVENT_UP
+  if (touch.event != EVENT_DOWN) {
+    DrawButton(widget,     (cnf.touch_offset[1] < OFFSET_MAX) ? 1 : 0);
+    DrawButton(widget + 1, (cnf.touch_offset[1] > OFFSET_MIN) ? 1 : 0);
+  }
 
   gfx_printf(OFFSET_Y_ROW, OFFSET_Y_COL, "%3d", (int)cnf.touch_offset[1]);
 }
@@ -834,7 +846,7 @@ static void onCalibrationXup(const void *w, Touch_t &touch) {
     }
   }
 
-  DrawOffsetX(static_cast<const Widget_t*>(w));
+  DrawOffsetX(static_cast<const Widget_t*>(w), touch);
 }
 
 static void onCalibrationXdown(const void *w, Touch_t &touch) {
@@ -847,7 +859,7 @@ static void onCalibrationXdown(const void *w, Touch_t &touch) {
     }
   }
 
-  DrawOffsetX(static_cast<const Widget_t*>(w) - 1);
+  DrawOffsetX(static_cast<const Widget_t*>(w) - 1, touch);
 }
 
 static void onCalibrationYup(const void *w, Touch_t &touch) {
@@ -860,7 +872,7 @@ static void onCalibrationYup(const void *w, Touch_t &touch) {
     }
   }
 
-  DrawOffsetY(static_cast<const Widget_t*>(w));
+  DrawOffsetY(static_cast<const Widget_t*>(w), touch);
 }
 
 static void onCalibrationYdown(const void *w, Touch_t &touch) {
@@ -873,7 +885,7 @@ static void onCalibrationYdown(const void *w, Touch_t &touch) {
     }
   }
 
-  DrawOffsetY(static_cast<const Widget_t*>(w) - 1);
+  DrawOffsetY(static_cast<const Widget_t*>(w) - 1, touch);
 }
 
 static void onCalibrationClose(const void *w, Touch_t &touch) {

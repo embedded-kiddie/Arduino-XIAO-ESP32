@@ -84,7 +84,7 @@ SdFs SD;
 #include "SPI.h"
 #define FS_TYPE  fs::SDFS
 #ifdef _TFT_eSPIH_
-#define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()) //, SPI_READ_FREQUENCY
+#define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()), SPI_READ_FREQUENCY
 #else
 #define SD_CONFIG SD_CS, SPI, SPI_READ_FREQUENCY
 #endif
