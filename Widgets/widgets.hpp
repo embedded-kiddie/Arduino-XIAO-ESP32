@@ -188,20 +188,21 @@ static void onFileManagerApply    (const void *w, Touch_t &touch);
 #define FONT_WIDTH    12  // [px] (for setTextSize(2))
 #define FONT_HEIGHT   16  // [px] (for setTextSize(2))
 #define FONT_MARGIN   3   // [px] (margin for each top, right, bottom, left)
+#define ITEM_WIDTH    11  // text length of an item (mlx0000.bmp)
 #define VIEW_ITEMS    10  // number of items in a view
 #define ITEM_HEIGHT   (FONT_HEIGHT + FONT_MARGIN * 2)
-#define VIEW_WIDTH    (FONT_WIDTH * (VIEW_ITEMS + 1) + FONT_MARGIN * 2) // 138
+#define VIEW_WIDTH    (FONT_WIDTH  * ITEM_WIDTH + FONT_MARGIN * 2) // 138
 #define VIEW_HEIGHT   (ITEM_HEIGHT * VIEW_ITEMS) // 220
 #define SCROLL_COLOR  RGB565(0x01, 0xA1, 0xFF)
 
 static constexpr Widget_t widget_file_manager[] = {
   {   0,   0, 320, 240, image_file_manager, EVENT_NONE,  onFileManagerScreen    },
-  {   1,   8,  26,  26, image_checkbox,     EVENT_DOWN,  onFileManagerCheckAll  },
-  {  32,  10, 138, 220, NULL,               EVENT_DOWN,  onFileManagerScrollBox }, // VIEW_WIDTH x VIEW_HEIGHT
-  { 176,  10,  15, 220, NULL,               EVENT_DRAG,  onFileManagerScrollBar }, // scroll bar x VIEW_HEIGHT
-  { 198,  69, 120,  90, NULL,               EVENT_NONE,  onFileManagerThumbnail },
-  { 207, 165,  32,  28, image_movie,        EVENT_CLICK, onFileManagerMovie     }, // 32 x 26 --> 32 x 28 for DrawPress()
-  { 276, 165,  32,  28, image_folder,       EVENT_CLICK, onFileManagerFolder    }, // 32 x 26 --> 32 x 28 for DrawPress()
+  {   0,   9,  26,  26, image_checkbox,     EVENT_DOWN,  onFileManagerCheckAll  },
+  {  29,  10, 138, 220, NULL,               EVENT_DOWN,  onFileManagerScrollBox }, // VIEW_WIDTH x VIEW_HEIGHT
+  { 170,   9,  15, 220, NULL,               EVENT_DRAG,  onFileManagerScrollBar }, // scroll bar x VIEW_HEIGHT
+  { 191,  62, 128,  96, NULL,               EVENT_NONE,  onFileManagerThumbnail },
+  { 207, 166,  32,  28, image_movie,        EVENT_CLICK, onFileManagerMovie     }, // 32 x 26 --> 32 x 28 for DrawPress()
+  { 276, 166,  32,  28, image_folder,       EVENT_CLICK, onFileManagerFolder    }, // 32 x 26 --> 32 x 28 for DrawPress()
   { 208, 206,  30,  32, NULL,               EVENT_ALL,   onFileManagerClose     }, // 30 x 30 --> 30 x 32 for DrawPress()
   { 276, 206,  30,  32, NULL,               EVENT_CLICK, onFileManagerApply     }, // 30 x 30 --> 30 x 32 for DrawPress()
 };
@@ -595,8 +596,8 @@ static void onFileManagerScreen(const void *w, Touch_t &touch) {
     uint32_t total, free;
     sdcard_size(&total, &free);
     GFX_EXEC(setTextSize(2));
-    gfx_printf(247, 14, "%4luMB", total);
-    gfx_printf(247, 42, "%4luMB", free);
+    gfx_printf(245, 13, "%4luMB", total);
+    gfx_printf(245, 37, "%4luMB", free);
 
     files.clear();
     GetFileList(SD, "/", 1, files);
@@ -647,7 +648,7 @@ static void onFileManagerScrollBox(const void *w, Touch_t &touch) {
         files[selected].path.c_str(),
         thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h,
         0, 0,
-        0.375, 0.375
+        0.4, 0.4
       ));
     } else {
       GFX_EXEC(fillRect(thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h, BLACK));
@@ -665,7 +666,7 @@ static void onFileManagerScrollBar(const void *w, Touch_t &touch) {
   if (touch.event == EVENT_NONE) {
     scroll_pos = drag_pos = 0;
     if (n_files > VIEW_ITEMS) {
-      scroll_max = widget->h * (n_files - VIEW_ITEMS) / n_files;
+      scroll_max = widget->h * (n_files - VIEW_ITEMS) / n_files + 1; // '1' for round up
       bar_height = widget->h - scroll_max;
     } else {
       bar_height = widget->h;
@@ -701,7 +702,6 @@ static void onFileManagerThumbnail(const void *w, Touch_t &touch) {
 
   if (touch.event == EVENT_NONE) {
     const Widget_t *widget = static_cast<const Widget_t*>(w);
-    GFX_EXEC(drawRect(widget->x - 2, widget->y - 2, widget->w + 4, widget->h + 4, LIGHTGREY));
     GFX_EXEC(drawRect(widget->x - 1, widget->y - 1, widget->w + 2, widget->h + 2, DARKGREY));
   }
 }
