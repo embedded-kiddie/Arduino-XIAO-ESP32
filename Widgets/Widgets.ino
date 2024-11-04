@@ -51,6 +51,8 @@ uint16_t lcd_height;
  * LovyanGFX Library
  * https://github.com/lovyan03/LovyanGFX
  *---------------------------------------------------*/
+// LovyanGFX need <SdFat.h> before including <LovyanGFX.hpp>
+#include "SdFat.h"
 #include <LovyanGFX.hpp>
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
 

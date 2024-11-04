@@ -579,7 +579,7 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
 
     sprite_view.setCursor(FONT_MARGIN, delta_pos);
     const char *p = strrchr(files[i].path.c_str(), '/');
-    sprite_view.print(p ? p + 1 : "");
+    sprite_view.print(p ? p + 1 : p);
   }
 
   sprite_view.pushSprite(&lcd, widget->x, widget->y);
@@ -602,9 +602,15 @@ static void onFileManagerScreen(const void *w, Touch_t &touch) {
     GetFileList(SD, "/", 1, files);
     n_files = files.size();
   
-    files[0].isSelected = true;
-    files[9].isSelected = true;
-    files[n_files-1].isSelected = true;
+    DBG_EXEC({
+      for (const auto& file : files) {
+        printf("%s, %lu\n", file.path.c_str(), file.size);
+      }
+
+      files[0].isSelected = true;
+      files[9].isSelected = true;
+      files[n_files-1].isSelected = true;
+    });
   }
 }
 
@@ -637,11 +643,11 @@ static void onFileManagerScrollBox(const void *w, Touch_t &touch) {
     if (files[selected].isSelected) {
       DBG_EXEC(printf("path: %s\n", files[selected].path.c_str()));
       GFX_EXEC(drawBmpFile(
-//      SD,
+        SD,
         files[selected].path.c_str(),
         thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h,
         0, 0,
-        0.25, 0.25
+        0.375, 0.375
       ));
     } else {
       GFX_EXEC(fillRect(thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h, BLACK));

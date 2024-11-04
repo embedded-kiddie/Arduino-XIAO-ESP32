@@ -47,7 +47,15 @@
 #define CAPTURE_SCREEN  true
 #define USE_SDFAT       true
 
-// Uncomment and set up if you want to use custom pins for the SPI communication
+// LovyanGFX need <SdFat.h> before including <LovyanGFX.hpp>
+#if defined (SdFat_h)
+#undef  USE_SDFAT
+#define USE_SDFAT       true
+#endif
+
+/*--------------------------------------------------------------------------------
+ * Uncomment and set up if you want to use custom pins for the SPI communication
+ *--------------------------------------------------------------------------------*/
 // #define REASSIGN_PINS
 
 /*--------------------------------------------------------------------------------
@@ -78,7 +86,7 @@ SdFs SD;
 #ifdef _TFT_eSPIH_
 #define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()) //, SPI_READ_FREQUENCY
 #else
-#define SD_CONFIG SD_CS //, SPI, SPI_READ_FREQUENCY
+#define SD_CONFIG SD_CS, SPI, SPI_READ_FREQUENCY
 #endif
 
 #endif // USE_SDFAT
@@ -162,7 +170,7 @@ static void getFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::v
     if (file.isHidden())
 #else
     const char *p = strrchr(file.path(), '/');
-    if (p && p[1] == '.')
+    if (p[p ? 1 : 0] == '.')
 #endif
     {
       ; // skip dot file
@@ -401,7 +409,7 @@ bool sdcard_save(void) {
 
 #if CAPTURE_SCREEN
   int no = GetFileNo(SD);
-  char path[64];
+  char path[BUF_SIZE];
   sprintf(path, "%s/mlx%04d.bmp", MLX90640_DIR, no);
   DBG_EXEC(printf("%s\n", path));
 
@@ -422,13 +430,11 @@ bool sdcard_save(void) {
 
   // SD.end(); // Activating this line will cause some GFX libraries to stop working.
 
-#if USE_SDFAT
-  DBG_EXEC(printf("Card size: %luMB\n", (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5)));
-  DBG_EXEC(printf("Free size: %luMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024)));
-#else
-  DBG_EXEC(printf("Card size: %lluMB\n", SD.totalBytes() / (1024 * 1024)));
-  DBG_EXEC(printf("Used size: %lluMB\n", SD.usedBytes()  / (1024 * 1024)));
-#endif
+  DBG_EXEC(uint32_t total);
+  DBG_EXEC(uint32_t free);
+  DBG_EXEC(sdcard_size(&total, &free));
+  DBG_EXEC(printf("Card size: %luMB\n", total));
+  DBG_EXEC(printf("Free size: %luMB\n", free));
 
   return true;
 }
