@@ -3,7 +3,7 @@
 #define TFT_WIDTH  240 // ST7789 240 x 240 and 240 x 320
 #define TFT_HEIGHT 320 // ST7789 240 x 320
 
-#if defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_UNOR4_MINIMA)
+#if defined (ARDUINO_UNOR4_WIFI) || defined (ARDUINO_UNOR4_MINIMA)
 
 /* SPI pin definition for Arduino UNO R3 and R4
   | ST7789 | PIN  |  R3  |   R4   |     Description      |
@@ -27,7 +27,7 @@
 #define SPI_READ_FREQUENCY   4000000  //  4 MHz
 #define SPI_TOUCH_FREQUENCY   250000  // 250KHz
 
-#elif defined(ARDUINO_XIAO_ESP32S3)
+#elif defined (ARDUINO_XIAO_ESP32S3)
 
 // Seeed Studio XIAO ESP32-S3
 #define TFT_SCLK      D8

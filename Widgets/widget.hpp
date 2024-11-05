@@ -64,6 +64,7 @@ static void DrawToggle(const Widget_t *widget, bool check = false);
 static void DrawCheck (const Widget_t *widget, bool check = false);
 static void DrawPress (const Widget_t *widget, Event_t event = EVENT_NONE);
 static void DrawRadio (const Widget_t *widget, uint8_t n_widget, uint8_t selected = 0);
+static void DrawThumb (const Widget_t *widget, const char *path);
 
 /*--------------------------------------------------------------------------------
  * Widgets
@@ -85,18 +86,13 @@ static PNG png; // PNG decoder instance
 static uint16_t xpos = 0;
 static uint16_t ypos = 0;
 
-// This function will be called during decoding of the png file to render each image
-// line to the TFT. PNGdec generates the image line and a 1bpp mask.
-static void pngDraw(PNGDRAW *pDraw) {
-  uint16_t lineBuffer[TFT_HEIGHT];          // Line buffer for rendering
-  uint8_t  maskBuffer[TFT_HEIGHT / 8 + 1];  // Mask buffer
-
+// This next function will be called during decoding of the png file to
+// render each image line to the TFT.  If you use a different TFT library
+// you will need to adapt this function to suit.
+void pngDraw(PNGDRAW *pDraw) {
+  uint16_t lineBuffer[MAX_IMAGE_WIDTH];
   png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
-
-  if (png.getAlphaMask(pDraw, maskBuffer, 255)) {
-    // Note: pushMaskedImage is for pushing to the TFT and will not work pushing into a sprite
-    tft.pushMaskedImage(xpos, ypos + pDraw->y, pDraw->iWidth, 1, lineBuffer, maskBuffer);
-  }
+  GFX_EXEC(pushImage(xpos, ypos + pDraw->y, pDraw->iWidth, 1, lineBuffer));
 }
 
 static void DrawPNG(const uint8_t *img, size_t size, uint16_t x, uint16_t y) {
@@ -104,7 +100,9 @@ static void DrawPNG(const uint8_t *img, size_t size, uint16_t x, uint16_t y) {
   ypos = y;
 
   if (png.openFLASH((uint8_t*)img, size, pngDraw) == PNG_SUCCESS) {
+    GFX_EXEC(startWrite());
     png.decode(NULL, 0);
+    GFX_EXEC(endWrite());
     // png.close(); // Required for files, not needed for FLASH arrays
   }
 }
@@ -113,7 +111,7 @@ static void DrawPNG(const uint8_t *img, size_t size, uint16_t x, uint16_t y) {
 /*--------------------------------------------------------------------------------
  * Converting byte order according to MCU architecture
  *--------------------------------------------------------------------------------*/
-#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#if defined (__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 
 #define SWAP(type, a, b)  { type tmp = a; a = b; b = tmp; }
 
@@ -142,11 +140,11 @@ static void DrawWidget(const Widget_t *widget, uint8_t offset /* = 0 */) {
   if (image) {
     GFX_EXEC(startWrite());
 
-#if defined(_TFT_eSPIH_)
+#if defined (_TFT_eSPIH_)
 
     DrawPNG(image->data, image->size, widget->x, widget->y);
 
-#elif defined(LOVYANGFX_HPP_)
+#elif defined (LOVYANGFX_HPP_)
 
     GFX_EXEC(drawPng(image->data, image->size, widget->x, widget->y));
 
@@ -221,12 +219,12 @@ static void DrawSlider(const Widget_t *widget, int16_t offset /* = 0 */) {
 
 #else
 
-#if defined(_TFT_eSPIH_)
+#if defined (_TFT_eSPIH_)
 
     TFT_eSprite sprite_bar  = TFT_eSprite(&tft);
     TFT_eSprite sprite_knob = TFT_eSprite(&sprite_bar);
 
-#elif defined(LOVYANGFX_HPP_)
+#elif defined (LOVYANGFX_HPP_)
 
     // slower but no flickering
     LGFX_Sprite sprite_bar(&lcd);
@@ -321,6 +319,21 @@ static void DrawPress(const Widget_t *widget, Event_t event) {
   if (event == EVENT_RISING) {
     touch_clear();
   }
+}
+
+/*--------------------------------------------------------------------------------
+ * Draw thumbnail
+ *--------------------------------------------------------------------------------*/
+static void DrawThumb(const Widget_t *widget, const char *path) {
+#if defined (LOVYANGFX_HPP_) && (!defined (ESP32) || defined (SdFat_h))
+  GFX_EXEC(drawBmpFile(
+    SD,
+    path,
+    widget->x, widget->y, widget->w, widget->h,
+    0, 0,
+    0.4, 0.4
+  ));
+#endif
 }
 
 /*--------------------------------------------------------------------------------

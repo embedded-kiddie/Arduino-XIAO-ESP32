@@ -1,7 +1,7 @@
 /*================================================================================
  * Touch event manager
  *================================================================================*/
-#if defined(_ADAFRUIT_GFX_H) || defined(_ARDUINO_GFX_LIBRARIES_H_)
+#if defined (_ADAFRUIT_GFX_H) || defined (_ARDUINO_GFX_LIBRARIES_H_)
 
 #include <SPI.h>
 #include <XPT2046_Touchscreen.h>

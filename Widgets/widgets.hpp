@@ -596,8 +596,13 @@ static void onFileManagerScreen(const void *w, Touch_t &touch) {
     uint32_t total, free;
     sdcard_size(&total, &free);
     GFX_EXEC(setTextSize(2));
-    gfx_printf(245, 13, "%4luMB", total);
-    gfx_printf(245, 37, "%4luMB", free);
+    if (total < 10000UL) {
+      gfx_printf(245, 13, "%4luMB", total);
+      gfx_printf(245, 37, "%4luMB", free);
+    } else {
+      gfx_printf(245, 13, "%4.1fGB", (float)total / 1000.0);
+      gfx_printf(245, 37, "%4.1fGB", (float)free  / 1000.0);
+    }
 
     files.clear();
     GetFileList(SD, "/", 1, files);
@@ -643,13 +648,7 @@ static void onFileManagerScrollBox(const void *w, Touch_t &touch) {
     const Widget_t *thumbnail = widget + 2; 
     if (files[selected].isSelected) {
       DBG_EXEC(printf("path: %s\n", files[selected].path.c_str()));
-      GFX_EXEC(drawBmpFile(
-        SD,
-        files[selected].path.c_str(),
-        thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h,
-        0, 0,
-        0.4, 0.4
-      ));
+      DrawThumb(thumbnail, files[selected].path.c_str());
     } else {
       GFX_EXEC(fillRect(thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h, BLACK));
     }

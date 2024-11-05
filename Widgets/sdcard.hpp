@@ -244,7 +244,7 @@ inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
   b = (color<<3)&0x00F8;
 }
 
-#if defined(_ADAFRUIT_GFX_H)
+#if defined (_ADAFRUIT_GFX_H)
 
 /* create snapshot of 3.5" TFT and save to file in bitmap format
  * https://forum.arduino.cc/t/create-snapshot-of-3-5-tft-and-save-to-file-in-bitmap-format/391367/7
@@ -334,15 +334,15 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
 
     for (int x = 0; x < w; x++) {
 
-#if   defined(_ARDUINO_GFX_LIBRARIES_H_)
+#if   defined (_ARDUINO_GFX_LIBRARIES_H_)
 
       rgb = 0; // does not support reading
 
-#elif defined(_ADAFRUIT_GFX_H)
+#elif defined (_ADAFRUIT_GFX_H)
 
       rgb = readPixA(x, y);
 
-#elif defined(_TFT_eSPIH_)
+#elif defined (_TFT_eSPIH_)
 
       rgb = GFX_EXEC(readPixel(x, y));
 
