@@ -31,14 +31,6 @@ static constexpr Image_t image_icon_camera[] = {
   { icon_video,   sizeof(icon_video  ) }, // 50 x 50
   { icon_stop,    sizeof(icon_stop   ) }, // 50 x 50
 };
-static constexpr Image_t image_slider1[] = {
-  { slider_bar1, sizeof(slider_bar1) }, // 160 x 26
-  { slider_knob, sizeof(slider_knob) }, //  26 x 26
-};
-static constexpr Image_t image_slider2[] = {
-  { slider_bar2, sizeof(slider_bar2) }, // 215 x 26
-  { slider_knob, sizeof(slider_knob) }, //  26 x 26
-};
 static constexpr Image_t image_radio[] = {
   { radio_off, sizeof(radio_off) }, // 26 x 26
   { radio_on,  sizeof(radio_on ) }, // 26 x 26
@@ -83,6 +75,30 @@ static constexpr Image_t image_save_flush[] = {
 static constexpr Image_t image_target[] = {
   { target_off, sizeof(target_off) }, // 32 x 32
   { target_on,  sizeof(target_on ) }, // 32 x 32
+};
+
+/*--------------------------------------------------------------------------------
+ * Slider model
+ * <------------------ Bar width -------------------->
+ *      <- width ->                   <- width ->
+ * +---+----------+------------------+----------+----+ ^
+ * |   |          |                  |          |    | |
+ * |   |   Knob   |                  |   Knob   |    | Bar and Knob height
+ * |   |(pos_min) |                  |(pos_max) |    | |
+ * +---+----------+------------------+----------+----+ v
+ * <--->                                         <--->
+ * SLIDER_KNOB_OFFSET               SLIDER_KNOB_OFFSET
+ *--------------------------------------------------------------------------------*/
+#define SLIDER_KNOB_OFFSET  6 // Offset from both ends of the bar
+
+static constexpr Image_t image_slider1[] = {
+  { slider_bar1, sizeof(slider_bar1) }, // 160 x 26
+  { slider_knob, sizeof(slider_knob) }, //  26 x 26
+};
+static constexpr Image_t image_slider2[] = {
+  { slider_bar2,     sizeof(slider_bar2    ) }, // 238 x 26
+  { slider_knob,     sizeof(slider_knob    ) }, //  26 x 26
+  { slider_knob_off, sizeof(slider_knob_off) }, //  26 x 26
 };
 
 /*--------------------------------------------------------------------------------
@@ -167,8 +183,8 @@ static constexpr Widget_t widget_thermograph[] = {
   { 137,  38, 110,  26, image_radio,       EVENT_DOWN,  onThermographRadio2  },
   { 137,  71, 170,  26, image_toggle,      EVENT_DOWN,  onThermographToggle1 },
   { 137, 103, 170,  26, image_toggle,      EVENT_DOWN,  onThermographToggle2 },
-  {  60, 136, 216,  26, image_slider2,     EVENT_DRAG,  onThermographSlider1 },
-  {  60, 174, 216,  26, image_slider2,     EVENT_DRAG,  onThermographSlider2 },
+  {  40, 134, 238,  26, image_slider2,     EVENT_DRAG,  onThermographSlider1 },
+  {  40, 173, 238,  26, image_slider2,     EVENT_DRAG,  onThermographSlider2 },
   {  60, 206,  30,  30, NULL,              EVENT_ALL,   onThermographClose   },
   { 230, 206,  30,  30, image_icon_apply,  EVENT_CLICK, onThermographApply   },
 };
@@ -409,6 +425,41 @@ static void onConfigurationReturn(const void *w, Touch_t &touch) {
 /*--------------------------------------------------------------------------------
  * Callback functions - Resolution
  *--------------------------------------------------------------------------------*/
+static void MakeSliderPos(const Widget_t *widget, const int16_t *scale, const int16_t n_scale, int16_t *pos) {
+  // Here it's assumed that the knob width is equal to its height.
+  // maximum  knob position on the bar
+  int16_t pos_max = widget->w - widget->h - SLIDER_KNOB_OFFSET;
+  const float step = (float)(pos_max - SLIDER_KNOB_OFFSET) / (float)(scale[n_scale-1] - scale[0]);
+
+  for (int i = 0; i < n_scale; i++) {
+    pos[i] = (int)((float)(scale[i] - scale[0]) * step + 0.5f) + SLIDER_KNOB_OFFSET;
+    // check each position on the scale
+    // GFX_EXEC(drawFastVLine(widget->x + pos[i] + widget->h / 2, widget->y - 10, 10, RED));
+  }
+}
+
+static int DrawSliderPos(const Widget_t *widget, Touch_t &touch, int16_t *pos, const int16_t n_pos) {
+  // Here it's assumed that the knob width is equal to its height.
+  // relative knob position on the bar
+  int16_t X = touch.x - widget->x - widget->h / 2;
+  X = constrain(X, pos[0], pos[n_pos - 1]);
+
+  for (int i = 0; i < n_pos - 1 ; i++) {
+    if (pos[i] <= X && X <= pos[i + 1]) {
+      if (X < (pos[i] + pos[i + 1]) / 2) {
+        DrawSlider(widget, pos[i  ]);
+        return i;
+      } else {
+        DrawSlider(widget, pos[i+1]);
+        return i + 1;
+      }
+    }
+  }
+
+  // never reach
+  return 0;
+}
+
 static void onResolutionScreen(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
@@ -419,18 +470,66 @@ static void onResolutionSlider1(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   const Widget_t *widget = static_cast<const Widget_t*>(w);
-  int16_t X = touch.x   - widget->x - widget->h / 2;
-  int16_t W = widget->w - widget->h - SLIDER_KNOB_OFFSET;
-  DrawSlider(widget, constrain(X, SLIDER_KNOB_OFFSET, W));
+  const int16_t scale[] = {1, 2, 4, 6, 8};
+  const int n = sizeof(scale) / sizeof(scale[0]);
+  int16_t pos[n];
+
+  MakeSliderPos(widget, scale, n, pos);
+
+  if (touch.event == EVENT_NONE) {
+    // Here it's assumed that the knob width is equal to its height.
+    touch.x = widget->x + widget->h / 2;
+    for (int i = 0; i < n; i++) {
+      if (scale[i] == cnf.interpolation) {
+        touch.x += pos[i];
+        break;
+      }
+    }
+  }
+
+  // update the knob position and the configuration
+  int i = DrawSliderPos(widget, touch, pos, n);
+  cnf.interpolation = scale[i];
+
+  // restrict pixel interpolation and block size
+  if (cnf.interpolation * cnf.block_size > 8) {
+    cnf.block_size = 8 / cnf.interpolation;
+    touch.event = EVENT_NONE;
+    onResolutionSlider2(widget + 1, touch);
+  }
 }
 
 static void onResolutionSlider2(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   const Widget_t *widget = static_cast<const Widget_t*>(w);
-  int16_t X = touch.x   - widget->x - widget->h / 2;
-  int16_t W = widget->w - widget->h - SLIDER_KNOB_OFFSET;
-  DrawSlider(widget, constrain(X, SLIDER_KNOB_OFFSET, W));
+  const int16_t scale[] = {1, 2, 4, 8};
+  const int n = sizeof(scale) / sizeof(scale[0]);
+  int16_t pos[n];
+
+  MakeSliderPos(widget, scale, n, pos);
+
+  if (touch.event == EVENT_NONE) {
+    // Here it's assumed that the knob width is equal to its height.
+    touch.x = widget->x + widget->h / 2;
+    for (int i = 0; i < n; i++) {
+      if (scale[i] == cnf.block_size) {
+        touch.x += pos[i];
+        break;
+      }
+    }
+  }
+
+  // update the knob position and the configuration
+  int i = DrawSliderPos(widget, touch, pos, n);
+  cnf.block_size = scale[i];
+
+  // restrict pixel interpolation and block size
+  if (cnf.interpolation * cnf.block_size > 8) {
+    cnf.interpolation = 8 / cnf.block_size;
+    touch.event = EVENT_NONE;
+    onResolutionSlider1(widget - 1, touch);
+  }
 }
 
 static void onResolutionClose(const void *w, Touch_t &touch) {
@@ -454,10 +553,17 @@ static void onResolutionApply(const void *w, Touch_t &touch) {
 /*--------------------------------------------------------------------------------
  * Callback functions - Thermograph
  *--------------------------------------------------------------------------------*/
+#define TERMOGRAPH_MIN  (-20)
+#define TERMOGRAPH_MAX  (180)
+#define TERMOGRAPH_STEP (5)
+
 static void onThermographScreen(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   DrawScreen(static_cast<const Widget_t*>(w));
+
+  GFX_EXEC(setTextSize(2));
+  GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
 }
 
 static void onThermographRadio1(const void *w, Touch_t &touch) {
@@ -500,22 +606,82 @@ static void onThermographToggle2(const void *w, Touch_t &touch) {
   DrawToggle(static_cast<const Widget_t*>(w), cnf.range_auto);
 }
 
+static __attribute__((optimize("O0"))) int16_t GetThermoSlider(const Widget_t *widget, Touch_t &touch) {
+  // Here it's assumed that the knob width is equal to its height.
+  int16_t X = touch.x - widget->x - widget->h / 2;        // Relative x coordinate of top left of knob
+  int16_t Y = SLIDER_KNOB_OFFSET;                         // Minimum value of knob top left coordinate
+  int16_t Z = widget->w - widget->h - SLIDER_KNOB_OFFSET; // Maximum value of knob top left coordinate
+  DrawSlider(widget, X = constrain(X, Y, Z));
+
+  // Set the X coordinate in 5 degree increments
+  X -= Y;
+  X = (X / 5) * 5;
+  X += Y;
+
+  return TERMOGRAPH_MIN + ((X - Y) * (TERMOGRAPH_MAX - TERMOGRAPH_MIN)) / (Z - Y); // value
+}
+
+static void PutThermoSlider(const Widget_t *widget, int16_t V) {
+  // Here it's assumed that the knob width is equal to its height.
+  int16_t Y = SLIDER_KNOB_OFFSET;                         // Minimum value of knob top left coordinate
+  int16_t Z = widget->w - widget->h - SLIDER_KNOB_OFFSET; // Maximum value of knob top left coordinate
+
+  int16_t X = (V - TERMOGRAPH_MIN) * (Z - Y) / (TERMOGRAPH_MAX - TERMOGRAPH_MIN) + Y;
+  DrawSlider(widget, X = constrain(X, Y, Z));
+}
+
 static void onThermographSlider1(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   const Widget_t *widget = static_cast<const Widget_t*>(w);
-  int16_t X = touch.x   - widget->x - widget->h / 2;
-  int16_t W = widget->w - widget->h - SLIDER_KNOB_OFFSET;
-  DrawSlider(widget, constrain(X, SLIDER_KNOB_OFFSET, W));
+
+  if (touch.event == EVENT_NONE) {
+    PutThermoSlider(widget, cnf.range_min);
+    gfx_printf(282, 139, "%3d", cnf.range_min);
+  }
+
+  else {
+    // Convert to temperature and display without flickering
+    int16_t v = GetThermoSlider(widget, touch);
+    static int16_t V = 0xFFFF;
+    if (V != v) {
+      cnf.range_min = V = v;
+      gfx_printf(282, 139, "%3d", cnf.range_min);
+
+      if (cnf.range_max - cnf.range_min < 10) {
+        cnf.range_max = cnf.range_min + 10;
+        touch.event = EVENT_NONE;
+        onThermographSlider2(widget + 1, touch);
+      }
+    }
+  }
 }
 
 static void onThermographSlider2(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   const Widget_t *widget = static_cast<const Widget_t*>(w);
-  int16_t X = touch.x   - widget->x - widget->h / 2;
-  int16_t W = widget->w - widget->h - SLIDER_KNOB_OFFSET;
-  DrawSlider(widget, constrain(X, SLIDER_KNOB_OFFSET, W));
+
+  if (touch.event == EVENT_NONE) {
+    PutThermoSlider(widget, cnf.range_max);
+    gfx_printf(282, 178, "%3d", cnf.range_max);
+  }
+
+  else {
+    // Convert to temperature and display without flickering
+    int16_t v = GetThermoSlider(widget, touch);
+    static int16_t V = 0xFFFF;
+    if (V != v) {
+      cnf.range_max = V = v;
+      gfx_printf(282, 178, "%3d", cnf.range_max);
+
+      if (cnf.range_max - cnf.range_min < 10) {
+        cnf.range_min = cnf.range_max - 10;
+        touch.event = EVENT_NONE;
+        onThermographSlider1(widget - 1, touch);
+      }
+    }
+  }
 }
 
 static void onThermographClose(const void *w, Touch_t &touch) {
@@ -783,38 +949,39 @@ static void onCaptureModeApply(const void *w, Touch_t &touch) {
 /*--------------------------------------------------------------------------------
  * Callback functions - Calibration
  *--------------------------------------------------------------------------------*/
-#define OFFSET_MIN    (-10)
-#define OFFSET_MAX    ( 10)
-#define OFFSET_X_ROW  123
-#define OFFSET_X_COL  172
-#define OFFSET_Y_ROW  223
-#define OFFSET_Y_COL  172
+#define TOUCH_OFFSET_MIN    (-10)
+#define TOUCH_OFFSET_MAX    ( 10)
+#define TOUCH_OFFSET_X_ROW  123
+#define TOUCH_OFFSET_X_COL  172
+#define TOUCH_OFFSET_Y_ROW  223
+#define TOUCH_OFFSET_Y_COL  172
 
 static void DrawOffsetX(const Widget_t* widget, Touch_t &touch) {
   // draw button when touch.event == EVENT_NONE or EVENT_UP
   if (touch.event != EVENT_DOWN) {
-    DrawButton(widget,     (cnf.touch_offset[0] < OFFSET_MAX) ? 1 : 0);
-    DrawButton(widget + 1, (cnf.touch_offset[0] > OFFSET_MIN) ? 1 : 0);
+    DrawButton(widget,     (cnf.touch_offset[0] < TOUCH_OFFSET_MAX) ? 1 : 0);
+    DrawButton(widget + 1, (cnf.touch_offset[0] > TOUCH_OFFSET_MIN) ? 1 : 0);
   }
 
-  gfx_printf(OFFSET_X_ROW, OFFSET_X_COL, "%3d", (int)cnf.touch_offset[0]);
+  gfx_printf(TOUCH_OFFSET_X_ROW, TOUCH_OFFSET_X_COL, "%3d", (int)cnf.touch_offset[0]);
 }
 
 static void DrawOffsetY(const Widget_t* widget, Touch_t &touch) {
   // draw button when touch.event == EVENT_NONE or EVENT_UP
   if (touch.event != EVENT_DOWN) {
-    DrawButton(widget,     (cnf.touch_offset[1] < OFFSET_MAX) ? 1 : 0);
-    DrawButton(widget + 1, (cnf.touch_offset[1] > OFFSET_MIN) ? 1 : 0);
+    DrawButton(widget,     (cnf.touch_offset[1] < TOUCH_OFFSET_MAX) ? 1 : 0);
+    DrawButton(widget + 1, (cnf.touch_offset[1] > TOUCH_OFFSET_MIN) ? 1 : 0);
   }
 
-  gfx_printf(OFFSET_Y_ROW, OFFSET_Y_COL, "%3d", (int)cnf.touch_offset[1]);
+  gfx_printf(TOUCH_OFFSET_Y_ROW, TOUCH_OFFSET_Y_COL, "%3d", (int)cnf.touch_offset[1]);
 }
 
 static void onCalibrationScreen (const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  GFX_EXEC(setTextSize(2));
   DrawScreen(static_cast<const Widget_t*>(w));
+
+  GFX_EXEC(setTextSize(2));
 }
 
 static void onCalibrationExec(const void *w, Touch_t &touch) {
@@ -838,7 +1005,7 @@ static void onCalibrationSave(const void *w, Touch_t &touch) {
 static void onCalibrationXup(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE && cnf.touch_offset[0] < OFFSET_MAX) {
+  if (touch.event != EVENT_NONE && cnf.touch_offset[0] < TOUCH_OFFSET_MAX) {
     DrawPress(static_cast<const Widget_t*>(w), touch.event);
     if (touch.event == EVENT_DOWN ) {
       cnf.touch_offset[0]++;
@@ -851,7 +1018,7 @@ static void onCalibrationXup(const void *w, Touch_t &touch) {
 static void onCalibrationXdown(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE && cnf.touch_offset[0] > OFFSET_MIN) {
+  if (touch.event != EVENT_NONE && cnf.touch_offset[0] > TOUCH_OFFSET_MIN) {
     DrawPress(static_cast<const Widget_t*>(w), touch.event);
     if (touch.event == EVENT_DOWN) {
       cnf.touch_offset[0]--;
@@ -864,7 +1031,7 @@ static void onCalibrationXdown(const void *w, Touch_t &touch) {
 static void onCalibrationYup(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE && cnf.touch_offset[1] < OFFSET_MAX) {
+  if (touch.event != EVENT_NONE && cnf.touch_offset[1] < TOUCH_OFFSET_MAX) {
     DrawPress(static_cast<const Widget_t*>(w), touch.event);
     if (touch.event == EVENT_DOWN) {
       cnf.touch_offset[1]++;
@@ -877,7 +1044,7 @@ static void onCalibrationYup(const void *w, Touch_t &touch) {
 static void onCalibrationYdown(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE && cnf.touch_offset[1] > OFFSET_MIN) {
+  if (touch.event != EVENT_NONE && cnf.touch_offset[1] > TOUCH_OFFSET_MIN) {
     DrawPress(static_cast<const Widget_t*>(w), touch.event);
     if (touch.event == EVENT_DOWN) {
       cnf.touch_offset[1]--;
@@ -924,11 +1091,11 @@ static void onAdjustOffsetTarget(const void *w, Touch_t &touch) {
     cnf.touch_offset[0] = lcd_width  / 2 - 1 - touch.x;
     cnf.touch_offset[1] = lcd_height / 2 - 1 - touch.y;
 
-    cnf.touch_offset[0] = constrain(cnf.touch_offset[0], OFFSET_MIN, OFFSET_MAX);
-    cnf.touch_offset[1] = constrain(cnf.touch_offset[1], OFFSET_MIN, OFFSET_MAX);
+    cnf.touch_offset[0] = constrain(cnf.touch_offset[0], TOUCH_OFFSET_MIN, TOUCH_OFFSET_MAX);
+    cnf.touch_offset[1] = constrain(cnf.touch_offset[1], TOUCH_OFFSET_MIN, TOUCH_OFFSET_MAX);
 
-    gfx_printf(OFFSET_X_ROW, OFFSET_X_COL, "%3d", (int)cnf.touch_offset[0]);
-    gfx_printf(OFFSET_Y_ROW, OFFSET_Y_COL, "%3d", (int)cnf.touch_offset[1]);
+    gfx_printf(TOUCH_OFFSET_X_ROW, TOUCH_OFFSET_X_COL, "%3d", (int)cnf.touch_offset[0]);
+    gfx_printf(TOUCH_OFFSET_Y_ROW, TOUCH_OFFSET_Y_COL, "%3d", (int)cnf.touch_offset[1]);
   }
 }
 

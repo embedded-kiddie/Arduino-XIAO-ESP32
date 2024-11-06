@@ -17,8 +17,8 @@ XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);  // Param 2 - Touch IRQ Pin - inter
 /*--------------------------------------------------------------------------------
  * Definition of events
  *--------------------------------------------------------------------------------*/
-#define PERIOD_DEBOUNCE     25  // [msec]
-#define PERIOD_TOUCHED      50  // [msec]
+#define PERIOD_DEBOUNCE     30  // [msec]
+#define PERIOD_TOUCHED      60  // [msec]
 #define PERIOD_CLEAR_EVENT  100 // [msec]
 
 typedef enum {

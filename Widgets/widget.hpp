@@ -53,8 +53,6 @@ typedef struct {
 /*--------------------------------------------------------------------------------
  * Prototype Declaration for drawing widget
  *--------------------------------------------------------------------------------*/
-#define SLIDER_KNOB_OFFSET  6 // Offset from both ends of the bar
-
 State_t widget_state(State_t s);
 static void DrawWidget(const Widget_t *widget, uint8_t offset = 0);
 static void DrawScreen(const Widget_t *widget, uint8_t offset = 0);
@@ -187,7 +185,7 @@ static void DrawButton(const Widget_t *widget, uint8_t offset /* = 0 */) {
     h = swap_endian(*(uint32_t*)(image->data + PNG_HEADER_HEIGHT));
     DBG_EXEC(printf("w: %d, h: %d\n", w, h));
 
-    LGFX_Sprite sprite(&lcd);
+    static LGFX_Sprite sprite(&lcd);
     sprite.createSprite(w, h);
     sprite.drawPng(image->data, image->size, 0, 0);
     sprite.pushSprite(widget->x, widget->y);
@@ -211,24 +209,16 @@ static void DrawSlider(const Widget_t *widget, int16_t offset /* = 0 */) {
   if (bar && knob) {
     GFX_EXEC(startWrite());
 
-#if 0
-
-    // faster but flickering
-    GFX_EXEC(drawPng(bar->data,  bar->size,  widget->x, widget->y));
-    GFX_EXEC(drawPng(knob->data, knob->size, widget->x + (widget->w - widget->h) - SLIDER_KNOB_OFFSET, widget->y));
-
-#else
-
 #if defined (_TFT_eSPIH_)
 
-    TFT_eSprite sprite_bar  = TFT_eSprite(&tft);
-    TFT_eSprite sprite_knob = TFT_eSprite(&sprite_bar);
+    static TFT_eSprite sprite_bar  = TFT_eSprite(&tft);
+    static TFT_eSprite sprite_knob = TFT_eSprite(&sprite_bar);
 
 #elif defined (LOVYANGFX_HPP_)
 
     // slower but no flickering
-    LGFX_Sprite sprite_bar(&lcd);
-    LGFX_Sprite sprite_knob(&sprite_bar);
+    static LGFX_Sprite sprite_bar(&lcd);
+    static LGFX_Sprite sprite_knob(&sprite_bar);
 
 #endif
 
@@ -252,8 +242,6 @@ static void DrawSlider(const Widget_t *widget, int16_t offset /* = 0 */) {
 
     sprite_knob.deleteSprite();
     sprite_bar.deleteSprite();
-
-#endif
 
     POS_CHECK(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());
