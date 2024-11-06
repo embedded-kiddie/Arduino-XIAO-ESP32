@@ -40,9 +40,12 @@ typedef struct {
   uint16_t    x, y;   // The coordinates where the event fired
 } Touch_t;
 
+/*--------------------------------------------------------------------------------
+ * Simple touch point correction
+ *--------------------------------------------------------------------------------*/
+extern MLXConfig_t cnf;
 extern uint16_t lcd_width;
 extern uint16_t lcd_height;
-extern MLXConfig_t cnf;
 
 /*--------------------------------------------------------------------------------
  * Setup touch manager
@@ -62,10 +65,17 @@ bool touch_setup(void) {
 
 bool touch_setup(void) {
 
-#ifdef LOVYANGFX_HPP_
+#ifdef defined (LOVYANGFX_HPP_)
+
   // https://github.com/lovyan03/LovyanGFX/discussions/539
   uint16_t cal[8] = {319, 384, 3866, 355, 277, 3729, 3832, 3785};
   GFX_EXEC(setTouchCalibrate(cal));
+
+#elif defined (_TFT_eSPIH_)
+
+  uint16_t cal[5] = {0, 0, 0, 0, 1};
+  GFX_EXEC(setTouch(touch));
+
 #endif
 
   return true;

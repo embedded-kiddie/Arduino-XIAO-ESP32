@@ -118,7 +118,7 @@ static void onMainScreen        (const void *w, Touch_t &touch);
 static void onMainInside        (const void *w, Touch_t &touch);
 static void onMainOutside       (const void *w, Touch_t &touch);
 static void onMainThermograph   (const void *w, Touch_t &touch);
-static void onMainCamera        (const void *w, Touch_t &touch);
+static void onMainCapture       (const void *w, Touch_t &touch);
 static void onMainConfiguration (const void *w, Touch_t &touch);
 
 static constexpr Widget_t widget_main[] = {
@@ -126,7 +126,7 @@ static constexpr Widget_t widget_main[] = {
   {   0,   0, 256, 192, NULL,              EVENT_ALL,  onMainInside        },
   { 258,   0,  62, 134, NULL,              EVENT_ALL,  onMainOutside       },
   {   0, 195, 256,  45, NULL,              EVENT_ALL,  onMainThermograph   },
-  { 265, 135,  50,  50, image_icon_camera, EVENT_UP,   onMainCamera        },
+  { 265, 135,  50,  50, image_icon_camera, EVENT_UP,   onMainCapture       },
   { 265, 185,  50,  50, NULL,              EVENT_ALL,  onMainConfiguration },
 };
 
@@ -316,17 +316,8 @@ static void onMainThermograph(const void *w, Touch_t &touch) {
   }
 }
 
-static void onMainCamera(const void *w, Touch_t &touch) {
+static void onMainCapture(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
-
-  uint8_t offset;
-  if (cnf.capture_mode == false) {
-    offset = 0;
-  } else if (cnf.video_recording == false) {
-    offset = 2;
-  } else {
-    offset = 3;
-  }
 
   if (touch.event == EVENT_NONE) {
     DrawButton(static_cast<const Widget_t*>(w), cnf.capture_mode == 0 ? 0 : 2);
@@ -553,9 +544,38 @@ static void onResolutionApply(const void *w, Touch_t &touch) {
 /*--------------------------------------------------------------------------------
  * Callback functions - Thermograph
  *--------------------------------------------------------------------------------*/
-#define TERMOGRAPH_MIN  (-20)
-#define TERMOGRAPH_MAX  (180)
-#define TERMOGRAPH_STEP (5)
+#define TERMOGRAPH_MIN      (-20)
+#define TERMOGRAPH_MAX      (180)
+#define TERMOGRAPH_STEP     (5)
+#define TERMOGRAPH_DIFF     (10)
+#define TERMOGRAPH_MIN_ROW  282
+#define TERMOGRAPH_MIN_COL  139
+#define TERMOGRAPH_MAX_ROW  282
+#define TERMOGRAPH_MAX_COL  178
+
+static __attribute__((optimize("O0"))) int16_t GetThermoSlider(const Widget_t *widget, Touch_t &touch) {
+  // Here it's assumed that the knob width is equal to its height.
+  int16_t X = touch.x - widget->x - widget->h / 2;        // Relative x coordinate of top left of knob
+  int16_t Y = SLIDER_KNOB_OFFSET;                         // Minimum value of knob top left coordinate
+  int16_t Z = widget->w - widget->h - SLIDER_KNOB_OFFSET; // Maximum value of knob top left coordinate
+  DrawSlider(widget, X = constrain(X, Y, Z));
+
+  // Set the X coordinate in 5 degree increments
+  X -= Y;
+  X = (X / TERMOGRAPH_STEP) * TERMOGRAPH_STEP;
+  X += Y;
+
+  return TERMOGRAPH_MIN + ((X - Y) * (TERMOGRAPH_MAX - TERMOGRAPH_MIN)) / (Z - Y); // value
+}
+
+static void PutThermoSlider(const Widget_t *widget, int16_t V) {
+  // Here it's assumed that the knob width is equal to its height.
+  int16_t Y = SLIDER_KNOB_OFFSET;                         // Minimum value of knob top left coordinate
+  int16_t Z = widget->w - widget->h - SLIDER_KNOB_OFFSET; // Maximum value of knob top left coordinate
+
+  int16_t X = (V - TERMOGRAPH_MIN) * (Z - Y) / (TERMOGRAPH_MAX - TERMOGRAPH_MIN) + Y;
+  DrawSlider(widget, X = constrain(X, Y, Z));
+}
 
 static void onThermographScreen(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
@@ -606,30 +626,6 @@ static void onThermographToggle2(const void *w, Touch_t &touch) {
   DrawToggle(static_cast<const Widget_t*>(w), cnf.range_auto);
 }
 
-static __attribute__((optimize("O0"))) int16_t GetThermoSlider(const Widget_t *widget, Touch_t &touch) {
-  // Here it's assumed that the knob width is equal to its height.
-  int16_t X = touch.x - widget->x - widget->h / 2;        // Relative x coordinate of top left of knob
-  int16_t Y = SLIDER_KNOB_OFFSET;                         // Minimum value of knob top left coordinate
-  int16_t Z = widget->w - widget->h - SLIDER_KNOB_OFFSET; // Maximum value of knob top left coordinate
-  DrawSlider(widget, X = constrain(X, Y, Z));
-
-  // Set the X coordinate in 5 degree increments
-  X -= Y;
-  X = (X / 5) * 5;
-  X += Y;
-
-  return TERMOGRAPH_MIN + ((X - Y) * (TERMOGRAPH_MAX - TERMOGRAPH_MIN)) / (Z - Y); // value
-}
-
-static void PutThermoSlider(const Widget_t *widget, int16_t V) {
-  // Here it's assumed that the knob width is equal to its height.
-  int16_t Y = SLIDER_KNOB_OFFSET;                         // Minimum value of knob top left coordinate
-  int16_t Z = widget->w - widget->h - SLIDER_KNOB_OFFSET; // Maximum value of knob top left coordinate
-
-  int16_t X = (V - TERMOGRAPH_MIN) * (Z - Y) / (TERMOGRAPH_MAX - TERMOGRAPH_MIN) + Y;
-  DrawSlider(widget, X = constrain(X, Y, Z));
-}
-
 static void onThermographSlider1(const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
@@ -637,7 +633,7 @@ static void onThermographSlider1(const void *w, Touch_t &touch) {
 
   if (touch.event == EVENT_NONE) {
     PutThermoSlider(widget, cnf.range_min);
-    gfx_printf(282, 139, "%3d", cnf.range_min);
+    gfx_printf(TERMOGRAPH_MIN_ROW, TERMOGRAPH_MIN_COL, "%3d", cnf.range_min);
   }
 
   else {
@@ -646,10 +642,11 @@ static void onThermographSlider1(const void *w, Touch_t &touch) {
     static int16_t V = 0xFFFF;
     if (V != v) {
       cnf.range_min = V = v;
-      gfx_printf(282, 139, "%3d", cnf.range_min);
+      gfx_printf(TERMOGRAPH_MIN_ROW, TERMOGRAPH_MIN_COL, "%3d", cnf.range_min);
 
-      if (cnf.range_max - cnf.range_min < 10) {
-        cnf.range_max = cnf.range_min + 10;
+      // Temperature minimum and maximum restrictions
+      if (cnf.range_max - cnf.range_min < TERMOGRAPH_DIFF) {
+        cnf.range_max = cnf.range_min + TERMOGRAPH_DIFF;
         touch.event = EVENT_NONE;
         onThermographSlider2(widget + 1, touch);
       }
@@ -664,7 +661,7 @@ static void onThermographSlider2(const void *w, Touch_t &touch) {
 
   if (touch.event == EVENT_NONE) {
     PutThermoSlider(widget, cnf.range_max);
-    gfx_printf(282, 178, "%3d", cnf.range_max);
+    gfx_printf(TERMOGRAPH_MAX_ROW, TERMOGRAPH_MAX_COL, "%3d", cnf.range_max);
   }
 
   else {
@@ -673,10 +670,11 @@ static void onThermographSlider2(const void *w, Touch_t &touch) {
     static int16_t V = 0xFFFF;
     if (V != v) {
       cnf.range_max = V = v;
-      gfx_printf(282, 178, "%3d", cnf.range_max);
+      gfx_printf(TERMOGRAPH_MAX_ROW, TERMOGRAPH_MAX_COL, "%3d", cnf.range_max);
 
-      if (cnf.range_max - cnf.range_min < 10) {
-        cnf.range_min = cnf.range_max - 10;
+      // Temperature minimum and maximum restrictions
+      if (cnf.range_max - cnf.range_min < TERMOGRAPH_DIFF) {
+        cnf.range_min = cnf.range_max - TERMOGRAPH_DIFF;
         touch.event = EVENT_NONE;
         onThermographSlider1(widget - 1, touch);
       }
@@ -843,7 +841,7 @@ static void onFileManagerScrollBar(const void *w, Touch_t &touch) {
     drag_pos = touch.y;
   } // else drag
 
-  // Relative movement from the reference position
+  // Relative movement from the previous position
   scroll_pos += touch.y - drag_pos;
   scroll_pos = constrain(scroll_pos, 0, scroll_max);
 //DBG_EXEC(printf("scroll_pos: %d, scroll_max: %d\n", scroll_pos, scroll_max));
@@ -858,7 +856,7 @@ static void onFileManagerScrollBar(const void *w, Touch_t &touch) {
   ScrollView(widget - 1, scroll_pos);
   GFX_EXEC(endTransaction());
 
-  // Update the reference position
+  // Update the previous position
   drag_pos = touch.y;
 }
 
