@@ -40,12 +40,26 @@ typedef struct {
   uint16_t    x, y;   // The coordinates where the event fired
 } Touch_t;
 
+typedef struct {
+  uint16_t    cal[8];
+  int8_t      offset[2];
+} TouchConfig_t;
+
+TouchConfig_t tch_cnf = {
+#if defined (LOVYANGFX_HPP_)
+  .cal = {319, 384, 3866, 355, 277, 3729, 3832, 3785},
+#elif defined (_TFT_eSPIH_)
+  .cal = {0, 0, 0, 0, 1},
+#endif
+  .offset = {0, 0},//{-10, +5}
+};
+
 /*--------------------------------------------------------------------------------
  * Simple touch point correction
  *--------------------------------------------------------------------------------*/
-extern MLXConfig_t cnf;
 extern uint16_t lcd_width;
 extern uint16_t lcd_height;
+extern MLXConfig_t mlx_cnf;
 
 /*--------------------------------------------------------------------------------
  * Setup touch manager
@@ -65,16 +79,14 @@ bool touch_setup(void) {
 
 bool touch_setup(void) {
 
-#ifdef defined (LOVYANGFX_HPP_)
+#if defined (LOVYANGFX_HPP_)
 
   // https://github.com/lovyan03/LovyanGFX/discussions/539
-  uint16_t cal[8] = {319, 384, 3866, 355, 277, 3729, 3832, 3785};
-  GFX_EXEC(setTouchCalibrate(cal));
+  GFX_EXEC(setTouchCalibrate(tch_cnf.cal));
 
 #elif defined (_TFT_eSPIH_)
 
-  uint16_t cal[5] = {0, 0, 0, 0, 1};
-  GFX_EXEC(setTouch(touch));
+  GFX_EXEC(setTouch(tch_cnf.cal));
 
 #endif
 
@@ -140,8 +152,8 @@ bool touch_event(Touch_t &touch) {
 
   if (event != EVENT_NONE) {
     if (stat) {
-        x += cnf.touch_offset[0];
-        y += cnf.touch_offset[1];
+        x += tch_cnf.offset[0];
+        y += tch_cnf.offset[1];
         x = constrain(x, 0, lcd_width  - 1);
         y = constrain(y, 0, lcd_height - 1);
     }

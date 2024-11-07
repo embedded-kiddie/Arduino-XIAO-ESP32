@@ -17,27 +17,36 @@ typedef struct {
   uint8_t       interpolation;
   uint8_t       block_size;
   uint8_t       color_scheme;
-  uint8_t       capture_mode; // 0: camera, 1: video
-  bool          video_recording;
-  bool          file_selected;
+  uint8_t       padding;
   bool          minmax_auto;
   bool          range_auto;
   int16_t       range_min;
   int16_t       range_max;
-  int8_t        touch_offset[2];
 } MLXConfig_t;
 
-MLXConfig_t cnf = {
+typedef struct {
+  uint8_t       padding;
+  uint8_t       capture_mode; // 0: camera, 1: video
+  bool          recording;
+  bool          file_selected;
+} MLXControl_t;
+
+MLXConfig_t mlx_cnf = {
   .interpolation  = 8,
   .block_size     = 1,
   .color_scheme   = 0,
-  .capture_mode   = 0,
-  .file_selected  = false,
+  .padding        = 0,
   .minmax_auto    = false,
   .range_auto     = false,
   .range_min      = 20,
   .range_max      = 35,
-  .touch_offset   = {0, 0},//{-10, +5}
+};
+
+MLXControl_t mlx_cnt = {
+  .padding        = 0,
+  .capture_mode   = 0,
+  .recording      = false,
+  .file_selected  = false,
 };
 
 /*=============================================================
