@@ -1,5 +1,5 @@
 /*================================================================================
- * Wedget data
+ * Widget definitions for each screen
  *================================================================================*/
 #include <Arduino.h>
 #include "widgets.h"
@@ -77,10 +77,10 @@ static constexpr Image_t image_folder[] = {
   { icon_folder_off, sizeof(icon_folder_off) }, // 32 x 26
   { icon_folder_on,  sizeof(icon_folder_on ) }, // 32 x 26
 };
-static constexpr Image_t image_save_flush[] = {
-  { save_flush_off, sizeof(save_flush_off) }, // 70 x 70
-  { save_flush_on,  sizeof(save_flush_on ) }, // 70 x 70
-  { save_flush_red, sizeof(save_flush_red) }, // 70 x 70
+static constexpr Image_t image_save_flash[] = {
+  { save_flash_off, sizeof(save_flash_off) }, // 70 x 70
+  { save_flash_on,  sizeof(save_flash_on ) }, // 70 x 70
+  { save_flash_red, sizeof(save_flash_red) }, // 70 x 70
 };
 static constexpr Image_t image_target[] = {
   { target_off, sizeof(target_off) }, // 32 x 32
@@ -263,7 +263,7 @@ static constexpr Widget_t widget_calibration[] = {
   {   0,   0, 320, 240, image_calibration, EVENT_NONE,  onCalibrationScreen   },
   {  22,  12,  70,  70, NULL,              EVENT_UP,    onCalibrationExec     },
   { 125,  12,  70,  70, NULL,              EVENT_UP,    onCalibrationAdjust   },
-  { 228,  12,  70,  70, image_save_flush,  EVENT_UP,    onCalibrationSave     },
+  { 228,  12,  70,  70, image_save_flash,  EVENT_UP,    onCalibrationSave     },
   { 164, 154,  26,  26, image_arrowU,      EVENT_CLICK, onCalibrationXup      },
   { 164, 180,  26,  26, image_arrowD,      EVENT_CLICK, onCalibrationXdown    },
   { 263, 154,  26,  26, image_arrowU,      EVENT_CLICK, onCalibrationYup      },
@@ -315,7 +315,7 @@ static void onMainScreen(const void *w, Touch_t &touch) {
   // Draw thermal range
   y += FONT_HEIGHT + 4;
   GFX_EXEC(setTextSize(2));
-  GFX_EXEC(setTextColor(WHITE));
+  GFX_EXEC(setTextColor(WHITE, BLACK));
   gfx_printf(0,                      y, "%d", MINTEMP);
   gfx_printf(w / 2 - FONT_WIDTH * 2, y, "%3.1f", (float)(MINTEMP + MAXTEMP) / 2.0f);
   gfx_printf(w     - FONT_WIDTH * 2, y, "%d", MAXTEMP);
@@ -625,7 +625,6 @@ static void onThermographScreen(const void *w, Touch_t &touch) {
 
   // copy MLX90640 configuration data and stop recording video
   cnf_copy = mlx_cnf;
-  tch_copy = tch_cnf;
   mlx_cnt.recording = false;
 
   GFX_EXEC(setTextSize(2));
@@ -759,7 +758,7 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
 
   sprite_view.setTextSize(2);
   sprite_view.setTextWrap(false);
-  sprite_view.setTextColor(WHITE);
+  sprite_view.setTextColor(WHITE, BLACK);
   sprite_view.createSprite(VIEW_WIDTH, VIEW_HEIGHT);
 
   int scaled_pos = scroll_pos * widget->h / bar_height;
@@ -776,12 +775,12 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
 
     if (invert == false && files[i].isSelected == true) {
       invert = true;
-      sprite_view.setTextColor(BLACK);
+      sprite_view.setTextColor(BLACK, WHITE);
     } else
 
     if (invert == true && files[i].isSelected == false) {
       invert = false;
-      sprite_view.setTextColor(WHITE);
+      sprite_view.setTextColor(WHITE, BLACK);
     }
 
     if (invert == true) {
@@ -1026,6 +1025,17 @@ static void onCalibrationScreen (const void *w, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   DrawScreen(static_cast<const Widget_t*>(w));
+
+  GFX_EXEC(setTextSize(1));
+  GFX_EXEC(setTextColor(WHITE));
+
+  uint16_t *c = tch_cnf.cal;
+  gfx_printf(115,  94, "%4d, %4d, %4d, %4d", c[0], c[1], c[2], c[3]);
+  gfx_printf(115, 106, "%4d, %4d, %4d, %4d", c[4], c[5], c[6], c[7]);
+
+  c = tch_copy.cal;
+  gfx_printf(115, 126, "%4d, %4d, %4d, %4d", c[0], c[1], c[2], c[3]);
+  gfx_printf(115, 138, "%4d, %4d, %4d, %4d", c[4], c[5], c[6], c[7]);
 
   GFX_EXEC(setTextSize(2));
 }
