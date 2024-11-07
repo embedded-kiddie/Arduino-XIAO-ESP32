@@ -30,12 +30,12 @@ typedef struct {
   const size_t    size;   // size of image data (only for TFT_eSPI with bitbank2/PNGdec)
 } Image_t;
 
-typedef struct {
+typedef struct Widget {
   const uint16_t  x, y;   // The top left coordinate of the widget
   const uint16_t  w, h;   // Widget width and height
   const Image_t   *image; // Widget image data
   const Event_t   event;  // The touch event to detect
-  void            (*callback)(const void *widget, Touch_t &touch);  // Callback event handler
+  void            (*callback)(const struct Widget *widget, Touch_t &touch);  // Event handler
 } Widget_t;
 
 #define N_WIDGETS(w)  (sizeof(w) / sizeof(w[0]))
@@ -160,7 +160,7 @@ static bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_
           widgets[i].y <= touch.y && touch.y <= widgets[i].y + widgets[i].h) {
 
         DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, widgets[i].event, touch.x, touch.y));
-        widgets[i].callback((void*)&widgets[i], touch);
+        widgets[i].callback(&widgets[i], touch);
         return true;
       }
     }

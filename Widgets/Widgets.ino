@@ -13,7 +13,8 @@
 /*--------------------------------------------------------------------------------
  * Widget control parameters
  *--------------------------------------------------------------------------------*/
-typedef struct {
+typedef struct MLXConfig {
+  // Member Variables
   uint8_t       interpolation;
   uint8_t       block_size;
   uint8_t       color_scheme;
@@ -22,9 +23,22 @@ typedef struct {
   bool          range_auto;
   int16_t       range_min;
   int16_t       range_max;
+
+  // Comparison Operator
+  bool operator != (const MLXConfig &RHS) {
+    return (
+      (interpolation != RHS.interpolation) ||
+      (block_size    != RHS.block_size   ) ||
+      (color_scheme  != RHS.color_scheme ) ||
+      (minmax_auto   != RHS.minmax_auto  ) ||
+      (range_auto    != RHS.range_auto   ) ||
+      (range_min     != RHS.range_min    ) ||
+      (range_max     != RHS.range_max    )
+    );
+  }
 } MLXConfig_t;
 
-typedef struct {
+typedef struct MLXControl {
   uint8_t       padding;
   uint8_t       capture_mode; // 0: camera, 1: video
   bool          recording;

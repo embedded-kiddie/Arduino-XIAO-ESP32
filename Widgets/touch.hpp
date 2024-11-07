@@ -35,21 +35,27 @@ typedef enum {
   EVENT_ALL     = (EVENT_FALLING | EVENT_RISING | EVENT_TOUCHED),
 } Event_t;
 
-typedef struct {
+typedef struct Touch {
   Event_t     event;  // Detected event
   uint16_t    x, y;   // The coordinates where the event fired
 } Touch_t;
 
-typedef struct {
+typedef struct TouchConfig {
+  // Member Variables
   uint16_t    cal[8];
   int8_t      offset[2];
+
+  // Comparison Operator
+  bool operator != (TouchConfig &RHS) {
+    return !bcmp(cal, RHS.cal, sizeof(cal)) || (offset[0] != RHS.offset[0]) || (offset[1] != RHS.offset[1]);
+  }
 } TouchConfig_t;
 
 TouchConfig_t tch_cnf = {
 #if defined (LOVYANGFX_HPP_)
   .cal = {319, 384, 3866, 355, 277, 3729, 3832, 3785},
 #elif defined (_TFT_eSPIH_)
-  .cal = {0, 0, 0, 0, 1},
+  .cal = {0, 0, 0, 0, 1, 0,},
 #endif
   .offset = {0, 0},//{-10, +5}
 };
