@@ -8,7 +8,7 @@
  * MLX90640 configuration and Widget control da
  *--------------------------------------------------------------------------------*/
 extern MLXConfig_t    mlx_cnf;
-extern MLXControl_t   mlx_cnt;
+extern MLXCapture_t   mlx_cap;
 extern TouchConfig_t  tch_cnf;
 
 static MLXConfig_t    cnf_copy;
@@ -116,7 +116,7 @@ static constexpr Image_t image_slider2[] = {
  * List of widget data based on the screen
  * The callback function may be something this:
  * static void onCallbackFunction(const Widget_t *widget, Touch_t &touch) {
- *   if (touch.event == EVENT_NONE) {
+ *   if (touch.event == EVENT_INIT) {
  *     // Setup Process
  *   } else {
  *     // Event Process
@@ -199,6 +199,19 @@ static constexpr Widget_t widget_thermograph[] = {
   { 230, 206,  30,  30, image_icon_apply,  EVENT_CLICK, onThermographApply   },
 };
 
+// Screen - Capture mode
+static void onCaptureModeScreen (const Widget_t *widget, Touch_t &touch);
+static void onCaptureModeCamera (const Widget_t *widget, Touch_t &touch);
+static void onCaptureModeVideo  (const Widget_t *widget, Touch_t &touch);
+static void onCaptureModeApply  (const Widget_t *widget, Touch_t &touch);
+
+static constexpr Widget_t widget_capture_mode[] = {
+  {   0,   0, 320, 240, image_capture_mode, EVENT_NONE, onCaptureModeScreen   },
+  {  48,  50, 240,  26, image_radio,        EVENT_DOWN, onCaptureModeCamera   },
+  {  48, 126, 240,  26, image_radio,        EVENT_DOWN, onCaptureModeVideo    },
+  { 145, 206,  30,  30, NULL,               EVENT_ALL,  onCaptureModeApply    },
+};
+
 // Screen - File manager
 static void onFileManagerScreen   (const Widget_t *widget, Touch_t &touch);
 static void onFileManagerCheckAll (const Widget_t *widget, Touch_t &touch);
@@ -231,19 +244,6 @@ static constexpr Widget_t widget_file_manager[] = {
   { 276, 166,  32,  28, image_folder,       EVENT_CLICK, onFileManagerFolder    }, // 32 x 26 --> 32 x 28 for DrawPress()
   { 208, 206,  30,  32, NULL,               EVENT_ALL,   onFileManagerClose     }, // 30 x 30 --> 30 x 32 for DrawPress()
   { 276, 206,  30,  32, NULL,               EVENT_CLICK, onFileManagerApply     }, // 30 x 30 --> 30 x 32 for DrawPress()
-};
-
-// Screen - Capture mode
-static void onCaptureModeScreen (const Widget_t *widget, Touch_t &touch);
-static void onCaptureModeCamera (const Widget_t *widget, Touch_t &touch);
-static void onCaptureModeVideo  (const Widget_t *widget, Touch_t &touch);
-static void onCaptureModeApply  (const Widget_t *widget, Touch_t &touch);
-
-static constexpr Widget_t widget_capture_mode[] = {
-  {   0,   0, 320, 240, image_capture_mode, EVENT_NONE, onCaptureModeScreen   },
-  {  48,  50, 240,  26, image_radio,        EVENT_DOWN, onCaptureModeCamera   },
-  {  48, 126, 240,  26, image_radio,        EVENT_DOWN, onCaptureModeVideo    },
-  { 145, 206,  30,  30, NULL,               EVENT_ALL,  onCaptureModeApply    },
 };
 
 // Screen - Calibration
@@ -294,6 +294,22 @@ static constexpr Widget_t widget_information[] = {
 };
 
 /*--------------------------------------------------------------------------------
+ * Common method - Apply
+ *--------------------------------------------------------------------------------*/
+static bool Apply(const Widget_t *widget, Touch_t &touch, bool enable) {
+  if (touch.event == EVENT_INIT) {
+    DrawButton(widget, enable);
+  } else if (enable) {
+    DrawPress(widget, touch.event);
+    if (touch.event == EVENT_RISING) {
+      DrawButton(widget, 0);
+      return true; // ready to apply updated data
+    }
+  }
+  return false;
+}
+
+/*--------------------------------------------------------------------------------
  * Callback functions - Main
  *--------------------------------------------------------------------------------*/
 static void onMainScreen(const Widget_t *widget, Touch_t &touch) {
@@ -328,7 +344,7 @@ static void onMainScreen(const Widget_t *widget, Touch_t &touch) {
 static void onMainInside(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     // pick up the point
   }
 }
@@ -336,7 +352,7 @@ static void onMainInside(const Widget_t *widget, Touch_t &touch) {
 static void onMainOutside(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     // Reset the picked up point
   }
 }
@@ -344,7 +360,7 @@ static void onMainOutside(const Widget_t *widget, Touch_t &touch) {
 static void onMainThermograph(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_THERMOGRAPH);
   }
 }
@@ -352,31 +368,31 @@ static void onMainThermograph(const Widget_t *widget, Touch_t &touch) {
 static void onMainCapture(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_NONE) {
-    DrawButton(widget, mlx_cnt.capture_mode == 0 ? 0 : 2);
+  if (touch.event == EVENT_INIT) {
+    DrawButton(widget, mlx_cap.capture_mode == 0 ? 0 : 2);
   }
 
-  else if (mlx_cnt.capture_mode == 0) {
+  else if (mlx_cap.capture_mode == 0) {
     DrawButton(widget, 1); // draw icon_camera2
     sdcard_save();
     DrawButton(widget, 0); // draw icon_camera1
   }
 
-  else if (mlx_cnt.recording == false) {
+  else if (mlx_cap.recording == false) {
     DrawButton(widget, 3); // draw icon_stop
-    mlx_cnt.recording = true;
+    mlx_cap.recording = true;
   }
 
   else {
     DrawButton(widget, 2); // draw icon_video
-    mlx_cnt.recording = false;
+    mlx_cap.recording = false;
   }
 }
 
 static void onMainConfiguration(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_CONFIGURATION);
   }
 }
@@ -390,7 +406,7 @@ static void onConfigurationScreen(const Widget_t *widget, Touch_t &touch) {
   // copy MLX90640 configuration data and stop recording video
   cnf_copy = mlx_cnf;
   tch_copy = tch_cnf;
-  mlx_cnt.recording = false;
+  mlx_cap.recording = false;
 
   DrawScreen(widget);
 }
@@ -398,7 +414,7 @@ static void onConfigurationScreen(const Widget_t *widget, Touch_t &touch) {
 static void onConfigurationResolution(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_RESOLUTION);
   }
 }
@@ -406,7 +422,7 @@ static void onConfigurationResolution(const Widget_t *widget, Touch_t &touch) {
 static void onConfigurationThermograph(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_THERMOGRAPH);
   }
 }
@@ -414,7 +430,7 @@ static void onConfigurationThermograph(const Widget_t *widget, Touch_t &touch) {
 static void onConfigurationCaptureMode(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_CAPTURE_MODE);
   }
 }
@@ -422,7 +438,7 @@ static void onConfigurationCaptureMode(const Widget_t *widget, Touch_t &touch) {
 static void onConfigurationFileManager(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_FILE_MANAGER);
   }
 }
@@ -430,7 +446,7 @@ static void onConfigurationFileManager(const Widget_t *widget, Touch_t &touch) {
 static void onConfigurationCalibration(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_CALIBRATION);
   }
 }
@@ -438,7 +454,7 @@ static void onConfigurationCalibration(const Widget_t *widget, Touch_t &touch) {
 static void onConfigurationInformation(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_INFORMATION);
   }
 }
@@ -446,7 +462,7 @@ static void onConfigurationInformation(const Widget_t *widget, Touch_t &touch) {
 static void onConfigurationReturn(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_ON);
   }
 }
@@ -504,9 +520,10 @@ static void onResolutionSlider1(const Widget_t *widget, Touch_t &touch) {
   const int n = sizeof(scale) / sizeof(scale[0]);
   int16_t pos[n];
 
+  // Calculate the position inside the widget (scale --> pos)
   MakeSliderPos(widget, scale, n, pos);
 
-  if (touch.event == EVENT_NONE) {
+  if (touch.event == EVENT_INIT) {
     // Here it's assumed that the knob width is equal to its height.
     touch.x = widget->x + widget->h / 2;
     for (int i = 0; i < n; i++) {
@@ -524,9 +541,13 @@ static void onResolutionSlider1(const Widget_t *widget, Touch_t &touch) {
   // restrict pixel interpolation and block size
   if (cnf_copy.interpolation * cnf_copy.block_size > 8) {
     cnf_copy.block_size = 8 / cnf_copy.interpolation;
-    touch.event = EVENT_NONE;
+    touch.event = EVENT_INIT;
     onResolutionSlider2(widget + 1, touch);
   }
+
+  // Enable apply if somethig is changed
+  touch.event = EVENT_INIT;
+  onResolutionApply(widget + 3, touch);
 }
 
 static void onResolutionSlider2(const Widget_t *widget, Touch_t &touch) {
@@ -536,9 +557,10 @@ static void onResolutionSlider2(const Widget_t *widget, Touch_t &touch) {
   const int n = sizeof(scale) / sizeof(scale[0]);
   int16_t pos[n];
 
+  // Calculate the position inside the widget (scale --> pos)
   MakeSliderPos(widget, scale, n, pos);
 
-  if (touch.event == EVENT_NONE) {
+  if (touch.event == EVENT_INIT) {
     // Here it's assumed that the knob width is equal to its height.
     touch.x = widget->x + widget->h / 2;
     for (int i = 0; i < n; i++) {
@@ -556,15 +578,19 @@ static void onResolutionSlider2(const Widget_t *widget, Touch_t &touch) {
   // restrict pixel interpolation and block size
   if (cnf_copy.interpolation * cnf_copy.block_size > 8) {
     cnf_copy.interpolation = 8 / cnf_copy.block_size;
-    touch.event = EVENT_NONE;
+    touch.event = EVENT_INIT;
     onResolutionSlider1(widget - 1, touch);
   }
+
+  // Enable apply if somethig is changed
+  touch.event = EVENT_INIT;
+  onResolutionApply(widget + 2, touch);
 }
 
 static void onResolutionClose(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_CONFIGURATION);
   }
 }
@@ -572,10 +598,8 @@ static void onResolutionClose(const Widget_t *widget, Touch_t &touch) {
 static void onResolutionApply(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_NONE) {
-    DrawButton(widget, 0);
-  } else {
-    DrawPress(widget, touch.event);
+  if (Apply(widget, touch, (cnf_copy != mlx_cnf))) {
+    mlx_cnf = cnf_copy;
   }
 }
 
@@ -622,7 +646,7 @@ static void onThermographScreen(const Widget_t *widget, Touch_t &touch) {
 
   // copy MLX90640 configuration data and stop recording video
   cnf_copy = mlx_cnf;
-  mlx_cnt.recording = false;
+  mlx_cap.recording = false;
 
   GFX_EXEC(setTextSize(2));
   GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
@@ -631,47 +655,63 @@ static void onThermographScreen(const Widget_t *widget, Touch_t &touch) {
 static void onThermographRadio1(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     cnf_copy.color_scheme = 0;
   }
 
   DrawRadio(widget, 2, cnf_copy.color_scheme);
+
+  // Enable apply if somethig is changed
+  touch.event = EVENT_INIT;
+  onThermographApply(widget + 7, touch);
 }
 
 static void onThermographRadio2(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     cnf_copy.color_scheme = 1;
   }
 
   DrawRadio(widget - 1, 2, cnf_copy.color_scheme);
+
+  // Enable apply if somethig is changed
+  touch.event = EVENT_INIT;
+  onThermographApply(widget + 6, touch);
 }
 
 static void onThermographToggle1(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     cnf_copy.minmax_auto = !cnf_copy.minmax_auto;
   }
 
   DrawToggle(widget, cnf_copy.minmax_auto);
+
+  // Enable apply if somethig is changed
+  touch.event = EVENT_INIT;
+  onThermographApply(widget + 5, touch);
 }
 
 static void onThermographToggle2(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     cnf_copy.range_auto = !cnf_copy.range_auto;
   }
 
   DrawToggle(widget, cnf_copy.range_auto);
+
+  // Enable apply if somethig is changed
+  touch.event = EVENT_INIT;
+  onThermographApply(widget + 4, touch);
 }
 
 static void onThermographSlider1(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_NONE) {
+  if (touch.event == EVENT_INIT) {
     PutThermoSlider(widget, cnf_copy.range_min);
     gfx_printf(TERMOGRAPH_MIN_ROW, TERMOGRAPH_MIN_COL, "%3d", cnf_copy.range_min);
   }
@@ -687,17 +727,21 @@ static void onThermographSlider1(const Widget_t *widget, Touch_t &touch) {
       // Temperature minimum and maximum restrictions
       if (cnf_copy.range_max - cnf_copy.range_min < TERMOGRAPH_DIFF) {
         cnf_copy.range_max = cnf_copy.range_min + TERMOGRAPH_DIFF;
-        touch.event = EVENT_NONE;
+        touch.event = EVENT_INIT;
         onThermographSlider2(widget + 1, touch);
       }
     }
   }
+
+  // Enable apply if somethig is changed
+  touch.event = EVENT_INIT;
+  onThermographApply(widget + 3, touch);
 }
 
 static void onThermographSlider2(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_NONE) {
+  if (touch.event == EVENT_INIT) {
     PutThermoSlider(widget, cnf_copy.range_max);
     gfx_printf(TERMOGRAPH_MAX_ROW, TERMOGRAPH_MAX_COL, "%3d", cnf_copy.range_max);
   }
@@ -713,17 +757,21 @@ static void onThermographSlider2(const Widget_t *widget, Touch_t &touch) {
       // Temperature minimum and maximum restrictions
       if (cnf_copy.range_max - cnf_copy.range_min < TERMOGRAPH_DIFF) {
         cnf_copy.range_min = cnf_copy.range_max - TERMOGRAPH_DIFF;
-        touch.event = EVENT_NONE;
+        touch.event = EVENT_INIT;
         onThermographSlider1(widget - 1, touch);
       }
     }
   }
+
+  // Enable apply if somethig is changed
+  touch.event = EVENT_INIT;
+  onThermographApply(widget + 2, touch);
 }
 
 static void onThermographClose(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_CONFIGURATION);
   }
 }
@@ -731,10 +779,45 @@ static void onThermographClose(const Widget_t *widget, Touch_t &touch) {
 static void onThermographApply(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_NONE) {
-    DrawButton(widget, 0);
-  } else {
-    DrawPress(widget, touch.event);
+  if (Apply(widget, touch, (cnf_copy != mlx_cnf))) {
+    mlx_cnf = cnf_copy;
+  }
+}
+
+/*--------------------------------------------------------------------------------
+ * Callback functions - Capture Mode
+ *--------------------------------------------------------------------------------*/
+static void onCaptureModeScreen(const Widget_t *widget, Touch_t &touch) {
+  DBG_EXEC(printf("%s\n", __func__));
+
+  DrawScreen(widget);
+}
+
+static void onCaptureModeCamera(const Widget_t *widget, Touch_t &touch) {
+  DBG_EXEC(printf("%s\n", __func__));
+
+  if (touch.event != EVENT_INIT) {
+    mlx_cap.capture_mode = 0;
+  }
+
+  DrawRadio(widget, 2, mlx_cap.capture_mode);
+}
+
+static void onCaptureModeVideo(const Widget_t *widget, Touch_t &touch) {
+  DBG_EXEC(printf("%s\n", __func__));
+
+  if (touch.event != EVENT_INIT) {
+    mlx_cap.capture_mode = 1;
+  }
+
+  DrawRadio(widget - 1, 2, mlx_cap.capture_mode);
+}
+
+static void onCaptureModeApply(const Widget_t *widget, Touch_t &touch) {
+  DBG_EXEC(printf("%s\n", __func__));
+
+  if (touch.event != EVENT_INIT) {
+    widget_state(STATE_CONFIGURATION);
   }
 }
 
@@ -744,6 +827,7 @@ static void onThermographApply(const Widget_t *widget, Touch_t &touch) {
 static std::vector<FileInfo_t> files;
 static int n_files;
 static int scroll_pos, scroll_max, bar_height;
+static bool file_selected;
 
 static void ScrollView(const Widget_t *widget, int scroll_pos) {
   static LGFX_Sprite sprite_view;
@@ -794,7 +878,7 @@ static void onFileManagerScreen(const Widget_t *widget, Touch_t &touch) {
 
   DrawScreen(widget);
 
-  mlx_cnt.file_selected = false;
+  file_selected = false;
 
   if (sdcard_open()) {
     uint32_t total, free;
@@ -827,21 +911,21 @@ static void onFileManagerScreen(const Widget_t *widget, Touch_t &touch) {
 static void onFileManagerCheckAll(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
-    mlx_cnt.file_selected = !mlx_cnt.file_selected;
+  if (touch.event != EVENT_INIT) {
+    file_selected = !file_selected;
     for (auto& file : files) {
-      file.isSelected = mlx_cnt.file_selected;
+      file.isSelected = file_selected;
     }
     ScrollView(widget + 1, scroll_pos);
   }
 
-  DrawCheck(widget, mlx_cnt.file_selected);
+  DrawCheck(widget, file_selected);
 }
 
 static void onFileManagerScrollBox(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     int scaled_pos = scroll_pos * widget->h / bar_height;
     int selected =  (scaled_pos + touch.y - widget->y - FONT_MARGIN) / ITEM_HEIGHT;
     files[selected].isSelected = !files[selected].isSelected;
@@ -864,7 +948,7 @@ static void onFileManagerScrollBar(const Widget_t *widget, Touch_t &touch) {
   static int drag_pos;
   static LGFX_Sprite sprite_scroll;
 
-  if (touch.event == EVENT_NONE) {
+  if (touch.event == EVENT_INIT) {
     scroll_pos = drag_pos = 0;
     if (n_files > VIEW_ITEMS) {
       scroll_max = widget->h * (n_files - VIEW_ITEMS) / n_files + 1; // '1' for round up
@@ -901,7 +985,7 @@ static void onFileManagerScrollBar(const Widget_t *widget, Touch_t &touch) {
 static void onFileManagerThumbnail(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_NONE) {
+  if (touch.event == EVENT_INIT) {
     GFX_EXEC(drawRect(widget->x - 1, widget->y - 1, widget->w + 2, widget->h + 2, DARKGREY));
   }
 }
@@ -909,7 +993,7 @@ static void onFileManagerThumbnail(const Widget_t *widget, Touch_t &touch) {
 static void onFileManagerMovie(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_NONE) {
+  if (touch.event == EVENT_INIT) {
     DrawButton(widget);
   } else {
     DrawPress(widget, touch.event);
@@ -919,7 +1003,7 @@ static void onFileManagerMovie(const Widget_t *widget, Touch_t &touch) {
 static void onFileManagerFolder(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_NONE) {
+  if (touch.event == EVENT_INIT) {
     DrawButton(widget);
   } else {
     DrawPress(widget, touch.event);
@@ -929,7 +1013,7 @@ static void onFileManagerFolder(const Widget_t *widget, Touch_t &touch) {
 static void onFileManagerClose(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_CONFIGURATION);
   }
 }
@@ -939,45 +1023,8 @@ static void onFileManagerApply(const Widget_t *widget, Touch_t &touch) {
 
   DrawPress(widget, touch.event);
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     // Remove files
-  }
-}
-
-/*--------------------------------------------------------------------------------
- * Callback functions - Capture Mode
- *--------------------------------------------------------------------------------*/
-static void onCaptureModeScreen(const Widget_t *widget, Touch_t &touch) {
-  DBG_EXEC(printf("%s\n", __func__));
-
-  DrawScreen(widget);
-}
-
-static void onCaptureModeCamera(const Widget_t *widget, Touch_t &touch) {
-  DBG_EXEC(printf("%s\n", __func__));
-
-  if (touch.event != EVENT_NONE) {
-    mlx_cnt.capture_mode = 0;
-  }
-
-  DrawRadio(widget, 2, mlx_cnt.capture_mode);
-}
-
-static void onCaptureModeVideo(const Widget_t *widget, Touch_t &touch) {
-  DBG_EXEC(printf("%s\n", __func__));
-
-  if (touch.event != EVENT_NONE) {
-    mlx_cnt.capture_mode = 1;
-  }
-
-  DrawRadio(widget - 1, 2, mlx_cnt.capture_mode);
-}
-
-static void onCaptureModeApply(const Widget_t *widget, Touch_t &touch) {
-  DBG_EXEC(printf("%s\n", __func__));
-
-  if (touch.event != EVENT_NONE) {
-    widget_state(STATE_CONFIGURATION);
   }
 }
 
@@ -992,7 +1039,7 @@ static void onCaptureModeApply(const Widget_t *widget, Touch_t &touch) {
 #define TOUCH_OFFSET_Y_COL  172
 
 static void DrawOffsetX(const Widget_t* widget, Touch_t &touch) {
-  // draw button when touch.event == EVENT_NONE or EVENT_UP
+  // draw button when touch.event == EVENT_INIT or EVENT_UP
   if (touch.event != EVENT_DOWN) {
     DrawButton(widget,     (tch_copy.offset[0] < TOUCH_OFFSET_MAX) ? 1 : 0);
     DrawButton(widget + 1, (tch_copy.offset[0] > TOUCH_OFFSET_MIN) ? 1 : 0);
@@ -1002,7 +1049,7 @@ static void DrawOffsetX(const Widget_t* widget, Touch_t &touch) {
 }
 
 static void DrawOffsetY(const Widget_t* widget, Touch_t &touch) {
-  // draw button when touch.event == EVENT_NONE or EVENT_UP
+  // draw button when touch.event == EVENT_INIT or EVENT_UP
   if (touch.event != EVENT_DOWN) {
     DrawButton(widget,     (tch_copy.offset[1] < TOUCH_OFFSET_MAX) ? 1 : 0);
     DrawButton(widget + 1, (tch_copy.offset[1] > TOUCH_OFFSET_MIN) ? 1 : 0);
@@ -1037,7 +1084,7 @@ static void onCalibrationExec(const Widget_t *widget, Touch_t &touch) {
 static void onCalibrationAdjust(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_ADJUST_OFFSET);
   }
 }
@@ -1051,7 +1098,7 @@ static void onCalibrationSave(const Widget_t *widget, Touch_t &touch) {
 static void onCalibrationXup(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE && tch_copy.offset[0] < TOUCH_OFFSET_MAX) {
+  if (touch.event != EVENT_INIT && tch_copy.offset[0] < TOUCH_OFFSET_MAX) {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_DOWN ) {
       tch_copy.offset[0]++;
@@ -1064,7 +1111,7 @@ static void onCalibrationXup(const Widget_t *widget, Touch_t &touch) {
 static void onCalibrationXdown(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE && tch_copy.offset[0] > TOUCH_OFFSET_MIN) {
+  if (touch.event != EVENT_INIT && tch_copy.offset[0] > TOUCH_OFFSET_MIN) {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_DOWN) {
       tch_copy.offset[0]--;
@@ -1077,7 +1124,7 @@ static void onCalibrationXdown(const Widget_t *widget, Touch_t &touch) {
 static void onCalibrationYup(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE && tch_copy.offset[1] < TOUCH_OFFSET_MAX) {
+  if (touch.event != EVENT_INIT && tch_copy.offset[1] < TOUCH_OFFSET_MAX) {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_DOWN) {
       tch_copy.offset[1]++;
@@ -1090,7 +1137,7 @@ static void onCalibrationYup(const Widget_t *widget, Touch_t &touch) {
 static void onCalibrationYdown(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE && tch_copy.offset[1] > TOUCH_OFFSET_MIN) {
+  if (touch.event != EVENT_INIT && tch_copy.offset[1] > TOUCH_OFFSET_MIN) {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_DOWN) {
       tch_copy.offset[1]--;
@@ -1111,7 +1158,7 @@ static void onCalibrationClose(const Widget_t *widget, Touch_t &touch) {
 static void onCalibrationApply(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_NONE) {
+  if (touch.event == EVENT_INIT) {
     DrawButton(widget, 0);
   } else {
     DrawPress(widget, touch.event);
@@ -1131,7 +1178,7 @@ static void onAdjustOffsetScreen(const Widget_t *widget, Touch_t &touch) {
 static void onAdjustOffsetTarget(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     DrawButton(widget, 1);
 
     tch_copy.offset[0] = lcd_width  / 2 - 1 - touch.x;
@@ -1148,7 +1195,7 @@ static void onAdjustOffsetTarget(const Widget_t *widget, Touch_t &touch) {
 static void onAdjustOffsetClose(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_CALIBRATION);
   }
 }
@@ -1156,7 +1203,7 @@ static void onAdjustOffsetClose(const Widget_t *widget, Touch_t &touch) {
 static void onAdjustOffsetApply(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_NONE) {
+  if (touch.event == EVENT_INIT) {
     DrawButton(widget, 0);
   } else {
     DrawPress(widget, touch.event);
@@ -1175,7 +1222,7 @@ static void onInformationScreen (const Widget_t *widget, Touch_t &touch) {
 static void onInformationClose  (const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_NONE) {
+  if (touch.event != EVENT_INIT) {
     widget_state(STATE_CONFIGURATION);
   }
 }

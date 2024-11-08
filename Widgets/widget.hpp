@@ -123,7 +123,7 @@ void widget_setup(State_t screen /* = STATE_OFF */) {
   }
 
   if (n && widget) {
-    Touch_t touch = { EVENT_NONE, 0, 0 };
+    Touch_t touch = { EVENT_INIT, 0, 0 };
     for (int i = 0; i < n; i++, widget++) {
       if (widget->callback) {
         widget->callback(widget, touch);

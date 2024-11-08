@@ -38,12 +38,10 @@ typedef struct MLXConfig {
   }
 } MLXConfig_t;
 
-typedef struct MLXControl {
-  uint8_t       padding;
+typedef struct MLXCapture {
   uint8_t       capture_mode; // 0: camera, 1: video
   bool          recording;
-  bool          file_selected;
-} MLXControl_t;
+} MLXCapture_t;
 
 MLXConfig_t mlx_cnf = {
   .interpolation  = 8,
@@ -56,11 +54,9 @@ MLXConfig_t mlx_cnf = {
   .range_max      = 35,
 };
 
-MLXControl_t mlx_cnt = {
-  .padding        = 0,
+MLXCapture_t mlx_cap = {
   .capture_mode   = 0,
   .recording      = false,
-  .file_selected  = false,
 };
 
 /*=============================================================

@@ -12,7 +12,7 @@ static void DrawButton(const Widget_t *widget, uint8_t offset = 0);
 static void DrawSlider(const Widget_t *widget, int16_t offset = 0);
 static void DrawToggle(const Widget_t *widget, bool check = false);
 static void DrawCheck (const Widget_t *widget, bool check = false);
-static void DrawPress (const Widget_t *widget, Event_t event = EVENT_NONE);
+static void DrawPress (const Widget_t *widget, Event_t event = EVENT_INIT);
 static void DrawRadio (const Widget_t *widget, uint8_t n_widget, uint8_t selected = 0);
 static void DrawThumb (const Widget_t *widget, const char *path);
 
@@ -212,10 +212,10 @@ static void DrawRadio(const Widget_t *widget, uint8_t n_widget, uint8_t selected
 /*--------------------------------------------------------------------------------
  * Rendering the pressed effects
  *--------------------------------------------------------------------------------*/
-#define PRESSED_BUFFER_LEN  64
-#define PRESSED_OFFSET      1 // 1 or 2
+#define PRESSED_BUFFER_LEN  64  // [px]
+#define PRESSED_OFFSET      1   // 1 or 2 (need a wider background image)
 
-static void DrawPress(const Widget_t *widget, Event_t event /* = EVENT_NONE */) {
+static void DrawPress(const Widget_t *widget, Event_t event /* = EVENT_INIT */) {
   int16_t offset;
   const uint16_t x = widget->x;
   const uint16_t y = widget->y;

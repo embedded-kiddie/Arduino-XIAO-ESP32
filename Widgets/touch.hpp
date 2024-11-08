@@ -26,7 +26,9 @@ typedef enum {
   EVENT_FALLING = (0x01), // untouch -->   touch
   EVENT_RISING  = (0x02), //   touch --> untouch
   EVENT_TOUCHED = (0x04), //   touch -->   touch
+
   // alias
+  EVENT_INIT    = (EVENT_NONE),
   EVENT_UP      = (EVENT_RISING),
   EVENT_DOWN    = (EVENT_FALLING),
   EVENT_DRAG    = (EVENT_FALLING | EVENT_TOUCHED),
