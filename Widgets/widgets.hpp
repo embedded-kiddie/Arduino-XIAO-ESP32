@@ -279,7 +279,7 @@ static void onAdjustOffsetClose (const Widget_t *widget, Touch_t &touch);
 static void onAdjustOffsetApply (const Widget_t *widget, Touch_t &touch);
 
 static constexpr Widget_t widget_adjust_offset[] = {
-  {  28,  90, 270,  60, image_adjust_offset, EVENT_NONE,  onAdjustOffsetScreen },
+  {  25,  90, 270,  60, image_adjust_offset, EVENT_NONE,  onAdjustOffsetScreen },
   { 144, 104,  32,  32, image_target,        EVENT_DOWN,  onAdjustOffsetTarget },
   {  60, 105,  30,  30, NULL,                EVENT_ALL,   onAdjustOffsetClose  },
   { 230, 105,  30,  30, image_icon_apply,    EVENT_CLICK, onAdjustOffsetApply  },
