@@ -13,6 +13,7 @@ extern TouchConfig_t  tch_cnf;
 
 static MLXConfig_t    cnf_copy;
 static TouchConfig_t  tch_copy;
+static TouchConfig_t  tch_ajst;
 
 /*--------------------------------------------------------------------------------
  * Image data of widget
@@ -24,7 +25,7 @@ static constexpr Image_t image_thermograph[]        = { { screen_thermograph,   
 static constexpr Image_t image_file_manager[]       = { { screen_file_manager,  sizeof(screen_file_manager ) }, }; // 320 x 240
 static constexpr Image_t image_capture_mode[]       = { { screen_capture_mode,  sizeof(screen_capture_mode ) }, }; // 320 x 240
 static constexpr Image_t image_calibration[]        = { { screen_calibration,   sizeof(screen_calibration  ) }, }; // 320 x 240
-static constexpr Image_t image_adjust_center[]      = { { screen_adjust_center, sizeof(screen_adjust_center) }, }; // 270 x  60
+static constexpr Image_t image_adjust_offset[]      = { { screen_adjust_offset, sizeof(screen_adjust_offset) }, }; // 270 x  60
 static constexpr Image_t image_information[]        = { { screen_information,   sizeof(screen_information  ) }, }; // 320 x 240
 static constexpr Image_t image_icon_configuration[] = { { icon_configuration,   sizeof(icon_configuration  ) }, }; //  50 x  50
 
@@ -278,10 +279,10 @@ static void onAdjustOffsetClose (const Widget_t *widget, Touch_t &touch);
 static void onAdjustOffsetApply (const Widget_t *widget, Touch_t &touch);
 
 static constexpr Widget_t widget_adjust_offset[] = {
-  {  26,  90, 270,  60, image_adjust_center, EVENT_NONE,  onAdjustOffsetScreen },
+  {  28,  90, 270,  60, image_adjust_offset, EVENT_NONE,  onAdjustOffsetScreen },
   { 144, 104,  32,  32, image_target,        EVENT_DOWN,  onAdjustOffsetTarget },
-  {  60, 206,  30,  30, NULL,                EVENT_ALL,   onAdjustOffsetClose  },
-  { 230, 206,  30,  30, image_icon_apply,    EVENT_CLICK, onAdjustOffsetApply  },
+  {  60, 105,  30,  30, NULL,                EVENT_ALL,   onAdjustOffsetClose  },
+  { 230, 105,  30,  30, image_icon_apply,    EVENT_CLICK, onAdjustOffsetApply  },
 };
 
 // Screen - Information
@@ -598,7 +599,7 @@ static void onResolutionClose(const Widget_t *widget, Touch_t &touch) {
 static void onResolutionApply(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (Apply(widget, touch, (cnf_copy != mlx_cnf))) {
+  if (Apply(widget, touch, (mlx_cnf != cnf_copy))) {
     mlx_cnf = cnf_copy;
   }
 }
@@ -779,7 +780,7 @@ static void onThermographClose(const Widget_t *widget, Touch_t &touch) {
 static void onThermographApply(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (Apply(widget, touch, (cnf_copy != mlx_cnf))) {
+  if (Apply(widget, touch, (mlx_cnf != cnf_copy))) {
     mlx_cnf = cnf_copy;
   }
 }
@@ -1031,6 +1032,16 @@ static void onFileManagerApply(const Widget_t *widget, Touch_t &touch) {
 /*--------------------------------------------------------------------------------
  * Callback functions - Calibration
  *--------------------------------------------------------------------------------*/
+static bool enable_save;
+static bool SaveCalibration(TouchConfig_t &config) {
+  if (touch_save(&tch_cnf)) {
+    enable_save = false;
+    return true;
+  } else {
+    return false;
+  }
+}
+
 #define TOUCH_OFFSET_MIN    (-10)
 #define TOUCH_OFFSET_MAX    ( 10)
 #define TOUCH_OFFSET_X_ROW  123
@@ -1038,7 +1049,7 @@ static void onFileManagerApply(const Widget_t *widget, Touch_t &touch) {
 #define TOUCH_OFFSET_Y_ROW  223
 #define TOUCH_OFFSET_Y_COL  172
 
-static void DrawOffsetX(const Widget_t* widget, Touch_t &touch) {
+static void DrawOffsetX(const Widget_t* widget, Touch_t &touch, const Widget_t *apply) {
   // draw button when touch.event == EVENT_INIT or EVENT_UP
   if (touch.event != EVENT_DOWN) {
     DrawButton(widget,     (tch_copy.offset[0] < TOUCH_OFFSET_MAX) ? 1 : 0);
@@ -1046,9 +1057,13 @@ static void DrawOffsetX(const Widget_t* widget, Touch_t &touch) {
   }
 
   gfx_printf(TOUCH_OFFSET_X_ROW, TOUCH_OFFSET_X_COL, "%3d", (int)tch_copy.offset[0]);
+
+  // Enable apply if somethig is changed
+  touch.event = EVENT_INIT;
+  onCalibrationApply(apply, touch);
 }
 
-static void DrawOffsetY(const Widget_t* widget, Touch_t &touch) {
+static void DrawOffsetY(const Widget_t* widget, Touch_t &touch, const Widget_t *apply) {
   // draw button when touch.event == EVENT_INIT or EVENT_UP
   if (touch.event != EVENT_DOWN) {
     DrawButton(widget,     (tch_copy.offset[1] < TOUCH_OFFSET_MAX) ? 1 : 0);
@@ -1056,10 +1071,16 @@ static void DrawOffsetY(const Widget_t* widget, Touch_t &touch) {
   }
 
   gfx_printf(TOUCH_OFFSET_Y_ROW, TOUCH_OFFSET_Y_COL, "%3d", (int)tch_copy.offset[1]);
+
+  // Enable apply if somethig is changed
+  touch.event = EVENT_INIT;
+  onCalibrationApply(apply, touch);
 }
 
-static void onCalibrationScreen (const Widget_t *widget, Touch_t &touch) {
+static void onCalibrationScreen(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
+
+  tch_ajst = tch_copy;
 
   DrawScreen(widget);
 
@@ -1069,16 +1090,22 @@ static void onCalibrationScreen (const Widget_t *widget, Touch_t &touch) {
   uint16_t *c = tch_cnf.cal;
   gfx_printf(115,  94, "%4d, %4d, %4d, %4d", c[0], c[1], c[2], c[3]);
   gfx_printf(115, 106, "%4d, %4d, %4d, %4d", c[4], c[5], c[6], c[7]);
-/*
-  c = tch_copy.cal;
-  gfx_printf(115, 126, "%4d, %4d, %4d, %4d", c[0], c[1], c[2], c[3]);
-  gfx_printf(115, 138, "%4d, %4d, %4d, %4d", c[4], c[5], c[6], c[7]);
-//*/
+
+  if (!(tch_cnf >= tch_copy)) {
+    c = tch_copy.cal;
+    gfx_printf(115, 126, "%4d, %4d, %4d, %4d", c[0], c[1], c[2], c[3]);
+    gfx_printf(115, 138, "%4d, %4d, %4d, %4d", c[4], c[5], c[6], c[7]);
+  }
+
   GFX_EXEC(setTextSize(2));
 }
 
 static void onCalibrationExec(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
+
+  if (touch.event != EVENT_INIT) {
+    touch_calibrate(&tch_copy);
+  }
 }
 
 static void onCalibrationAdjust(const Widget_t *widget, Touch_t &touch) {
@@ -1092,7 +1119,17 @@ static void onCalibrationAdjust(const Widget_t *widget, Touch_t &touch) {
 static void onCalibrationSave(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  DrawButton(widget, 0);
+  if (touch.event == EVENT_INIT) {
+    DrawButton(widget, enable_save);
+  }
+
+  // now ready to save touch configuration data into flash
+  else if (enable_save) {
+    DrawButton(widget, 2);
+    if (SaveCalibration(tch_cnf)) {
+      widget_state(STATE_CALIBRATION);
+    }
+  }
 }
 
 static void onCalibrationXup(const Widget_t *widget, Touch_t &touch) {
@@ -1105,7 +1142,7 @@ static void onCalibrationXup(const Widget_t *widget, Touch_t &touch) {
     }
   }
 
-  DrawOffsetX(widget, touch);
+  DrawOffsetX(widget, touch, widget + 5);
 }
 
 static void onCalibrationXdown(const Widget_t *widget, Touch_t &touch) {
@@ -1118,7 +1155,7 @@ static void onCalibrationXdown(const Widget_t *widget, Touch_t &touch) {
     }
   }
 
-  DrawOffsetX(widget - 1, touch);
+  DrawOffsetX(widget - 1, touch, widget + 4);
 }
 
 static void onCalibrationYup(const Widget_t *widget, Touch_t &touch) {
@@ -1131,7 +1168,7 @@ static void onCalibrationYup(const Widget_t *widget, Touch_t &touch) {
     }
   }
 
-  DrawOffsetY(widget, touch);
+  DrawOffsetY(widget, touch, widget + 3);
 }
 
 static void onCalibrationYdown(const Widget_t *widget, Touch_t &touch) {
@@ -1144,7 +1181,7 @@ static void onCalibrationYdown(const Widget_t *widget, Touch_t &touch) {
     }
   }
 
-  DrawOffsetY(widget - 1, touch);
+  DrawOffsetY(widget - 1, touch, widget + 2);
 }
 
 static void onCalibrationClose(const Widget_t *widget, Touch_t &touch) {
@@ -1158,10 +1195,13 @@ static void onCalibrationClose(const Widget_t *widget, Touch_t &touch) {
 static void onCalibrationApply(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_INIT) {
-    DrawButton(widget, 0);
-  } else {
-    DrawPress(widget, touch.event);
+  if (Apply(widget, touch, (tch_cnf != tch_copy))) {
+    tch_cnf = tch_copy;
+
+    // Enable to save if somethig configuration data
+    enable_save = true;
+    touch.event = EVENT_INIT;
+    onCalibrationSave(widget - 6, touch);
   }
 }
 
@@ -1171,24 +1211,37 @@ static void onCalibrationApply(const Widget_t *widget, Touch_t &touch) {
 static void onAdjustOffsetScreen(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
+#if defined (LOVYANGFX_HPP_)
+  GFX_EXEC(beginTransaction());
+  GFX_EXEC(fillRectAlpha(0, 0, lcd_width, lcd_height, 160, BLACK));
+  GFX_EXEC(endTransaction());
+#endif
+
   DrawScreen(widget);
-  DrawButton(widget + 1);
 }
 
 static void onAdjustOffsetTarget(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event != EVENT_INIT) {
+  if (touch.event == EVENT_INIT) {
+    DrawButton(widget);
+  }
+
+  else {
     DrawButton(widget, 1);
 
-    tch_copy.offset[0] = lcd_width  / 2 - 1 - touch.x;
-    tch_copy.offset[1] = lcd_height / 2 - 1 - touch.y;
+    tch_ajst.offset[0] = lcd_width  / 2 - 1 - touch.x;
+    tch_ajst.offset[1] = lcd_height / 2 - 1 - touch.y;
 
-    tch_copy.offset[0] = constrain(tch_copy.offset[0], TOUCH_OFFSET_MIN, TOUCH_OFFSET_MAX);
-    tch_copy.offset[1] = constrain(tch_copy.offset[1], TOUCH_OFFSET_MIN, TOUCH_OFFSET_MAX);
+    tch_ajst.offset[0] = constrain(tch_ajst.offset[0], TOUCH_OFFSET_MIN, TOUCH_OFFSET_MAX);
+    tch_ajst.offset[1] = constrain(tch_ajst.offset[1], TOUCH_OFFSET_MIN, TOUCH_OFFSET_MAX);
 
-    gfx_printf(TOUCH_OFFSET_X_ROW, TOUCH_OFFSET_X_COL, "%3d", (int)tch_copy.offset[0]);
-    gfx_printf(TOUCH_OFFSET_Y_ROW, TOUCH_OFFSET_Y_COL, "%3d", (int)tch_copy.offset[1]);
+    gfx_printf(TOUCH_OFFSET_X_ROW, TOUCH_OFFSET_X_COL, "%3d", (int)tch_ajst.offset[0]);
+    gfx_printf(TOUCH_OFFSET_Y_ROW, TOUCH_OFFSET_Y_COL, "%3d", (int)tch_ajst.offset[1]);
+
+    // Enable apply if somethig is changed
+    touch.event = EVENT_INIT;
+    onAdjustOffsetApply(widget + 2, touch);
   }
 }
 
@@ -1203,10 +1256,9 @@ static void onAdjustOffsetClose(const Widget_t *widget, Touch_t &touch) {
 static void onAdjustOffsetApply(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_INIT) {
-    DrawButton(widget, 0);
-  } else {
-    DrawPress(widget, touch.event);
+  if (Apply(widget, touch, (tch_copy <= tch_ajst))) {
+    tch_copy = tch_ajst;
+    widget_state(STATE_CALIBRATION);
   }
 }
 

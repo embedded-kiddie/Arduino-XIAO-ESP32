@@ -48,19 +48,34 @@ typedef struct TouchConfig {
   int8_t      offset[2];
 
   // Comparison Operator
+  bool operator >= (TouchConfig &RHS) {
+    return !bcmp(cal, RHS.cal, sizeof(cal));
+  }
+  bool operator <= (TouchConfig &RHS) {
+    return (offset[0] != RHS.offset[0]) || (offset[1] != RHS.offset[1]);
+  }
   bool operator != (TouchConfig &RHS) {
-    return !bcmp(cal, RHS.cal, sizeof(cal)) || (offset[0] != RHS.offset[0]) || (offset[1] != RHS.offset[1]);
+    return bcmp(cal, RHS.cal, sizeof(cal)) || (offset[0] != RHS.offset[0]) || (offset[1] != RHS.offset[1]);
   }
 } TouchConfig_t;
 
 TouchConfig_t tch_cnf = {
-#if defined (LOVYANGFX_HPP_)
+#if   defined (LOVYANGFX_HPP_)
   .cal = {319, 384, 3866, 355, 277, 3729, 3832, 3785},
 #elif defined (_TFT_eSPIH_)
   .cal = {0, 0, 0, 0, 1, 0,},
 #endif
   .offset = {0, 0},//{-10, +5}
 };
+
+/*--------------------------------------------------------------------------------
+ * Functions prototyping
+ *--------------------------------------------------------------------------------*/
+bool touch_setup(void);
+bool touch_event(Touch_t &touch);
+void touch_clear(void);
+bool touch_save(TouchConfig_t *config);
+void touch_calibrate(TouchConfig_t *config);
 
 /*--------------------------------------------------------------------------------
  * Simple touch point correction
@@ -72,36 +87,29 @@ extern MLXConfig_t mlx_cnf;
 /*--------------------------------------------------------------------------------
  * Setup touch manager
  *--------------------------------------------------------------------------------*/
-#ifdef  _XPT2046_Touchscreen_h_
-
 bool touch_setup(void) {
+#if   defined (_XPT2046_Touchscreen_h_)
+
   if (ts.begin()) {
     ts.setRotation(SCREEN_ROTATION);
     return true;
   } else {
     return false;
   }
-}
 
-#else // LovyanGFX || TFT_eSPI
-
-bool touch_setup(void) {
-
-#if defined (LOVYANGFX_HPP_)
+#elif defined (LOVYANGFX_HPP_)
 
   // https://github.com/lovyan03/LovyanGFX/discussions/539
   GFX_EXEC(setTouchCalibrate(tch_cnf.cal));
+  return true;
 
 #elif defined (_TFT_eSPIH_)
 
   GFX_EXEC(setTouch(tch_cnf.cal));
-
-#endif
-
   return true;
-}
 
 #endif // _XPT2046_Touchscreen_h_
+}
 
 /*--------------------------------------------------------------------------------
  * Event manager
@@ -192,4 +200,32 @@ void touch_clear(void) {
   Touch_t touch;
   delay(PERIOD_CLEAR_EVENT);
   while(touch_event(touch));
+}
+
+bool touch_save(TouchConfig_t *config) {
+  // use preferences.h
+  // https://docs.espressif.com/projects/arduino-esp32/en/latest/tutorials/preferences.html
+  // https://github.com/espressif/arduino-esp32/tree/master/libraries/Preferences
+  delay(1000);
+
+#if   defined (_XPT2046_Touchscreen_h_)
+
+#elif defined (LOVYANGFX_HPP_)
+
+#elif defined (_TFT_eSPIH_)
+
+#endif
+
+  return true;
+}
+
+void touch_calibrate(TouchConfig_t *config) {
+#if   defined (_XPT2046_Touchscreen_h_)
+
+#elif defined (LOVYANGFX_HPP_)
+  // https://github.com/lovyan03/LovyanGFX/tree/master/examples/HowToUse/2_user_setting
+
+#elif defined (_TFT_eSPIH_)
+
+#endif
 }

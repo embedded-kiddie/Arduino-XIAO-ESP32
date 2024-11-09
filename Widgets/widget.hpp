@@ -137,12 +137,9 @@ void widget_setup(State_t screen /* = STATE_OFF */) {
  * Change state
  *--------------------------------------------------------------------------------*/
 State_t widget_state(State_t screen /*= STATE_OFF */) {
-  if (screen != state) {
-    state = screen;
-    touch_clear();
-    widget_setup(state);
-  }
-
+  state = screen;
+  touch_clear();
+  widget_setup(state);
   return state;
 }
 
