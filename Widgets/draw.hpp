@@ -9,10 +9,10 @@
 static void DrawScreen(const Widget_t *widget);
 static void DrawWidget(const Widget_t *widget, uint8_t offset = 0);
 static void DrawButton(const Widget_t *widget, uint8_t offset = 0);
-static void DrawSlider(const Widget_t *widget, int16_t offset = 0);
 static void DrawToggle(const Widget_t *widget, bool check = false);
 static void DrawCheck (const Widget_t *widget, bool check = false);
 static void DrawPress (const Widget_t *widget, Event_t event = EVENT_INIT);
+static void DrawSlider(const Widget_t *widget, int16_t value, bool enable = true);
 static void DrawRadio (const Widget_t *widget, uint8_t n_widget, uint8_t selected = 0);
 static void DrawThumb (const Widget_t *widget, const char *path);
 
@@ -149,9 +149,9 @@ static void DrawButton(const Widget_t *widget, uint8_t offset /* = 0 */) {
 /*--------------------------------------------------------------------------------
  * Draw slider
  *--------------------------------------------------------------------------------*/
-static void DrawSlider(const Widget_t *widget, int16_t offset /* = 0 */) {
+static void DrawSlider(const Widget_t *widget, int16_t value, bool enable /* = true */) {
   const Image_t *bar  = &widget->image[0];
-  const Image_t *knob = &widget->image[1];
+  const Image_t *knob = &widget->image[enable ? 1 : 2]; // [1]: enable, [2]: disable
 
   if (bar && knob) {
     GFX_EXEC(startWrite());
@@ -184,7 +184,7 @@ static void DrawSlider(const Widget_t *widget, int16_t offset /* = 0 */) {
     sprite_knob.createSprite(w, h);
     sprite_knob.drawPng(knob->data, knob->size, 0, 0);
 
-    sprite_knob.pushSprite(offset, 0);
+    sprite_knob.pushSprite(value, 0);
     sprite_bar.pushSprite(widget->x, widget->y);
 
     sprite_knob.deleteSprite();

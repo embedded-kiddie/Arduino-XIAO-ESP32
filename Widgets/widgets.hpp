@@ -2,6 +2,7 @@
  * Widget definitions for each screen
  *================================================================================*/
 #include <Arduino.h>
+#define DEMO_MODE true
 #include "widgets.h"
 
 /*--------------------------------------------------------------------------------
@@ -87,6 +88,12 @@ static constexpr Image_t image_target[] = {
   { target_off, sizeof(target_off) }, // 32 x 32
   { target_on,  sizeof(target_on ) }, // 32 x 32
 };
+#if defined (DEMO_MODE) && DEMO_MODE
+static constexpr Image_t image_demo[] = {
+  { screen_demo1, sizeof(screen_demo1) },
+  { screen_demo2, sizeof(screen_demo2) },
+};
+#endif
 
 /*--------------------------------------------------------------------------------
  * Slider model
@@ -198,6 +205,9 @@ static constexpr Widget_t widget_thermograph[] = {
   {  40, 173, 238,  26, image_slider2,     EVENT_DRAG,  onThermographSlider2 },
   {  60, 206,  30,  30, NULL,              EVENT_ALL,   onThermographClose   },
   { 230, 206,  30,  30, image_icon_apply,  EVENT_CLICK, onThermographApply   },
+#if defined (DEMO_MODE) && DEMO_MODE
+  {   0,   0, 128, 135, image_demo,        EVENT_NONE,  nullptr              },
+#endif
 };
 
 // Screen - Capture mode
@@ -631,13 +641,13 @@ static __attribute__((optimize("O0"))) int16_t GetThermoSlider(const Widget_t *w
   return TERMOGRAPH_MIN + ((X - Y) * (TERMOGRAPH_MAX - TERMOGRAPH_MIN)) / (Z - Y); // value
 }
 
-static void PutThermoSlider(const Widget_t *widget, int16_t V) {
+static void PutThermoSlider(const Widget_t *widget, int16_t V, bool enable) {
   // Here it's assumed that the knob width is equal to its height.
   int16_t Y = SLIDER_KNOB_OFFSET;                         // Minimum value of knob top left coordinate
   int16_t Z = widget->w - widget->h - SLIDER_KNOB_OFFSET; // Maximum value of knob top left coordinate
 
   int16_t X = (V - TERMOGRAPH_MIN) * (Z - Y) / (TERMOGRAPH_MAX - TERMOGRAPH_MIN) + Y;
-  DrawSlider(widget, X = constrain(X, Y, Z));
+  DrawSlider(widget, X = constrain(X, Y, Z), enable);
 }
 
 static void onThermographScreen(const Widget_t *widget, Touch_t &touch) {
@@ -662,6 +672,10 @@ static void onThermographRadio1(const Widget_t *widget, Touch_t &touch) {
 
   DrawRadio(widget, 2, cnf_copy.color_scheme);
 
+#if defined (DEMO_MODE) && DEMO_MODE
+  DrawWidget(widget + 8, 0);
+#endif
+
   // Enable apply if somethig is changed
   touch.event = EVENT_INIT;
   onThermographApply(widget + 7, touch);
@@ -675,6 +689,10 @@ static void onThermographRadio2(const Widget_t *widget, Touch_t &touch) {
   }
 
   DrawRadio(widget - 1, 2, cnf_copy.color_scheme);
+
+#if defined (DEMO_MODE) && DEMO_MODE
+  if (touch.event != EVENT_INIT) DrawWidget(widget + 7, 1);
+#endif
 
   // Enable apply if somethig is changed
   touch.event = EVENT_INIT;
@@ -704,8 +722,12 @@ static void onThermographToggle2(const Widget_t *widget, Touch_t &touch) {
 
   DrawToggle(widget, cnf_copy.range_auto);
 
-  // Enable apply if somethig is changed
+  // Disable Slider
   touch.event = EVENT_INIT;
+  onThermographSlider1(widget + 1, touch);
+  onThermographSlider2(widget + 2, touch);
+
+  // Enable apply if somethig is changed
   onThermographApply(widget + 4, touch);
 }
 
@@ -713,11 +735,12 @@ static void onThermographSlider1(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
-    PutThermoSlider(widget, cnf_copy.range_min);
+    // when range_auto == true then make slider disable
+    PutThermoSlider(widget, cnf_copy.range_min, !cnf_copy.range_auto);
     gfx_printf(TERMOGRAPH_MIN_ROW, TERMOGRAPH_MIN_COL, "%3d", cnf_copy.range_min);
   }
 
-  else {
+  else if (!cnf_copy.range_auto) {
     // Convert to temperature and display without flickering
     int16_t v = GetThermoSlider(widget, touch);
     static int16_t V = 0xFFFF;
@@ -743,11 +766,12 @@ static void onThermographSlider2(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
-    PutThermoSlider(widget, cnf_copy.range_max);
+    // when range_auto == true then make slider disable
+    PutThermoSlider(widget, cnf_copy.range_max, !cnf_copy.range_auto);
     gfx_printf(TERMOGRAPH_MAX_ROW, TERMOGRAPH_MAX_COL, "%3d", cnf_copy.range_max);
   }
 
-  else {
+  else if (!cnf_copy.range_auto) {
     // Convert to temperature and display without flickering
     int16_t v = GetThermoSlider(widget, touch);
     static int16_t V = 0xFFFF;
@@ -1085,7 +1109,7 @@ static void onCalibrationScreen(const Widget_t *widget, Touch_t &touch) {
   DrawScreen(widget);
 
   GFX_EXEC(setTextSize(1));
-  GFX_EXEC(setTextColor(WHITE));
+  GFX_EXEC(setTextColor(WHITE, BLACK));
 
   uint16_t *c = tch_cnf.cal;
   gfx_printf(115,  94, "%4d, %4d, %4d, %4d", c[0], c[1], c[2], c[3]);
@@ -1105,6 +1129,7 @@ static void onCalibrationExec(const Widget_t *widget, Touch_t &touch) {
 
   if (touch.event != EVENT_INIT) {
     touch_calibrate(&tch_copy);
+    widget_state(STATE_CALIBRATION);
   }
 }
 

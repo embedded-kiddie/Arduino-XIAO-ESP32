@@ -223,7 +223,17 @@ void touch_calibrate(TouchConfig_t *config) {
 #if   defined (_XPT2046_Touchscreen_h_)
 
 #elif defined (LOVYANGFX_HPP_)
+
   // https://github.com/lovyan03/LovyanGFX/tree/master/examples/HowToUse/2_user_setting
+  GFX_EXEC(clear(0));
+  GFX_EXEC(setTextSize(2));
+  GFX_EXEC(setTextDatum(textdatum_t::middle_center));
+  GFX_EXEC(drawString("touch the arrow marker.", lcd_width >> 1, lcd_height >> 1));
+  GFX_EXEC(setTextDatum(textdatum_t::top_left));
+  GFX_EXEC(calibrateTouch(config->cal, WHITE, BLACK, std::max(lcd_width, lcd_height) >> 3));
+
+  // clear offset
+  config->offset[0] = config->offset[1] = 0;
 
 #elif defined (_TFT_eSPIH_)
 
