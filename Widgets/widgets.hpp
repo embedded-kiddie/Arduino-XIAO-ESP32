@@ -2,8 +2,12 @@
  * Widget definitions for each screen
  *================================================================================*/
 #include <Arduino.h>
-#define DEMO_MODE true
 #include "widgets.h"
+
+#define DEMO_MODE true
+#if     DEMO_MODE
+#include "demo.h"
+#endif
 
 /*--------------------------------------------------------------------------------
  * MLX90640 configuration and Widget control da
@@ -90,8 +94,12 @@ static constexpr Image_t image_target[] = {
 };
 #if defined (DEMO_MODE) && DEMO_MODE
 static constexpr Image_t image_demo[] = {
-  { screen_demo1, sizeof(screen_demo1) },
-  { screen_demo2, sizeof(screen_demo2) },
+  { screen_demo0, sizeof(screen_demo0) }, // 8:1 (256 x 192)
+  { screen_demo1, sizeof(screen_demo1) }, // 6:1 (192 x 144)
+  { screen_demo2, sizeof(screen_demo2) }, // 4:1 (128 x  96)
+  { screen_demo3, sizeof(screen_demo3) }, // 2:1 ( 64 x  48)
+  { screen_demo4, sizeof(screen_demo4) }, // 1:1 ( 32 x  24)
+  { screen_demo5, sizeof(screen_demo5) }, // 2:1 ( 64 x  48)
 };
 #endif
 
@@ -146,6 +154,9 @@ static constexpr Widget_t widget_main[] = {
   {   0, 195, 256,  45, NULL,              EVENT_ALL,  onMainThermograph   },
   { 265, 135,  50,  50, image_icon_camera, EVENT_UP,   onMainCapture       },
   { 265, 185,  50,  50, NULL,              EVENT_ALL,  onMainConfiguration },
+#if defined (DEMO_MODE) && DEMO_MODE
+  {   0,   0, 320, 240, image_demo,        EVENT_NONE, nullptr             },
+#endif
 };
 
 // Screen - Configuration
@@ -327,9 +338,20 @@ static void onMainScreen(const Widget_t *widget, Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   DrawScreen(widget);
-#if 0
+
+#if defined (DEMO_MODE) && DEMO_MODE
+  int N = 0;
+  switch (mlx_cnf.interpolation * mlx_cnf.box_size) {
+    case 8: N = 0; break;
+    case 6: N = 1; break;
+    case 4: N = 2; break;
+    case 2: N = 3; break;
+    case 1: N = 4; break;
+  }
+  DrawWidget(widget + 6, N);
+#endif
+
   // Draw color bar
-  extern const uint16_t camColors[];
   const int n = sizeof(camColors) / sizeof(camColors[0]);
   const int w = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_COLS;
   int       y = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_ROWS + 3;
@@ -340,16 +362,24 @@ static void onMainScreen(const Widget_t *widget, Touch_t &touch) {
 
   // Draw thermal range
   y += FONT_HEIGHT + 4;
-  GFX_EXEC(setTextSize(2));
   GFX_EXEC(setTextColor(WHITE, BLACK));
-  gfx_printf(0,                      y, "%d", MINTEMP);
-  gfx_printf(w / 2 - FONT_WIDTH * 2, y, "%3.1f", (float)(MINTEMP + MAXTEMP) / 2.0f);
-  gfx_printf(w     - FONT_WIDTH * 2, y, "%d", MAXTEMP);
+  GFX_EXEC(setTextSize(mlx_cnf.interpolation * mlx_cnf.box_size > 4 ? 2 : 1));
+
+  GFX_EXEC(setTextDatum(textdatum_t::top_left));
+  gfx_printf(0, y, "%d", mlx_cnf.range_min);
+
+  GFX_EXEC(setTextDatum(textdatum_t::top_right));
+  gfx_printf(w, y, "%d", mlx_cnf.range_max);
+
+  if (mlx_cnf.interpolation * mlx_cnf.box_size > 1) {
+    GFX_EXEC(setTextDatum(textdatum_t::top_center));
+    gfx_printf(w / 2, y, "%3.1f", (float)(mlx_cnf.range_min + mlx_cnf.range_max) / 2.0f);
+  }
 
   // Draw resolution
   GFX_EXEC(setTextSize(2));
+  GFX_EXEC(setTextDatum(textdatum_t::top_left));
   gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%2d:%d", mlx_cnf.interpolation, mlx_cnf.box_size);
-#endif
 }
 
 static void onMainInside(const Widget_t *widget, Touch_t &touch) {
@@ -550,8 +580,8 @@ static void onResolutionSlider1(const Widget_t *widget, Touch_t &touch) {
   cnf_copy.interpolation = scale[i];
 
   // restrict pixel interpolation and block size
-  if (cnf_copy.interpolation * cnf_copy.block_size > 8) {
-    cnf_copy.block_size = 8 / cnf_copy.interpolation;
+  if (cnf_copy.interpolation * cnf_copy.box_size > 8) {
+    cnf_copy.box_size = 8 / cnf_copy.interpolation;
     touch.event = EVENT_INIT;
     onResolutionSlider2(widget + 1, touch);
   }
@@ -575,7 +605,7 @@ static void onResolutionSlider2(const Widget_t *widget, Touch_t &touch) {
     // Here it's assumed that the knob width is equal to its height.
     touch.x = widget->x + widget->h / 2;
     for (int i = 0; i < n; i++) {
-      if (scale[i] == cnf_copy.block_size) {
+      if (scale[i] == cnf_copy.box_size) {
         touch.x += pos[i];
         break;
       }
@@ -584,11 +614,11 @@ static void onResolutionSlider2(const Widget_t *widget, Touch_t &touch) {
 
   // update the knob position and the configuration
   int i = UpdateSliderPos(widget, touch, pos, n);
-  cnf_copy.block_size = scale[i];
+  cnf_copy.box_size = scale[i];
 
   // restrict pixel interpolation and block size
-  if (cnf_copy.interpolation * cnf_copy.block_size > 8) {
-    cnf_copy.interpolation = 8 / cnf_copy.block_size;
+  if (cnf_copy.interpolation * cnf_copy.box_size > 8) {
+    cnf_copy.interpolation = 8 / cnf_copy.box_size;
     touch.event = EVENT_INIT;
     onResolutionSlider1(widget - 1, touch);
   }
@@ -673,7 +703,7 @@ static void onThermographRadio1(const Widget_t *widget, Touch_t &touch) {
   DrawRadio(widget, 2, cnf_copy.color_scheme);
 
 #if defined (DEMO_MODE) && DEMO_MODE
-  DrawWidget(widget + 8, 0);
+  DrawWidget(widget + 8, 2);
 #endif
 
   // Enable apply if somethig is changed
@@ -691,7 +721,7 @@ static void onThermographRadio2(const Widget_t *widget, Touch_t &touch) {
   DrawRadio(widget - 1, 2, cnf_copy.color_scheme);
 
 #if defined (DEMO_MODE) && DEMO_MODE
-  if (touch.event != EVENT_INIT) DrawWidget(widget + 7, 1);
+  if (touch.event != EVENT_INIT) DrawWidget(widget + 7, 5);
 #endif
 
   // Enable apply if somethig is changed

@@ -45,11 +45,8 @@ void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   len = vsnprintf(buf, sizeof(buf), fmt, arg_ptr);
   va_end(arg_ptr);
 
-  // Clear the text output area
-//GFX_EXEC(fillRect(x, y, len * FONT_WIDTH, FONT_HEIGHT, BLACK)); // use setTextColor(WHITE, BLACK)
-
-  GFX_EXEC(setCursor(x, y));
-  GFX_EXEC(print(buf));
+  // use setTextColor(foreground_color, background_color) and setTextDatum(textdatum_t::...)
+  GFX_EXEC(drawString(buf, x, y));
 }
 
 #endif
