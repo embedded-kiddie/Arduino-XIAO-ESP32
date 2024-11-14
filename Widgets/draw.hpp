@@ -263,6 +263,7 @@ static void DrawPress(const Widget_t *widget, Event_t event /* = EVENT_INIT */) 
 static void DrawThumb(const Widget_t *widget, const char *path) {
 #if defined (LOVYANGFX_HPP_) && (!defined (ESP32) || defined (SdFat_h))
 
+  GFX_EXEC(fillRect(widget->x, widget->y, widget->w, widget->h, BLACK));
   GFX_EXEC(drawBmpFile(
     SD,
     path,
