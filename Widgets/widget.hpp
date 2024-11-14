@@ -35,7 +35,7 @@ typedef struct Widget {
   const uint16_t  w, h;   // Widget width and height
   const Image_t   *image; // Widget image data
   const Event_t   event;  // The touch event to detect
-  void            (*callback)(const struct Widget *widget, Touch_t &touch);  // Event handler
+  void            (*callback)(const struct Widget *widget, const Touch_t &touch);  // Event handler
 } Widget_t;
 
 static Widget_t const *focus = NULL;
@@ -59,7 +59,7 @@ void widget_control(void);
 void widget_setup(State_t screen = STATE_OFF);
 State_t widget_state(State_t screen = STATE_OFF);
 static bool widget_watch(const Widget_t *widgets, const size_t n_widgets);
-static bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_t &touch);
+static bool widget_event(const Widget_t *widgets, const size_t n_widgets, const Touch_t &touch);
 
 /*--------------------------------------------------------------------------------
  * Widgets
@@ -148,19 +148,14 @@ State_t widget_state(State_t screen /*= STATE_OFF */) {
 /*--------------------------------------------------------------------------------
  * Handle the widget events on screen
  *--------------------------------------------------------------------------------*/
-static bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_t &touch) {
-  Event_t e = touch.event;
-
+static bool widget_event(const Widget_t *widgets, const size_t n_widgets, const Touch_t &touch) {
   if (focus == NULL) {
     for (int i = 0; i < n_widgets; i++) {
       // In case the touch events to be handled
       if ((widgets[i].event & touch.event) && widgets[i].callback) {
-
-        // Find the widget where the event fired
+        // Focus the widget where the event fired
         if (widgets[i].x <= touch.x && touch.x <= widgets[i].x + widgets[i].w &&
             widgets[i].y <= touch.y && touch.y <= widgets[i].y + widgets[i].h) {
-
-          // Focus the widget
           focus = &widgets[i];
           break;
         }
@@ -168,12 +163,12 @@ static bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_
     }
   }
 
-  if (focus && (focus->event & e) && focus->callback) {
+  if (focus && (focus->event & touch.event) && focus->callback) {
     DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, focus->event, touch.x, touch.y));
     focus->callback(focus, touch);
   }
 
-  focus = (e == EVENT_RISING ? NULL : focus);
+  focus = (touch.event == EVENT_RISING ? NULL : focus);
   return (focus != NULL);
 }
 

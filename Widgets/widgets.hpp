@@ -21,6 +21,11 @@ static TouchConfig_t  tch_copy;
 static TouchConfig_t  tch_ajst;
 
 /*--------------------------------------------------------------------------------
+ * Initial event message
+ *--------------------------------------------------------------------------------*/
+static constexpr Touch_t doInit = { EVENT_INIT, 0, 0 };
+
+/*--------------------------------------------------------------------------------
  * Image data of widget
  *--------------------------------------------------------------------------------*/
 static constexpr Image_t image_main[]               = { { screen_main,          sizeof(screen_main         ) }, }; // 320 x 240
@@ -131,7 +136,7 @@ static constexpr Image_t image_slider2[] = {
 /*--------------------------------------------------------------------------------
  * List of widget data based on the screen
  * The callback function may be something this:
- * static void onCallbackFunction(const Widget_t *widget, Touch_t &touch) {
+ * static void onCallbackFunction(const Widget_t *widget, const Touch_t &touch) {
  *   if (touch.event == EVENT_INIT) {
  *     // Setup Process
  *   } else {
@@ -140,12 +145,12 @@ static constexpr Image_t image_slider2[] = {
  * }
  *--------------------------------------------------------------------------------*/
 // Screen - Main
-static void onMainScreen        (const Widget_t *widget, Touch_t &touch);
-static void onMainInside        (const Widget_t *widget, Touch_t &touch);
-static void onMainOutside       (const Widget_t *widget, Touch_t &touch);
-static void onMainThermograph   (const Widget_t *widget, Touch_t &touch);
-static void onMainCapture       (const Widget_t *widget, Touch_t &touch);
-static void onMainConfiguration (const Widget_t *widget, Touch_t &touch);
+static void onMainScreen        (const Widget_t *widget, const Touch_t &touch);
+static void onMainInside        (const Widget_t *widget, const Touch_t &touch);
+static void onMainOutside       (const Widget_t *widget, const Touch_t &touch);
+static void onMainThermograph   (const Widget_t *widget, const Touch_t &touch);
+static void onMainCapture       (const Widget_t *widget, const Touch_t &touch);
+static void onMainConfiguration (const Widget_t *widget, const Touch_t &touch);
 
 static constexpr Widget_t widget_main[] = {
   {   0,   0, 320, 240, image_main,        EVENT_NONE, onMainScreen        },
@@ -160,14 +165,14 @@ static constexpr Widget_t widget_main[] = {
 };
 
 // Screen - Configuration
-static void onConfigurationScreen       (const Widget_t *widget, Touch_t &touch);
-static void onConfigurationResolution   (const Widget_t *widget, Touch_t &touch);
-static void onConfigurationThermograph  (const Widget_t *widget, Touch_t &touch);
-static void onConfigurationCaptureMode  (const Widget_t *widget, Touch_t &touch);
-static void onConfigurationFileManager  (const Widget_t *widget, Touch_t &touch);
-static void onConfigurationCalibration  (const Widget_t *widget, Touch_t &touch);
-static void onConfigurationInformation  (const Widget_t *widget, Touch_t &touch);
-static void onConfigurationReturn       (const Widget_t *widget, Touch_t &touch);
+static void onConfigurationScreen       (const Widget_t *widget, const Touch_t &touch);
+static void onConfigurationResolution   (const Widget_t *widget, const Touch_t &touch);
+static void onConfigurationThermograph  (const Widget_t *widget, const Touch_t &touch);
+static void onConfigurationCaptureMode  (const Widget_t *widget, const Touch_t &touch);
+static void onConfigurationFileManager  (const Widget_t *widget, const Touch_t &touch);
+static void onConfigurationCalibration  (const Widget_t *widget, const Touch_t &touch);
+static void onConfigurationInformation  (const Widget_t *widget, const Touch_t &touch);
+static void onConfigurationReturn       (const Widget_t *widget, const Touch_t &touch);
 
 static constexpr Widget_t widget_configuration[] = {
   {   0,   0, 320, 240, image_configuration, EVENT_NONE, onConfigurationScreen      },
@@ -181,11 +186,11 @@ static constexpr Widget_t widget_configuration[] = {
 };
 
 // Screen - Resolution
-static void onResolutionScreen  (const Widget_t *widget, Touch_t &touch);
-static void onResolutionSlider1 (const Widget_t *widget, Touch_t &touch);
-static void onResolutionSlider2 (const Widget_t *widget, Touch_t &touch);
-static void onResolutionClose   (const Widget_t *widget, Touch_t &touch);
-static void onResolutionApply   (const Widget_t *widget, Touch_t &touch);
+static void onResolutionScreen  (const Widget_t *widget, const Touch_t &touch);
+static void onResolutionSlider1 (const Widget_t *widget, const Touch_t &touch);
+static void onResolutionSlider2 (const Widget_t *widget, const Touch_t &touch);
+static void onResolutionClose   (const Widget_t *widget, const Touch_t &touch);
+static void onResolutionApply   (const Widget_t *widget, const Touch_t &touch);
 
 static constexpr Widget_t widget_resolution[] = {
   {   0,   0, 320, 240, image_resolution, EVENT_NONE,  onResolutionScreen  },
@@ -196,15 +201,15 @@ static constexpr Widget_t widget_resolution[] = {
 };
 
 // Screen - Thermograph
-static void onThermographScreen   (const Widget_t *widget, Touch_t &touch);
-static void onThermographRadio1   (const Widget_t *widget, Touch_t &touch);
-static void onThermographRadio2   (const Widget_t *widget, Touch_t &touch);
-static void onThermographToggle1  (const Widget_t *widget, Touch_t &touch);
-static void onThermographToggle2  (const Widget_t *widget, Touch_t &touch);
-static void onThermographSlider1  (const Widget_t *widget, Touch_t &touch);
-static void onThermographSlider2  (const Widget_t *widget, Touch_t &touch);
-static void onThermographClose    (const Widget_t *widget, Touch_t &touch);
-static void onThermographApply    (const Widget_t *widget, Touch_t &touch);
+static void onThermographScreen   (const Widget_t *widget, const Touch_t &touch);
+static void onThermographRadio1   (const Widget_t *widget, const Touch_t &touch);
+static void onThermographRadio2   (const Widget_t *widget, const Touch_t &touch);
+static void onThermographToggle1  (const Widget_t *widget, const Touch_t &touch);
+static void onThermographToggle2  (const Widget_t *widget, const Touch_t &touch);
+static void onThermographSlider1  (const Widget_t *widget, const Touch_t &touch);
+static void onThermographSlider2  (const Widget_t *widget, const Touch_t &touch);
+static void onThermographClose    (const Widget_t *widget, const Touch_t &touch);
+static void onThermographApply    (const Widget_t *widget, const Touch_t &touch);
 
 static constexpr Widget_t widget_thermograph[] = {
   {   0,   0, 320, 240, image_thermograph, EVENT_NONE,  onThermographScreen  },
@@ -222,10 +227,10 @@ static constexpr Widget_t widget_thermograph[] = {
 };
 
 // Screen - Capture mode
-static void onCaptureModeScreen (const Widget_t *widget, Touch_t &touch);
-static void onCaptureModeCamera (const Widget_t *widget, Touch_t &touch);
-static void onCaptureModeVideo  (const Widget_t *widget, Touch_t &touch);
-static void onCaptureModeApply  (const Widget_t *widget, Touch_t &touch);
+static void onCaptureModeScreen (const Widget_t *widget, const Touch_t &touch);
+static void onCaptureModeCamera (const Widget_t *widget, const Touch_t &touch);
+static void onCaptureModeVideo  (const Widget_t *widget, const Touch_t &touch);
+static void onCaptureModeApply  (const Widget_t *widget, const Touch_t &touch);
 
 static constexpr Widget_t widget_capture_mode[] = {
   {   0,   0, 320, 240, image_capture_mode, EVENT_NONE, onCaptureModeScreen   },
@@ -235,15 +240,15 @@ static constexpr Widget_t widget_capture_mode[] = {
 };
 
 // Screen - File manager
-static void onFileManagerScreen   (const Widget_t *widget, Touch_t &touch);
-static void onFileManagerCheckAll (const Widget_t *widget, Touch_t &touch);
-static void onFileManagerScrollBox(const Widget_t *widget, Touch_t &touch);
-static void onFileManagerScrollBar(const Widget_t *widget, Touch_t &touch);
-static void onFileManagerThumbnail(const Widget_t *widget, Touch_t &touch);
-static void onFileManagerMovie    (const Widget_t *widget, Touch_t &touch);
-static void onFileManagerFolder   (const Widget_t *widget, Touch_t &touch);
-static void onFileManagerClose    (const Widget_t *widget, Touch_t &touch);
-static void onFileManagerApply    (const Widget_t *widget, Touch_t &touch);
+static void onFileManagerScreen   (const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerCheckAll (const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerScrollBox(const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerThumbnail(const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerMovie    (const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerFolder   (const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerClose    (const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerApply    (const Widget_t *widget, const Touch_t &touch);
 
 // Setting for the scroll area
 #define FONT_WIDTH    12  // [px] (for setTextSize(2))
@@ -269,16 +274,16 @@ static constexpr Widget_t widget_file_manager[] = {
 };
 
 // Screen - Calibration
-static void onCalibrationScreen (const Widget_t *widget, Touch_t &touch);
-static void onCalibrationExec   (const Widget_t *widget, Touch_t &touch);
-static void onCalibrationAdjust (const Widget_t *widget, Touch_t &touch);
-static void onCalibrationSave   (const Widget_t *widget, Touch_t &touch);
-static void onCalibrationXup    (const Widget_t *widget, Touch_t &touch);
-static void onCalibrationXdown  (const Widget_t *widget, Touch_t &touch);
-static void onCalibrationYup    (const Widget_t *widget, Touch_t &touch);
-static void onCalibrationYdown  (const Widget_t *widget, Touch_t &touch);
-static void onCalibrationClose  (const Widget_t *widget, Touch_t &touch);
-static void onCalibrationApply  (const Widget_t *widget, Touch_t &touch);
+static void onCalibrationScreen (const Widget_t *widget, const Touch_t &touch);
+static void onCalibrationExec   (const Widget_t *widget, const Touch_t &touch);
+static void onCalibrationAdjust (const Widget_t *widget, const Touch_t &touch);
+static void onCalibrationSave   (const Widget_t *widget, const Touch_t &touch);
+static void onCalibrationXup    (const Widget_t *widget, const Touch_t &touch);
+static void onCalibrationXdown  (const Widget_t *widget, const Touch_t &touch);
+static void onCalibrationYup    (const Widget_t *widget, const Touch_t &touch);
+static void onCalibrationYdown  (const Widget_t *widget, const Touch_t &touch);
+static void onCalibrationClose  (const Widget_t *widget, const Touch_t &touch);
+static void onCalibrationApply  (const Widget_t *widget, const Touch_t &touch);
 
 static constexpr Widget_t widget_calibration[] = {
   {   0,   0, 320, 240, image_calibration, EVENT_NONE,  onCalibrationScreen   },
@@ -294,10 +299,10 @@ static constexpr Widget_t widget_calibration[] = {
 };
 
 // Screen - Adjust Offset
-static void onAdjustOffsetScreen(const Widget_t *widget, Touch_t &touch);
-static void onAdjustOffsetTarget(const Widget_t *widget, Touch_t &touch);
-static void onAdjustOffsetClose (const Widget_t *widget, Touch_t &touch);
-static void onAdjustOffsetApply (const Widget_t *widget, Touch_t &touch);
+static void onAdjustOffsetScreen(const Widget_t *widget, const Touch_t &touch);
+static void onAdjustOffsetTarget(const Widget_t *widget, const Touch_t &touch);
+static void onAdjustOffsetClose (const Widget_t *widget, const Touch_t &touch);
+static void onAdjustOffsetApply (const Widget_t *widget, const Touch_t &touch);
 
 static constexpr Widget_t widget_adjust_offset[] = {
   {  25,  90, 270,  60, image_adjust_offset, EVENT_NONE,  onAdjustOffsetScreen },
@@ -307,8 +312,8 @@ static constexpr Widget_t widget_adjust_offset[] = {
 };
 
 // Screen - Information
-static void onInformationScreen(const Widget_t *widget, Touch_t &touch);
-static void onInformationClose (const Widget_t *widget, Touch_t &touch);
+static void onInformationScreen(const Widget_t *widget, const Touch_t &touch);
+static void onInformationClose (const Widget_t *widget, const Touch_t &touch);
 
 static constexpr Widget_t widget_information[] = {
   {   0,   0, 320, 240, image_information, EVENT_NONE, onInformationScreen   },
@@ -318,7 +323,7 @@ static constexpr Widget_t widget_information[] = {
 /*--------------------------------------------------------------------------------
  * Common method - Apply
  *--------------------------------------------------------------------------------*/
-static bool Apply(const Widget_t *widget, Touch_t &touch, bool enable) {
+static bool Apply(const Widget_t *widget, const Touch_t &touch, bool enable) {
   if (touch.event == EVENT_INIT) {
     DrawButton(widget, enable);
   } else if (enable) {
@@ -334,7 +339,7 @@ static bool Apply(const Widget_t *widget, Touch_t &touch, bool enable) {
 /*--------------------------------------------------------------------------------
  * Callback functions - Main
  *--------------------------------------------------------------------------------*/
-static void onMainScreen(const Widget_t *widget, Touch_t &touch) {
+static void onMainScreen(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   DrawScreen(widget);
@@ -382,7 +387,7 @@ static void onMainScreen(const Widget_t *widget, Touch_t &touch) {
   gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%2d:%d", mlx_cnf.interpolation, mlx_cnf.box_size);
 }
 
-static void onMainInside(const Widget_t *widget, Touch_t &touch) {
+static void onMainInside(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -390,7 +395,7 @@ static void onMainInside(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onMainOutside(const Widget_t *widget, Touch_t &touch) {
+static void onMainOutside(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -398,7 +403,7 @@ static void onMainOutside(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onMainThermograph(const Widget_t *widget, Touch_t &touch) {
+static void onMainThermograph(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -406,7 +411,7 @@ static void onMainThermograph(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onMainCapture(const Widget_t *widget, Touch_t &touch) {
+static void onMainCapture(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
@@ -430,7 +435,7 @@ static void onMainCapture(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onMainConfiguration(const Widget_t *widget, Touch_t &touch) {
+static void onMainConfiguration(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -441,7 +446,7 @@ static void onMainConfiguration(const Widget_t *widget, Touch_t &touch) {
 /*--------------------------------------------------------------------------------
  * Callback functions - Configuration
  *--------------------------------------------------------------------------------*/
-static void onConfigurationScreen(const Widget_t *widget, Touch_t &touch) {
+static void onConfigurationScreen(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   // copy MLX90640 configuration data and stop recording video
@@ -452,7 +457,7 @@ static void onConfigurationScreen(const Widget_t *widget, Touch_t &touch) {
   DrawScreen(widget);
 }
 
-static void onConfigurationResolution(const Widget_t *widget, Touch_t &touch) {
+static void onConfigurationResolution(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -460,7 +465,7 @@ static void onConfigurationResolution(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onConfigurationThermograph(const Widget_t *widget, Touch_t &touch) {
+static void onConfigurationThermograph(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -468,7 +473,7 @@ static void onConfigurationThermograph(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onConfigurationCaptureMode(const Widget_t *widget, Touch_t &touch) {
+static void onConfigurationCaptureMode(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -476,7 +481,7 @@ static void onConfigurationCaptureMode(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onConfigurationFileManager(const Widget_t *widget, Touch_t &touch) {
+static void onConfigurationFileManager(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -484,7 +489,7 @@ static void onConfigurationFileManager(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onConfigurationCalibration(const Widget_t *widget, Touch_t &touch) {
+static void onConfigurationCalibration(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -492,7 +497,7 @@ static void onConfigurationCalibration(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onConfigurationInformation(const Widget_t *widget, Touch_t &touch) {
+static void onConfigurationInformation(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -500,7 +505,7 @@ static void onConfigurationInformation(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onConfigurationReturn(const Widget_t *widget, Touch_t &touch) {
+static void onConfigurationReturn(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -526,7 +531,7 @@ static void MakeSliderPos(const Widget_t *widget, const int16_t *scale, const in
   }
 }
 
-static int UpdateSliderPos(const Widget_t *widget, Touch_t &touch, int16_t *pos, const int16_t n_pos) {
+static int UpdateSliderPos(const Widget_t *widget, const Touch_t &touch, int16_t *pos, const int16_t n_pos) {
   // Here it's assumed that the knob width is equal to its height.
   // relative knob position on the bar
   int16_t X = touch.x - widget->x - widget->h / 2;
@@ -548,17 +553,18 @@ static int UpdateSliderPos(const Widget_t *widget, Touch_t &touch, int16_t *pos,
   return 0;
 }
 
-static void onResolutionScreen(const Widget_t *widget, Touch_t &touch) {
+static void onResolutionScreen(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   DrawScreen(widget);
 }
 
-static void onResolutionSlider1(const Widget_t *widget, Touch_t &touch) {
+static void onResolutionSlider1(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   const int16_t scale[] = {1, 2, 4, 6, 8};
   const int n = sizeof(scale) / sizeof(scale[0]);
+  Touch_t t = touch;
   int16_t pos[n];
 
   // Calculate the position inside the widget (scale --> pos)
@@ -566,36 +572,35 @@ static void onResolutionSlider1(const Widget_t *widget, Touch_t &touch) {
 
   if (touch.event == EVENT_INIT) {
     // Here it's assumed that the knob width is equal to its height.
-    touch.x = widget->x + widget->h / 2;
+    t.x = widget->x + widget->h / 2;
     for (int i = 0; i < n; i++) {
       if (scale[i] == cnf_copy.interpolation) {
-        touch.x += pos[i];
+        t.x += pos[i];
         break;
       }
     }
   }
 
   // update the knob position and the configuration
-  int i = UpdateSliderPos(widget, touch, pos, n);
+  int i = UpdateSliderPos(widget, t, pos, n);
   cnf_copy.interpolation = scale[i];
 
   // restrict pixel interpolation and block size
   if (cnf_copy.interpolation * cnf_copy.box_size > 8) {
     cnf_copy.box_size = 8 / cnf_copy.interpolation;
-    touch.event = EVENT_INIT;
-    onResolutionSlider2(widget + 1, touch);
+    onResolutionSlider2(widget + 1, doInit);
   }
 
   // Enable apply if somethig is changed
-  touch.event = EVENT_INIT;
-  onResolutionApply(widget + 3, touch);
+  onResolutionApply(widget + 3, doInit);
 }
 
-static void onResolutionSlider2(const Widget_t *widget, Touch_t &touch) {
+static void onResolutionSlider2(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   const int16_t scale[] = {1, 2, 4, 8};
   const int n = sizeof(scale) / sizeof(scale[0]);
+  Touch_t t = touch;
   int16_t pos[n];
 
   // Calculate the position inside the widget (scale --> pos)
@@ -603,32 +608,30 @@ static void onResolutionSlider2(const Widget_t *widget, Touch_t &touch) {
 
   if (touch.event == EVENT_INIT) {
     // Here it's assumed that the knob width is equal to its height.
-    touch.x = widget->x + widget->h / 2;
+    t.x = widget->x + widget->h / 2;
     for (int i = 0; i < n; i++) {
       if (scale[i] == cnf_copy.box_size) {
-        touch.x += pos[i];
+        t.x += pos[i];
         break;
       }
     }
   }
 
   // update the knob position and the configuration
-  int i = UpdateSliderPos(widget, touch, pos, n);
+  int i = UpdateSliderPos(widget, t, pos, n);
   cnf_copy.box_size = scale[i];
 
   // restrict pixel interpolation and block size
   if (cnf_copy.interpolation * cnf_copy.box_size > 8) {
     cnf_copy.interpolation = 8 / cnf_copy.box_size;
-    touch.event = EVENT_INIT;
-    onResolutionSlider1(widget - 1, touch);
+    onResolutionSlider1(widget - 1, doInit);
   }
 
   // Enable apply if somethig is changed
-  touch.event = EVENT_INIT;
-  onResolutionApply(widget + 2, touch);
+  onResolutionApply(widget + 2, doInit);
 }
 
-static void onResolutionClose(const Widget_t *widget, Touch_t &touch) {
+static void onResolutionClose(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -636,7 +639,7 @@ static void onResolutionClose(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onResolutionApply(const Widget_t *widget, Touch_t &touch) {
+static void onResolutionApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (Apply(widget, touch, (mlx_cnf != cnf_copy))) {
@@ -656,7 +659,7 @@ static void onResolutionApply(const Widget_t *widget, Touch_t &touch) {
 #define TERMOGRAPH_MAX_ROW  282
 #define TERMOGRAPH_MAX_COL  178
 
-static __attribute__((optimize("O0"))) int16_t GetThermoSlider(const Widget_t *widget, Touch_t &touch) {
+static __attribute__((optimize("O0"))) int16_t GetThermoSlider(const Widget_t *widget, const Touch_t &touch) {
   // Here it's assumed that the knob width is equal to its height.
   int16_t X = touch.x - widget->x - widget->h / 2;        // Relative x coordinate of top left of knob
   int16_t Y = SLIDER_KNOB_OFFSET;                         // Minimum value of knob top left coordinate
@@ -680,7 +683,7 @@ static void PutThermoSlider(const Widget_t *widget, int16_t V, bool enable) {
   DrawSlider(widget, X = constrain(X, Y, Z), enable);
 }
 
-static void onThermographScreen(const Widget_t *widget, Touch_t &touch) {
+static void onThermographScreen(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   DrawScreen(widget);
@@ -693,7 +696,7 @@ static void onThermographScreen(const Widget_t *widget, Touch_t &touch) {
   GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
 }
 
-static void onThermographRadio1(const Widget_t *widget, Touch_t &touch) {
+static void onThermographRadio1(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -707,11 +710,10 @@ static void onThermographRadio1(const Widget_t *widget, Touch_t &touch) {
 #endif
 
   // Enable apply if somethig is changed
-  touch.event = EVENT_INIT;
-  onThermographApply(widget + 7, touch);
+  onThermographApply(widget + 7, doInit);
 }
 
-static void onThermographRadio2(const Widget_t *widget, Touch_t &touch) {
+static void onThermographRadio2(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -725,11 +727,10 @@ static void onThermographRadio2(const Widget_t *widget, Touch_t &touch) {
 #endif
 
   // Enable apply if somethig is changed
-  touch.event = EVENT_INIT;
-  onThermographApply(widget + 6, touch);
+  onThermographApply(widget + 6, doInit);
 }
 
-static void onThermographToggle1(const Widget_t *widget, Touch_t &touch) {
+static void onThermographToggle1(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -739,11 +740,10 @@ static void onThermographToggle1(const Widget_t *widget, Touch_t &touch) {
   DrawToggle(widget, cnf_copy.minmax_auto);
 
   // Enable apply if somethig is changed
-  touch.event = EVENT_INIT;
-  onThermographApply(widget + 5, touch);
+  onThermographApply(widget + 5, doInit);
 }
 
-static void onThermographToggle2(const Widget_t *widget, Touch_t &touch) {
+static void onThermographToggle2(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -753,15 +753,14 @@ static void onThermographToggle2(const Widget_t *widget, Touch_t &touch) {
   DrawToggle(widget, cnf_copy.range_auto);
 
   // Disable Slider
-  touch.event = EVENT_INIT;
-  onThermographSlider1(widget + 1, touch);
-  onThermographSlider2(widget + 2, touch);
+  onThermographSlider1(widget + 1, doInit);
+  onThermographSlider2(widget + 2, doInit);
 
   // Enable apply if somethig is changed
-  onThermographApply(widget + 4, touch);
+  onThermographApply(widget + 4, doInit);
 }
 
-static void onThermographSlider1(const Widget_t *widget, Touch_t &touch) {
+static void onThermographSlider1(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
@@ -781,18 +780,16 @@ static void onThermographSlider1(const Widget_t *widget, Touch_t &touch) {
       // Temperature minimum and maximum restrictions
       if (cnf_copy.range_max - cnf_copy.range_min < TERMOGRAPH_DIFF) {
         cnf_copy.range_max = cnf_copy.range_min + TERMOGRAPH_DIFF;
-        touch.event = EVENT_INIT;
-        onThermographSlider2(widget + 1, touch);
+        onThermographSlider2(widget + 1, doInit);
       }
     }
   }
 
   // Enable apply if somethig is changed
-  touch.event = EVENT_INIT;
-  onThermographApply(widget + 3, touch);
+  onThermographApply(widget + 3, doInit);
 }
 
-static void onThermographSlider2(const Widget_t *widget, Touch_t &touch) {
+static void onThermographSlider2(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
@@ -812,18 +809,16 @@ static void onThermographSlider2(const Widget_t *widget, Touch_t &touch) {
       // Temperature minimum and maximum restrictions
       if (cnf_copy.range_max - cnf_copy.range_min < TERMOGRAPH_DIFF) {
         cnf_copy.range_min = cnf_copy.range_max - TERMOGRAPH_DIFF;
-        touch.event = EVENT_INIT;
-        onThermographSlider1(widget - 1, touch);
+        onThermographSlider1(widget - 1, doInit);
       }
     }
   }
 
   // Enable apply if somethig is changed
-  touch.event = EVENT_INIT;
-  onThermographApply(widget + 2, touch);
+  onThermographApply(widget + 2, doInit);
 }
 
-static void onThermographClose(const Widget_t *widget, Touch_t &touch) {
+static void onThermographClose(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -831,7 +826,7 @@ static void onThermographClose(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onThermographApply(const Widget_t *widget, Touch_t &touch) {
+static void onThermographApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (Apply(widget, touch, (mlx_cnf != cnf_copy))) {
@@ -842,13 +837,13 @@ static void onThermographApply(const Widget_t *widget, Touch_t &touch) {
 /*--------------------------------------------------------------------------------
  * Callback functions - Capture Mode
  *--------------------------------------------------------------------------------*/
-static void onCaptureModeScreen(const Widget_t *widget, Touch_t &touch) {
+static void onCaptureModeScreen(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   DrawScreen(widget);
 }
 
-static void onCaptureModeCamera(const Widget_t *widget, Touch_t &touch) {
+static void onCaptureModeCamera(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -858,7 +853,7 @@ static void onCaptureModeCamera(const Widget_t *widget, Touch_t &touch) {
   DrawRadio(widget, 2, mlx_cap.capture_mode);
 }
 
-static void onCaptureModeVideo(const Widget_t *widget, Touch_t &touch) {
+static void onCaptureModeVideo(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -868,7 +863,7 @@ static void onCaptureModeVideo(const Widget_t *widget, Touch_t &touch) {
   DrawRadio(widget - 1, 2, mlx_cap.capture_mode);
 }
 
-static void onCaptureModeApply(const Widget_t *widget, Touch_t &touch) {
+static void onCaptureModeApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -928,7 +923,7 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
   sprite_view.deleteSprite();
 }
 
-static void onFileManagerScreen(const Widget_t *widget, Touch_t &touch) {
+static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   DrawScreen(widget);
@@ -963,7 +958,7 @@ static void onFileManagerScreen(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onFileManagerCheckAll(const Widget_t *widget, Touch_t &touch) {
+static void onFileManagerCheckAll(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -977,7 +972,7 @@ static void onFileManagerCheckAll(const Widget_t *widget, Touch_t &touch) {
   DrawCheck(widget, file_selected);
 }
 
-static void onFileManagerScrollBox(const Widget_t *widget, Touch_t &touch) {
+static void onFileManagerScrollBox(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -997,7 +992,7 @@ static void onFileManagerScrollBox(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onFileManagerScrollBar(const Widget_t *widget, Touch_t &touch) {
+static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   static int drag_pos;
@@ -1037,7 +1032,7 @@ static void onFileManagerScrollBar(const Widget_t *widget, Touch_t &touch) {
   drag_pos = touch.y;
 }
 
-static void onFileManagerThumbnail(const Widget_t *widget, Touch_t &touch) {
+static void onFileManagerThumbnail(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
@@ -1045,7 +1040,7 @@ static void onFileManagerThumbnail(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onFileManagerMovie(const Widget_t *widget, Touch_t &touch) {
+static void onFileManagerMovie(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
@@ -1055,7 +1050,7 @@ static void onFileManagerMovie(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onFileManagerFolder(const Widget_t *widget, Touch_t &touch) {
+static void onFileManagerFolder(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
@@ -1065,7 +1060,7 @@ static void onFileManagerFolder(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onFileManagerClose(const Widget_t *widget, Touch_t &touch) {
+static void onFileManagerClose(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -1073,7 +1068,7 @@ static void onFileManagerClose(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onFileManagerApply(const Widget_t *widget, Touch_t &touch) {
+static void onFileManagerApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   DrawPress(widget, touch.event);
@@ -1103,7 +1098,7 @@ static bool SaveCalibration(TouchConfig_t &config) {
 #define TOUCH_OFFSET_Y_ROW  223
 #define TOUCH_OFFSET_Y_COL  172
 
-static void DrawOffsetX(const Widget_t* widget, Touch_t &touch, const Widget_t *apply) {
+static void DrawOffsetX(const Widget_t* widget, const Touch_t &touch, const Widget_t *apply) {
   // draw button when touch.event == EVENT_INIT or EVENT_UP
   if (touch.event != EVENT_DOWN) {
     DrawButton(widget,     (tch_copy.offset[0] < TOUCH_OFFSET_MAX) ? 1 : 0);
@@ -1113,11 +1108,10 @@ static void DrawOffsetX(const Widget_t* widget, Touch_t &touch, const Widget_t *
   gfx_printf(TOUCH_OFFSET_X_ROW, TOUCH_OFFSET_X_COL, "%3d", (int)tch_copy.offset[0]);
 
   // Enable apply if somethig is changed
-  touch.event = EVENT_INIT;
-  onCalibrationApply(apply, touch);
+  onCalibrationApply(apply, doInit);
 }
 
-static void DrawOffsetY(const Widget_t* widget, Touch_t &touch, const Widget_t *apply) {
+static void DrawOffsetY(const Widget_t* widget, const Touch_t &touch, const Widget_t *apply) {
   // draw button when touch.event == EVENT_INIT or EVENT_UP
   if (touch.event != EVENT_DOWN) {
     DrawButton(widget,     (tch_copy.offset[1] < TOUCH_OFFSET_MAX) ? 1 : 0);
@@ -1127,11 +1121,10 @@ static void DrawOffsetY(const Widget_t* widget, Touch_t &touch, const Widget_t *
   gfx_printf(TOUCH_OFFSET_Y_ROW, TOUCH_OFFSET_Y_COL, "%3d", (int)tch_copy.offset[1]);
 
   // Enable apply if somethig is changed
-  touch.event = EVENT_INIT;
-  onCalibrationApply(apply, touch);
+  onCalibrationApply(apply, doInit);
 }
 
-static void onCalibrationScreen(const Widget_t *widget, Touch_t &touch) {
+static void onCalibrationScreen(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   tch_ajst = tch_copy;
@@ -1154,7 +1147,7 @@ static void onCalibrationScreen(const Widget_t *widget, Touch_t &touch) {
   GFX_EXEC(setTextSize(2));
 }
 
-static void onCalibrationExec(const Widget_t *widget, Touch_t &touch) {
+static void onCalibrationExec(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -1163,7 +1156,7 @@ static void onCalibrationExec(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onCalibrationAdjust(const Widget_t *widget, Touch_t &touch) {
+static void onCalibrationAdjust(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -1171,7 +1164,7 @@ static void onCalibrationAdjust(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onCalibrationSave(const Widget_t *widget, Touch_t &touch) {
+static void onCalibrationSave(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
@@ -1187,7 +1180,7 @@ static void onCalibrationSave(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onCalibrationXup(const Widget_t *widget, Touch_t &touch) {
+static void onCalibrationXup(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT && tch_copy.offset[0] < TOUCH_OFFSET_MAX) {
@@ -1200,7 +1193,7 @@ static void onCalibrationXup(const Widget_t *widget, Touch_t &touch) {
   DrawOffsetX(widget, touch, widget + 5);
 }
 
-static void onCalibrationXdown(const Widget_t *widget, Touch_t &touch) {
+static void onCalibrationXdown(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT && tch_copy.offset[0] > TOUCH_OFFSET_MIN) {
@@ -1213,7 +1206,7 @@ static void onCalibrationXdown(const Widget_t *widget, Touch_t &touch) {
   DrawOffsetX(widget - 1, touch, widget + 4);
 }
 
-static void onCalibrationYup(const Widget_t *widget, Touch_t &touch) {
+static void onCalibrationYup(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT && tch_copy.offset[1] < TOUCH_OFFSET_MAX) {
@@ -1226,7 +1219,7 @@ static void onCalibrationYup(const Widget_t *widget, Touch_t &touch) {
   DrawOffsetY(widget, touch, widget + 3);
 }
 
-static void onCalibrationYdown(const Widget_t *widget, Touch_t &touch) {
+static void onCalibrationYdown(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT && tch_copy.offset[1] > TOUCH_OFFSET_MIN) {
@@ -1239,7 +1232,7 @@ static void onCalibrationYdown(const Widget_t *widget, Touch_t &touch) {
   DrawOffsetY(widget - 1, touch, widget + 2);
 }
 
-static void onCalibrationClose(const Widget_t *widget, Touch_t &touch) {
+static void onCalibrationClose(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_DOWN) {
@@ -1247,7 +1240,7 @@ static void onCalibrationClose(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onCalibrationApply(const Widget_t *widget, Touch_t &touch) {
+static void onCalibrationApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (Apply(widget, touch, (tch_cnf != tch_copy))) {
@@ -1255,15 +1248,14 @@ static void onCalibrationApply(const Widget_t *widget, Touch_t &touch) {
 
     // Enable to save if somethig configuration data
     enable_save = true;
-    touch.event = EVENT_INIT;
-    onCalibrationSave(widget - 6, touch);
+    onCalibrationSave(widget - 6, doInit);
   }
 }
 
 /*--------------------------------------------------------------------------------
  * Callback functions - Adjust Offset
  *--------------------------------------------------------------------------------*/
-static void onAdjustOffsetScreen(const Widget_t *widget, Touch_t &touch) {
+static void onAdjustOffsetScreen(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
 #if defined (LOVYANGFX_HPP_)
@@ -1275,7 +1267,7 @@ static void onAdjustOffsetScreen(const Widget_t *widget, Touch_t &touch) {
   DrawScreen(widget);
 }
 
-static void onAdjustOffsetTarget(const Widget_t *widget, Touch_t &touch) {
+static void onAdjustOffsetTarget(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
@@ -1295,12 +1287,11 @@ static void onAdjustOffsetTarget(const Widget_t *widget, Touch_t &touch) {
     gfx_printf(TOUCH_OFFSET_Y_ROW, TOUCH_OFFSET_Y_COL, "%3d", (int)tch_ajst.offset[1]);
 
     // Enable apply if somethig is changed
-    touch.event = EVENT_INIT;
-    onAdjustOffsetApply(widget + 2, touch);
+    onAdjustOffsetApply(widget + 2, doInit);
   }
 }
 
-static void onAdjustOffsetClose(const Widget_t *widget, Touch_t &touch) {
+static void onAdjustOffsetClose(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
@@ -1308,7 +1299,7 @@ static void onAdjustOffsetClose(const Widget_t *widget, Touch_t &touch) {
   }
 }
 
-static void onAdjustOffsetApply(const Widget_t *widget, Touch_t &touch) {
+static void onAdjustOffsetApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (Apply(widget, touch, (tch_copy <= tch_ajst))) {
@@ -1320,13 +1311,13 @@ static void onAdjustOffsetApply(const Widget_t *widget, Touch_t &touch) {
 /*--------------------------------------------------------------------------------
  * Callback functions - Information
  *--------------------------------------------------------------------------------*/
-static void onInformationScreen (const Widget_t *widget, Touch_t &touch) {
+static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   DrawScreen(widget);
 }
 
-static void onInformationClose  (const Widget_t *widget, Touch_t &touch) {
+static void onInformationClose  (const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
