@@ -38,6 +38,8 @@ typedef struct Widget {
   void            (*callback)(const struct Widget *widget, Touch_t &touch);  // Event handler
 } Widget_t;
 
+static Widget_t const *focus = NULL;
+
 #define N_WIDGETS(w)  (sizeof(w) / sizeof(w[0]))
 
 /*--------------------------------------------------------------------------------
@@ -70,7 +72,7 @@ static bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_
  *--------------------------------------------------------------------------------*/
 void widget_setup(State_t screen /* = STATE_OFF */) {
   int n = 0;
-  const Widget_t *widget = NULL;
+  const Widget_t *widget = focus = NULL;
 
   switch (screen) {
     case STATE_MAIN:
@@ -147,20 +149,20 @@ State_t widget_state(State_t screen /*= STATE_OFF */) {
  * Handle the widget events on screen
  *--------------------------------------------------------------------------------*/
 static bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_t &touch) {
-  static Widget_t const *focus = NULL;
+  if (touch.event == EVENT_RISING) {
+    focus = NULL;
+  }
 
   for (int i = 0; i < n_widgets; i++) {
-    // In case the touch event to be detected
+    // In case the touch events to be handled
     if ((widgets[i].event & touch.event) && widgets[i].callback) {
-
       // Find the widget where the event fired
       if (focus == &widgets[i] || (
         widgets[i].x <= touch.x && touch.x <= widgets[i].x + widgets[i].w &&
         widgets[i].y <= touch.y && touch.y <= widgets[i].y + widgets[i].h)) {
 
         DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, widgets[i].event, touch.x, touch.y));
-        focus = (touch.event == EVENT_RISING ? NULL : &widgets[i]);
-        widgets[i].callback(&widgets[i], touch);
+        widgets[i].callback(focus = &widgets[i], touch);
         return true;
       }
     }
