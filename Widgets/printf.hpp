@@ -26,15 +26,6 @@ int printf(const char* fmt, ...) {
 #endif
 
 #ifdef  GFX_EXEC
-/*--------------------------------------------------------------------------------
- * Definitions of graphics helpers
- *--------------------------------------------------------------------------------*/
-// Font size for setTextSize(2)
-#ifndef FONT_WIDTH
-#define FONT_WIDTH    12 // [px] (Device coordinate system)
-#define FONT_HEIGHT   16 // [px] (Device coordinate system)
-#define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
-#endif
 
 void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   int len = 0;

@@ -147,22 +147,27 @@ State_t widget_state(State_t screen /*= STATE_OFF */) {
  * Manage widget events
  *--------------------------------------------------------------------------------*/
 static bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_t &touch) {
+  static Widget_t const *focus = nullptr;
+
   for (int i = 0; i < n_widgets; i++) {
 
     // In case the touch event to be detected
     if ((widgets[i].event & touch.event) && widgets[i].callback) {
 
       // Find the widget where the event fired
-      if (widgets[i].x <= touch.x && touch.x <= widgets[i].x + widgets[i].w &&
-          widgets[i].y <= touch.y && touch.y <= widgets[i].y + widgets[i].h) {
+      if (focus == &widgets[i] || (
+        widgets[i].x <= touch.x && touch.x <= widgets[i].x + widgets[i].w &&
+        widgets[i].y <= touch.y && touch.y <= widgets[i].y + widgets[i].h)) {
 
         DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, widgets[i].event, touch.x, touch.y));
         widgets[i].callback(&widgets[i], touch);
+        focus = (touch.event == EVENT_RISING ? nullptr : &widgets[i]);
         return true;
       }
     }
   }
 
+  focus = nullptr;
   return false;
 }
 
