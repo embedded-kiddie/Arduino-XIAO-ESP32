@@ -149,27 +149,32 @@ State_t widget_state(State_t screen /*= STATE_OFF */) {
  * Handle the widget events on screen
  *--------------------------------------------------------------------------------*/
 static bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_t &touch) {
-  if (touch.event == EVENT_RISING) {
-    focus = NULL;
-  }
+  Event_t e = touch.event;
 
-  for (int i = 0; i < n_widgets; i++) {
-    // In case the touch events to be handled
-    if ((widgets[i].event & touch.event) && widgets[i].callback) {
-      // Find the widget where the event fired
-      if (focus == &widgets[i] || (
-        widgets[i].x <= touch.x && touch.x <= widgets[i].x + widgets[i].w &&
-        widgets[i].y <= touch.y && touch.y <= widgets[i].y + widgets[i].h)) {
+  if (focus == NULL) {
+    for (int i = 0; i < n_widgets; i++) {
+      // In case the touch events to be handled
+      if ((widgets[i].event & touch.event) && widgets[i].callback) {
 
-        DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, widgets[i].event, touch.x, touch.y));
-        widgets[i].callback(focus = &widgets[i], touch);
-        return true;
+        // Find the widget where the event fired
+        if (widgets[i].x <= touch.x && touch.x <= widgets[i].x + widgets[i].w &&
+            widgets[i].y <= touch.y && touch.y <= widgets[i].y + widgets[i].h) {
+
+          // Focus the widget
+          focus = &widgets[i];
+          break;
+        }
       }
     }
   }
 
-  focus = NULL;
-  return false;
+  if (focus && (focus->event & e) && focus->callback) {
+    DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, focus->event, touch.x, touch.y));
+    focus->callback(focus, touch);
+  }
+
+  focus = (e == EVENT_RISING ? NULL : focus);
+  return (focus != NULL);
 }
 
 /*--------------------------------------------------------------------------------
