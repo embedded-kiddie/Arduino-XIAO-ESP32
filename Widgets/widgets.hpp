@@ -21,11 +21,6 @@ static TouchConfig_t  tch_copy;
 static TouchConfig_t  tch_ajst;
 
 /*--------------------------------------------------------------------------------
- * Initial event message
- *--------------------------------------------------------------------------------*/
-static constexpr Touch_t doInit = { EVENT_INIT, 0, 0 };
-
-/*--------------------------------------------------------------------------------
  * Image data of widget
  *--------------------------------------------------------------------------------*/
 static constexpr Image_t image_main[]               = { { screen_main,          sizeof(screen_main         ) }, }; // 320 x 240

@@ -62,6 +62,11 @@ static bool widget_watch(const Widget_t *widgets, const size_t n_widgets);
 static bool widget_event(const Widget_t *widgets, const size_t n_widgets, const Touch_t &touch);
 
 /*--------------------------------------------------------------------------------
+ * Initial event message
+ *--------------------------------------------------------------------------------*/
+static constexpr Touch_t doInit = { EVENT_INIT, 0, 0 };
+
+/*--------------------------------------------------------------------------------
  * Widgets
  *--------------------------------------------------------------------------------*/
 #include "draw.hpp"
@@ -72,7 +77,7 @@ static bool widget_event(const Widget_t *widgets, const size_t n_widgets, const 
  *--------------------------------------------------------------------------------*/
 void widget_setup(State_t screen /* = STATE_OFF */) {
   int n = 0;
-  const Widget_t *widget = focus = NULL;
+  Widget_t const *widget = focus = NULL;
 
   switch (screen) {
     case STATE_MAIN:
@@ -125,10 +130,9 @@ void widget_setup(State_t screen /* = STATE_OFF */) {
   }
 
   if (n && widget) {
-    Touch_t touch = { EVENT_INIT, 0, 0 };
     for (int i = 0; i < n; i++, widget++) {
       if (widget->callback) {
-        widget->callback(widget, touch);
+        widget->callback(widget, doInit);
       }
       CHECK_POS(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     }
