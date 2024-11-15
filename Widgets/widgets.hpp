@@ -369,6 +369,7 @@ static void onMainScreen(const Widget_t *widget, const Touch_t &touch) {
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setTextSize(mlx_cnf.interpolation * mlx_cnf.box_size > 4 ? 2 : 1));
 
+#if defined (LOVYANGFX_HPP_)
   GFX_EXEC(setTextDatum(textdatum_t::top_left));
   gfx_printf(0, y, "%d", mlx_cnf.range_min);
 
@@ -384,6 +385,9 @@ static void onMainScreen(const Widget_t *widget, const Touch_t &touch) {
   GFX_EXEC(setTextSize(2));
   GFX_EXEC(setTextDatum(textdatum_t::top_left));
   gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%2d:%d", mlx_cnf.interpolation, mlx_cnf.box_size);
+#else
+#warning TFT_eSPI support required
+#endif
 }
 
 static void onMainInside(const Widget_t *widget, const Touch_t &touch) {
@@ -879,6 +883,7 @@ static int scroll_pos, scroll_max, bar_height;
 static bool file_selected;
 
 static void ScrollView(const Widget_t *widget, int scroll_pos) {
+#if defined (LOVYANGFX_HPP_)
   static LGFX_Sprite sprite_view;
   bool invert = false;
 
@@ -920,6 +925,9 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
 
   sprite_view.pushSprite(&lcd, widget->x, widget->y);
   sprite_view.deleteSprite();
+#else
+#warning TFT_eSPI support required
+#endif
 }
 
 static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
@@ -995,7 +1003,6 @@ static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch)
   DBG_EXEC(printf("%s\n", __func__));
 
   static int drag_pos;
-  static LGFX_Sprite sprite_scroll;
 
   if (touch.event == EVENT_INIT) {
     scroll_pos = drag_pos = 0;
@@ -1017,15 +1024,20 @@ static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch)
   scroll_pos = constrain(scroll_pos, 0, scroll_max);
 //DBG_EXEC(printf("scroll_pos: %d, scroll_max: %d\n", scroll_pos, scroll_max));
 
-  GFX_EXEC(beginTransaction());
+#if defined (LOVYANGFX_HPP_)
+  static LGFX_Sprite sprite_scroll;
 
   sprite_scroll.createSprite(widget->w, widget->h);
   sprite_scroll.fillRect(0, scroll_pos, widget->w, bar_height, SCROLL_COLOR);
   sprite_scroll.pushSprite(&lcd, widget->x, widget->y);
   sprite_scroll.deleteSprite();
 
+  GFX_EXEC(beginTransaction());
   ScrollView(widget - 1, scroll_pos);
   GFX_EXEC(endTransaction());
+#else
+#warning TFT_eSPI support required
+#endif
 
   // Update the previous position
   drag_pos = touch.y;
@@ -1261,6 +1273,8 @@ static void onAdjustOffsetScreen(const Widget_t *widget, const Touch_t &touch) {
   GFX_EXEC(beginTransaction());
   GFX_EXEC(fillRectAlpha(0, 0, lcd_width, lcd_height, 160, BLACK));
   GFX_EXEC(endTransaction());
+#else
+#warning TFT_eSPI support required
 #endif
 
   DrawScreen(widget);

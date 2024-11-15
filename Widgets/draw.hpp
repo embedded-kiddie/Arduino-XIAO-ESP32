@@ -35,7 +35,7 @@ static uint16_t ypos = 0;
 // render each image line to the TFT.  If you use a different TFT library
 // you will need to adapt this function to suit.
 void pngDraw(PNGDRAW *pDraw) {
-  uint16_t lineBuffer[MAX_IMAGE_WIDTH];
+  uint16_t lineBuffer[TFT_WIDTH > TFT_HEIGHT ? TFT_WIDTH : TFT_HEIGHT];
   png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
   GFX_EXEC(pushImage(xpos, ypos + pDraw->y, pDraw->iWidth, 1, lineBuffer));
 }
@@ -156,18 +156,11 @@ static void DrawSlider(const Widget_t *widget, int16_t value, bool enable /* = t
   if (bar && knob) {
     GFX_EXEC(startWrite());
 
-#if defined (_TFT_eSPIH_)
-
-    static TFT_eSprite sprite_bar  = TFT_eSprite(&tft);
-    static TFT_eSprite sprite_knob = TFT_eSprite(&sprite_bar);
-
-#elif defined (LOVYANGFX_HPP_)
+#if defined (LOVYANGFX_HPP_)
 
     // slower but no flickering
     static LGFX_Sprite sprite_bar(&lcd);
     static LGFX_Sprite sprite_knob(&sprite_bar);
-
-#endif
 
     uint32_t w, h;
     w = swap_endian(*(uint32_t*)(bar->data + PNG_HEADER_WIDTH));
@@ -192,6 +185,15 @@ static void DrawSlider(const Widget_t *widget, int16_t value, bool enable /* = t
 
     CHECK_POS(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());
+
+#elif defined (_TFT_eSPIH_)
+
+    static TFT_eSprite sprite_bar  = TFT_eSprite(&tft);
+    static TFT_eSprite sprite_knob = TFT_eSprite(&sprite_bar);
+
+#warning TFT_eSPI support required
+
+#endif
   }
 }
 
@@ -222,7 +224,17 @@ static void DrawPress(const Widget_t *widget, Event_t event /* = EVENT_INIT */) 
   const uint16_t w = widget->w;
   const uint16_t h = widget->h;
   const uint16_t d = PRESSED_OFFSET * 2;
+
+#if   defined (LOVYANGFX_HPP_)
+
   lgfx::rgb888_t rgb[PRESSED_BUFFER_LEN];
+
+#elif defined (_TFT_eSPIH_)
+
+  uint16_t rgb[PRESSED_BUFFER_LEN];
+
+#warning TFT_eSPI support required
+#endif
 
   if (event == EVENT_FALLING) {
     offset = +PRESSED_OFFSET;
@@ -272,5 +284,7 @@ static void DrawThumb(const Widget_t *widget, const char *path) {
     0.4, 0.4  // 320 x 240 --> 128 x 96
   ));
 
+#else
+#warning TFT_eSPI support required
 #endif
 }

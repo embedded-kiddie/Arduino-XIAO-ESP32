@@ -250,7 +250,6 @@ inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
  * https://forum.arduino.cc/t/create-snapshot-of-3-5-tft-and-save-to-file-in-bitmap-format/391367/7
 */
 static uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
-
     digitalWrite(TFT_CS, LOW);
 
     GFX_EXEC(startWrite());    // needed for low-level methods. CS active
@@ -272,11 +271,20 @@ static uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 forma
 #endif // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
 
 static bool SaveBMP24(FS_TYPE &fs, const char *path) {
-#ifdef  LOVYANGFX_HPP_
+
+#if   defined (LOVYANGFX_HPP_)
+
   lgfx::rgb888_t rgb[TFT_WIDTH > TFT_HEIGHT ? TFT_WIDTH : TFT_HEIGHT];
+
+#elif defined (_TFT_eSPIH_)
+
+  uint16_t rgb[TFT_WIDTH > TFT_HEIGHT ? TFT_WIDTH : TFT_HEIGHT]; // check ReadWrite_Test
+
 #else
+
   uint16_t rgb;
   uint8_t r, g, b;
+
 #endif
 
   File file = fs.open(path, FILE_WRITE);
@@ -323,14 +331,14 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
       delay(1); // reset wdt
     }
 
-#ifdef  LOVYANGFX_HPP_
+#if defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
 
 //  GFX_EXEC(beginTransaction());
     GFX_EXEC(readRect(0, y, w, 1, rgb));
 //  GFX_EXEC(endTransaction());
-    file.write((uint8_t*)rgb, w * sizeof(lgfx::rgb888_t)); // SD: 2966 msec, SdFat: 2777 msec
+    file.write((uint8_t*)rgb, w * sizeof(rgb[0])); // SD: 2966 msec, SdFat: 2777 msec
 
-#else
+#else // defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
 
     for (int x = 0; x < w; x++) {
 
@@ -342,14 +350,6 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
 
       rgb = readPixA(x, y);
 
-#elif defined (_TFT_eSPIH_)
-
-      rgb = GFX_EXEC(readPixel(x, y));
-
-#else // LOVYANGFX_HPP_
-
-      rgb = GFX_EXEC(readPixel(x, y));
-
 #endif
 
       // write the data in BMP reverse order
@@ -359,7 +359,7 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
       file.write(r);
     }
   
-#endif // LOVYANGFX_HPP_
+#endif // defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
   }
 
   file.close();

@@ -126,7 +126,7 @@ bool touch_event(Touch_t &touch) {
   static uint8_t count;
   Event_t event = EVENT_NONE;
 
-#ifdef  _XPT2046_Touchscreen_h_
+#if defined (_XPT2046_Touchscreen_h_)
 
   bool stat = ts.touched();
   if (stat) {
@@ -138,6 +138,10 @@ bool touch_event(Touch_t &touch) {
 #else // LovyanGFX || TFT_eSPI
 
   bool stat = GFX_EXEC(getTouch(&x, &y));
+
+#if defined (_TFT_eSPIH_)
+#warning TFT_eSPI support required
+#endif
 
 #endif // _XPT2046_Touchscreen_h_
 
