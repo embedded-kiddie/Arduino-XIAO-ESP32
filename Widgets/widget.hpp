@@ -74,63 +74,71 @@ State_t widget_state(State_t screen = STATE_OFF);
 #include "widgets.hpp"
 
 /*--------------------------------------------------------------------------------
+ * Get widget table
+ *--------------------------------------------------------------------------------*/
+static bool widget_get(State_t screen, Widget_t const **widget, int *n) {
+  switch (screen) {
+    case STATE_MAIN:
+      *widget = widget_main;
+      *n = N_WIDGETS(widget_main);
+      return true;
+
+    case STATE_CONFIGURATION:
+      *widget = widget_configuration;
+      *n = N_WIDGETS(widget_configuration);
+      return true;
+
+    case STATE_RESOLUTION:
+      *widget = widget_resolution;
+      *n = N_WIDGETS(widget_resolution);
+      return true;
+
+    case STATE_THERMOGRAPH:
+      *widget = widget_thermograph;
+      *n = N_WIDGETS(widget_thermograph);
+      return true;
+
+    case STATE_FILE_MANAGER:
+      *widget = widget_file_manager;
+      *n = N_WIDGETS(widget_file_manager);
+      return true;
+
+    case STATE_CAPTURE_MODE:
+      *widget = widget_capture_mode;
+      *n = N_WIDGETS(widget_capture_mode);
+      return true;
+
+    case STATE_CALIBRATION:
+      *widget = widget_calibration;
+      *n = N_WIDGETS(widget_calibration);
+      return true;
+
+    case STATE_ADJUST_OFFSET:
+      *widget = widget_adjust_offset;
+      *n = N_WIDGETS(widget_adjust_offset);
+      return true;
+
+    case STATE_INFORMATION:
+      *widget = widget_information;
+      *n = N_WIDGETS(widget_information);
+      return true;
+
+    default:
+      return false;
+  }
+}
+
+/*--------------------------------------------------------------------------------
  * Draw all widgets at the start of each state
  *--------------------------------------------------------------------------------*/
 void widget_setup(State_t screen /* = STATE_OFF */) {
-  int n = 0;
-  Widget_t const *widget = focus = NULL;
+  int n;
+  Widget_t const *widget;
 
-  switch (screen) {
-    case STATE_MAIN:
-      widget = widget_main;
-      n = N_WIDGETS(widget_main);
-      break;
+  // reset focused widget
+  focus = NULL;
 
-    case STATE_CONFIGURATION:
-      widget = widget_configuration;
-      n = N_WIDGETS(widget_configuration);
-      break;
-
-    case STATE_RESOLUTION:
-      widget = widget_resolution;
-      n = N_WIDGETS(widget_resolution);
-      break;
-
-    case STATE_THERMOGRAPH:
-      widget = widget_thermograph;
-      n = N_WIDGETS(widget_thermograph);
-      break;
-
-    case STATE_FILE_MANAGER:
-      widget = widget_file_manager;
-      n = N_WIDGETS(widget_file_manager);
-      break;
-
-    case STATE_CAPTURE_MODE:
-      widget = widget_capture_mode;
-      n = N_WIDGETS(widget_capture_mode);
-      break;
-
-    case STATE_CALIBRATION:
-      widget = widget_calibration;
-      n = N_WIDGETS(widget_calibration);
-      break;
-
-    case STATE_ADJUST_OFFSET:
-      widget = widget_adjust_offset;
-      n = N_WIDGETS(widget_adjust_offset);
-      break;
-
-    case STATE_INFORMATION:
-      widget = widget_information;
-      n = N_WIDGETS(widget_information);
-      break;
-
-    default:
-      break;
-  }
-
-  if (n && widget) {
+  if (widget_get(screen, &widget, &n)) {
     for (int i = 0; i < n; i++, widget++) {
       if (widget->callback) {
         widget->callback(widget, doInit);
@@ -173,7 +181,7 @@ static bool widget_event(const Widget_t *widgets, const size_t n_widgets, const 
     focus->callback(focus, touch);
   }
 
-  focus = (touch.event == EVENT_RISING ? NULL : focus);
+  focus = (touch.event & EVENT_RISING ? NULL : focus);
   return (focus != NULL);
 }
 
@@ -197,79 +205,36 @@ static bool widget_watch(const Widget_t *widgets, const size_t n_widgets) {
  * Finite State Machines
  *--------------------------------------------------------------------------------*/
 void widget_control(void) {
-  switch (state) {
-    case STATE_ON:
-      widget_setup(state = STATE_MAIN);
-      break;
+  int n;
+  Widget_t const *widget;
 
+  if (!widget_get(state, &widget, &n)) {
+    state = STATE_ON;
+  }
+
+  State_t start = state;
+  switch (state) {
     case STATE_MAIN:
-      // when icon 'configuration' is clicked then state becomes 'STATE_CONFIGURATION'
-      widget_watch(widget_main, N_WIDGETS(widget_main));
+    case STATE_THERMOGRAPH:
+      widget_watch(widget, n);
       break;
 
     case STATE_CONFIGURATION:
-      do {
-        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-        widget_watch(widget_configuration, N_WIDGETS(widget_configuration));
-        delay(1); // reset wdt
-      } while (state == STATE_CONFIGURATION);
-      break;
-
     case STATE_RESOLUTION:
-      do {
-        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-        widget_watch(widget_resolution, N_WIDGETS(widget_resolution));
-        delay(1); // reset wdt
-      } while (state == STATE_RESOLUTION);
-      break;
-
-    case STATE_THERMOGRAPH:
-      // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-      widget_watch(widget_thermograph, N_WIDGETS(widget_thermograph));
-      break;
-
     case STATE_FILE_MANAGER:
-      do {
-        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-        widget_watch(widget_file_manager, N_WIDGETS(widget_file_manager));
-        delay(1); // reset wdt
-      } while (state == STATE_FILE_MANAGER);
-      break;
-
     case STATE_CAPTURE_MODE:
-      do {
-        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-        widget_watch(widget_capture_mode, N_WIDGETS(widget_capture_mode));
-        delay(1); // reset wdt
-      } while (state == STATE_CAPTURE_MODE);
-      break;
-
     case STATE_CALIBRATION:
-      do {
-        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-        widget_watch(widget_calibration, N_WIDGETS(widget_calibration));
-        delay(1); // reset wdt
-      } while (state == STATE_CALIBRATION);
-      break;
-
     case STATE_ADJUST_OFFSET:
-      do {
-        // when icon 'back' is clicked then state becomes 'STATE_CALIBRATION'
-        widget_watch(widget_adjust_offset, N_WIDGETS(widget_adjust_offset));
-        delay(1); // reset wdt
-      } while (state == STATE_ADJUST_OFFSET);
-      break;
-
     case STATE_INFORMATION:
       do {
-        // when icon 'back' is clicked then state becomes 'STATE_MAIN'
-        widget_watch(widget_information, N_WIDGETS(widget_information));
+        widget_watch(widget, n);
         delay(1); // reset wdt
-      } while (state == STATE_INFORMATION);
+      } while (state == start);
       break;
 
+    case STATE_ON:
     default:
-      state = STATE_ON;
+      widget_setup(state = STATE_MAIN);
       break;
   }
 }

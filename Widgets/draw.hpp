@@ -236,9 +236,9 @@ static void DrawPress(const Widget_t *widget, Event_t event /* = EVENT_INIT */) 
 #warning TFT_eSPI support required
 #endif
 
-  if (event == EVENT_FALLING) {
+  if (event & EVENT_FALLING) {
     offset = +PRESSED_OFFSET;
-  } else if (event == EVENT_RISING) {
+  } else if (event & EVENT_RISING) {
     offset = -PRESSED_OFFSET;
   } else {
     offset = 0;
@@ -263,7 +263,7 @@ static void DrawPress(const Widget_t *widget, Event_t event /* = EVENT_INIT */) 
     GFX_EXEC(endWrite());
   }
 
-  if (event == EVENT_RISING) {
+  if (event & EVENT_RISING) {
     touch_clear();
   }
 }

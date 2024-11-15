@@ -326,7 +326,7 @@ static bool Apply(const Widget_t *widget, const Touch_t &touch, bool enable) {
   else if (enable) {
     DrawPress(widget, touch.event);
 
-    if (touch.event == EVENT_RISING) {
+    if (touch.event & EVENT_RISING) {
       DrawButton(widget, 0);
       return true; // ready to apply
     }
@@ -1011,7 +1011,7 @@ static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch)
     }
   }
 
-  else if (touch.event == EVENT_DOWN) {
+  else if (touch.event & EVENT_DOWN) {
     drag_pos = touch.y;
   } // else drag
 
@@ -1107,7 +1107,7 @@ static bool SaveCalibration(TouchConfig_t &config) {
 
 static void DrawOffsetX(const Widget_t* widget, const Touch_t &touch, const Widget_t *apply) {
   // draw button when touch.event == EVENT_INIT or EVENT_UP
-  if (touch.event != EVENT_DOWN) {
+  if (!(touch.event & EVENT_DOWN)) {
     DrawButton(widget,     (tch_copy.offset[0] < TOUCH_OFFSET_MAX) ? 1 : 0);
     DrawButton(widget + 1, (tch_copy.offset[0] > TOUCH_OFFSET_MIN) ? 1 : 0);
   }
@@ -1120,7 +1120,7 @@ static void DrawOffsetX(const Widget_t* widget, const Touch_t &touch, const Widg
 
 static void DrawOffsetY(const Widget_t* widget, const Touch_t &touch, const Widget_t *apply) {
   // draw button when touch.event == EVENT_INIT or EVENT_UP
-  if (touch.event != EVENT_DOWN) {
+  if (!(touch.event & EVENT_DOWN)) {
     DrawButton(widget,     (tch_copy.offset[1] < TOUCH_OFFSET_MAX) ? 1 : 0);
     DrawButton(widget + 1, (tch_copy.offset[1] > TOUCH_OFFSET_MIN) ? 1 : 0);
   }
@@ -1192,7 +1192,7 @@ static void onCalibrationXup(const Widget_t *widget, const Touch_t &touch) {
 
   if (touch.event != EVENT_INIT && tch_copy.offset[0] < TOUCH_OFFSET_MAX) {
     DrawPress(widget, touch.event);
-    if (touch.event == EVENT_DOWN ) {
+    if (touch.event & EVENT_DOWN ) {
       tch_copy.offset[0]++;
     }
   }
@@ -1205,7 +1205,7 @@ static void onCalibrationXdown(const Widget_t *widget, const Touch_t &touch) {
 
   if (touch.event != EVENT_INIT && tch_copy.offset[0] > TOUCH_OFFSET_MIN) {
     DrawPress(widget, touch.event);
-    if (touch.event == EVENT_DOWN) {
+    if (touch.event & EVENT_DOWN) {
       tch_copy.offset[0]--;
     }
   }
@@ -1218,7 +1218,7 @@ static void onCalibrationYup(const Widget_t *widget, const Touch_t &touch) {
 
   if (touch.event != EVENT_INIT && tch_copy.offset[1] < TOUCH_OFFSET_MAX) {
     DrawPress(widget, touch.event);
-    if (touch.event == EVENT_DOWN) {
+    if (touch.event & EVENT_DOWN) {
       tch_copy.offset[1]++;
     }
   }
@@ -1231,7 +1231,7 @@ static void onCalibrationYdown(const Widget_t *widget, const Touch_t &touch) {
 
   if (touch.event != EVENT_INIT && tch_copy.offset[1] > TOUCH_OFFSET_MIN) {
     DrawPress(widget, touch.event);
-    if (touch.event == EVENT_DOWN) {
+    if (touch.event & EVENT_DOWN) {
       tch_copy.offset[1]--;
     }
   }
@@ -1242,7 +1242,7 @@ static void onCalibrationYdown(const Widget_t *widget, const Touch_t &touch) {
 static void onCalibrationClose(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_DOWN) {
+  if (touch.event & EVENT_DOWN) {
     widget_state(STATE_CONFIGURATION);
   }
 }
