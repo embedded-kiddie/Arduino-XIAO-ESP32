@@ -129,36 +129,6 @@ static bool widget_get(State_t screen, Widget_t const **widget, int *n) {
 }
 
 /*--------------------------------------------------------------------------------
- * Draw all widgets at the start of each state
- *--------------------------------------------------------------------------------*/
-void widget_setup(State_t screen /* = STATE_OFF */) {
-  int n;
-  Widget_t const *widget;
-
-  // reset focused widget
-  focus = NULL;
-
-  if (widget_get(screen, &widget, &n)) {
-    for (int i = 0; i < n; i++, widget++) {
-      if (widget->callback) {
-        widget->callback(widget, doInit);
-      }
-      CHECK_POS(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
-    }
-  }
-}
-
-/*--------------------------------------------------------------------------------
- * Change state
- *--------------------------------------------------------------------------------*/
-State_t widget_state(State_t screen /*= STATE_OFF */) {
-  state = screen;
-  touch_clear();
-  widget_setup(state);
-  return state;
-}
-
-/*--------------------------------------------------------------------------------
  * Handle the widget events on screen
  *--------------------------------------------------------------------------------*/
 static bool widget_event(const Widget_t *widgets, const size_t n_widgets, const Touch_t &touch) {
@@ -199,6 +169,36 @@ static bool widget_watch(const Widget_t *widgets, const size_t n_widgets) {
   }
 
   return false;
+}
+
+/*--------------------------------------------------------------------------------
+ * Draw all widgets at the start of each state
+ *--------------------------------------------------------------------------------*/
+void widget_setup(State_t screen /* = STATE_OFF */) {
+  int n;
+  Widget_t const *widget;
+
+  // reset focused widget
+  focus = NULL;
+
+  if (widget_get(screen, &widget, &n)) {
+    for (int i = 0; i < n; i++, widget++) {
+      if (widget->callback) {
+        widget->callback(widget, doInit);
+      }
+      CHECK_POS(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
+    }
+  }
+}
+
+/*--------------------------------------------------------------------------------
+ * Change state
+ *--------------------------------------------------------------------------------*/
+State_t widget_state(State_t screen /*= STATE_OFF */) {
+  state = screen;
+  touch_clear();
+  widget_setup(state);
+  return state;
 }
 
 /*--------------------------------------------------------------------------------
