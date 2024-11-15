@@ -430,11 +430,11 @@ bool sdcard_save(void) {
 
   // SD.end(); // Activating this line will cause some GFX libraries to stop working.
 
-  DBG_EXEC(uint32_t total);
-  DBG_EXEC(uint32_t free);
-  DBG_EXEC(sdcard_size(&total, &free));
-  DBG_EXEC(printf("Card size: %luMB\n", total));
-  DBG_EXEC(printf("Free size: %luMB\n", free));
+  DBG_EXEC({
+    uint32_t total; uint32_t free;
+    sdcard_size(&total, &free);
+    printf("Card size: %luMB\nFree size: %luMB\n", total, free);
+  });
 
   return true;
 }
