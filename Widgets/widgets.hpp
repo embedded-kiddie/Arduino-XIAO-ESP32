@@ -369,25 +369,21 @@ static void onMainScreen(const Widget_t *widget, const Touch_t &touch) {
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setTextSize(mlx_cnf.interpolation * mlx_cnf.box_size > 4 ? 2 : 1));
 
-#if defined (LOVYANGFX_HPP_)
-  GFX_EXEC(setTextDatum(textdatum_t::top_left));
+  GFX_EXEC(setTextDatum(TL_DATUM));
   gfx_printf(0, y, "%d", mlx_cnf.range_min);
 
-  GFX_EXEC(setTextDatum(textdatum_t::top_right));
+  GFX_EXEC(setTextDatum(TR_DATUM));
   gfx_printf(w, y, "%d", mlx_cnf.range_max);
 
   if (mlx_cnf.interpolation * mlx_cnf.box_size > 1) {
-    GFX_EXEC(setTextDatum(textdatum_t::top_center));
+    GFX_EXEC(setTextDatum(TC_DATUM));
     gfx_printf(w / 2, y, "%3.1f", (float)(mlx_cnf.range_min + mlx_cnf.range_max) / 2.0f);
   }
 
   // Draw resolution
   GFX_EXEC(setTextSize(2));
-  GFX_EXEC(setTextDatum(textdatum_t::top_left));
+  GFX_EXEC(setTextDatum(TL_DATUM));
   gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%2d:%d", mlx_cnf.interpolation, mlx_cnf.box_size);
-#else
-#warning TFT_eSPI support required
-#endif
 }
 
 static void onMainInside(const Widget_t *widget, const Touch_t &touch) {
