@@ -234,6 +234,17 @@ static constexpr Widget_t widget_capture_mode[] = {
   { 145, 206,  30,  30, NULL,               EVENT_ALL,  onCaptureModeApply    },
 };
 
+// Configuration for the scroll box
+#define FONT_WIDTH    12  // [px] (for setTextSize(2))
+#define FONT_HEIGHT   16  // [px] (for setTextSize(2))
+#define FONT_MARGIN   3   // [px] (margin for each top, right, bottom, left)
+#define ITEM_WIDTH    11  // text length of an item (mlx0000.bmp)
+#define VIEW_ITEMS    10  // number of items in a view
+#define ITEM_HEIGHT   (FONT_HEIGHT + FONT_MARGIN * 2)
+#define VIEW_WIDTH    (FONT_WIDTH  * ITEM_WIDTH + FONT_MARGIN * 2) // 138
+#define VIEW_HEIGHT   (ITEM_HEIGHT * VIEW_ITEMS) // 220
+#define SCROLL_COLOR  RGB565(0x01, 0xA1, 0xFF)
+
 // Screen - File manager
 static void onFileManagerScreen   (const Widget_t *widget, const Touch_t &touch);
 static void onFileManagerCheckAll (const Widget_t *widget, const Touch_t &touch);
@@ -245,27 +256,16 @@ static void onFileManagerFolder   (const Widget_t *widget, const Touch_t &touch)
 static void onFileManagerClose    (const Widget_t *widget, const Touch_t &touch);
 static void onFileManagerApply    (const Widget_t *widget, const Touch_t &touch);
 
-// Setting for the scroll area
-#define FONT_WIDTH    12  // [px] (for setTextSize(2))
-#define FONT_HEIGHT   16  // [px] (for setTextSize(2))
-#define FONT_MARGIN   3   // [px] (margin for each top, right, bottom, left)
-#define ITEM_WIDTH    11  // text length of an item (mlx0000.bmp)
-#define VIEW_ITEMS    10  // number of items in a view
-#define ITEM_HEIGHT   (FONT_HEIGHT + FONT_MARGIN * 2)
-#define VIEW_WIDTH    (FONT_WIDTH  * ITEM_WIDTH + FONT_MARGIN * 2) // 138
-#define VIEW_HEIGHT   (ITEM_HEIGHT * VIEW_ITEMS) // 220
-#define SCROLL_COLOR  RGB565(0x01, 0xA1, 0xFF)
-
 static constexpr Widget_t widget_file_manager[] = {
-  {   0,   0, 320, 240, image_file_manager, EVENT_NONE,  onFileManagerScreen    },
-  {   0,   9,  26,  26, image_checkbox,     EVENT_DOWN,  onFileManagerCheckAll  },
-  {  29,  10, 138, 220, NULL,               EVENT_DOWN,  onFileManagerScrollBox }, // VIEW_WIDTH x VIEW_HEIGHT
-  { 170,   9,  15, 220, NULL,               EVENT_DRAG,  onFileManagerScrollBar }, // scroll bar x VIEW_HEIGHT
-  { 191,  62, 128,  96, NULL,               EVENT_NONE,  onFileManagerThumbnail },
-  { 207, 166,  32,  28, image_movie,        EVENT_CLICK, onFileManagerMovie     }, // 32 x 26 --> 32 x 28 for DrawPress()
-  { 276, 166,  32,  28, image_folder,       EVENT_CLICK, onFileManagerFolder    }, // 32 x 26 --> 32 x 28 for DrawPress()
-  { 208, 206,  30,  32, NULL,               EVENT_ALL,   onFileManagerClose     }, // 30 x 30 --> 30 x 32 for DrawPress()
-  { 276, 206,  30,  32, NULL,               EVENT_CLICK, onFileManagerApply     }, // 30 x 30 --> 30 x 32 for DrawPress()
+  {   0,   0, 320, 240, image_file_manager, EVENT_NONE,   onFileManagerScreen    },
+  {   0,   9,  26,  26, image_checkbox,     EVENT_DOWN,   onFileManagerCheckAll  },
+  {  29,  10, 138, 220, NULL,               EVENT_SELECT, onFileManagerScrollBox }, // VIEW_WIDTH x VIEW_HEIGHT
+  { 170,   9,  15, 220, NULL,               EVENT_DRAG,   onFileManagerScrollBar }, // scroll bar x VIEW_HEIGHT
+  { 191,  62, 128,  96, NULL,               EVENT_NONE,   onFileManagerThumbnail },
+  { 207, 166,  32,  28, image_movie,        EVENT_CLICK,  onFileManagerMovie     }, // 32 x 26 --> 32 x 28 for DrawPress()
+  { 276, 166,  32,  28, image_folder,       EVENT_CLICK,  onFileManagerFolder    }, // 32 x 26 --> 32 x 28 for DrawPress()
+  { 208, 206,  30,  32, NULL,               EVENT_ALL,    onFileManagerClose     }, // 30 x 30 --> 30 x 32 for DrawPress()
+  { 276, 206,  30,  32, NULL,               EVENT_CLICK,  onFileManagerApply     }, // 30 x 30 --> 30 x 32 for DrawPress()
 };
 
 // Screen - Calibration
@@ -321,13 +321,17 @@ static constexpr Widget_t widget_information[] = {
 static bool Apply(const Widget_t *widget, const Touch_t &touch, bool enable) {
   if (touch.event == EVENT_INIT) {
     DrawButton(widget, enable);
-  } else if (enable) {
+  }
+
+  else if (enable) {
     DrawPress(widget, touch.event);
+
     if (touch.event == EVENT_RISING) {
       DrawButton(widget, 0);
-      return true; // ready to apply updated data
+      return true; // ready to apply
     }
   }
+
   return false;
 }
 
@@ -386,7 +390,7 @@ static void onMainInside(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    // pick up the point
+    // ToDo: plot the points and show values
   }
 }
 
@@ -394,7 +398,7 @@ static void onMainOutside(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    // Reset the picked up point
+    // ToDo: reset the picked up points
   }
 }
 
@@ -1069,7 +1073,7 @@ static void onFileManagerApply(const Widget_t *widget, const Touch_t &touch) {
   DrawPress(widget, touch.event);
 
   if (touch.event != EVENT_INIT) {
-    // Remove files
+    // ToDo: remove selected files
   }
 }
 

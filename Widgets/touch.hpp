@@ -17,23 +17,27 @@ XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);  // Param 2 - Touch IRQ Pin - inter
 /*--------------------------------------------------------------------------------
  * Definition of events
  *--------------------------------------------------------------------------------*/
-#define PERIOD_DEBOUNCE     30  // [msec]
-#define PERIOD_TOUCHED      60  // [msec]
+#define PERIOD_DEBOUNCE     25  // [msec]
+#define PERIOD_TOUCHED      50  // [msec]
+#define PERIOD_TAP2         200 // [msec]
 #define PERIOD_CLEAR_EVENT  100 // [msec]
 
 typedef enum {
-  EVENT_NONE    = (0x00),
-  EVENT_FALLING = (0x01), // untouch -->   touch
-  EVENT_RISING  = (0x02), //   touch --> untouch
+  EVENT_NONE    = (0x00), // considered as 'HIGH'
+  EVENT_RISING  = (0x01), //   touch --> untouch
+  EVENT_FALLING = (0x02), // untouch -->   touch
   EVENT_TOUCHED = (0x04), //   touch -->   touch
+  EVENT_TAP2    = (0x08), // double tap
 
   // alias
   EVENT_INIT    = (EVENT_NONE),
   EVENT_UP      = (EVENT_RISING),
   EVENT_DOWN    = (EVENT_FALLING),
   EVENT_DRAG    = (EVENT_FALLING | EVENT_TOUCHED),
+  EVENT_TAP     = (EVENT_FALLING | EVENT_RISING),
   EVENT_CLICK   = (EVENT_FALLING | EVENT_RISING),
   EVENT_CHANGE  = (EVENT_FALLING | EVENT_RISING),
+  EVENT_SELECT  = (EVENT_FALLING | EVENT_TAP2),
   EVENT_ALL     = (EVENT_FALLING | EVENT_RISING | EVENT_TOUCHED),
 } Event_t;
 
@@ -116,17 +120,10 @@ bool touch_setup(void) {
  *--------------------------------------------------------------------------------*/
 bool touch_event(Touch_t &touch) {
   uint32_t time = millis();
-  static uint32_t prev_time = time;
-
-  time -= prev_time;
-  if (time < PERIOD_DEBOUNCE) {
-    return false;
-  } else {
-    time = prev_time;
-  }
-
+  static uint32_t prev_time;
   static uint16_t x, y;
-  static bool prev_stat = false;
+  static bool prev_stat;
+  static uint8_t count;
   Event_t event = EVENT_NONE;
 
 #ifdef  _XPT2046_Touchscreen_h_
@@ -144,26 +141,34 @@ bool touch_event(Touch_t &touch) {
 
 #endif // _XPT2046_Touchscreen_h_
 
+  // when state changes, check again after a certain period of time
+  uint32_t dt = time - prev_time;
+  if (stat != prev_stat) {
+    if (dt < PERIOD_DEBOUNCE) {
+      return false;
+    } else {
+      prev_time = time;
+    }
+  }
+
   // untouch --> touch
   if (prev_stat == false && stat == true) {
     event = EVENT_FALLING;
+    count = dt < PERIOD_TAP2 ? count + 1 : 0;
   } else
 
   // touch --> untouch
   if (prev_stat == true && stat == false) {
     event = EVENT_RISING;
+    count = dt < PERIOD_TAP2 ? count + 1 : 0;
   } else
 
   // touch --> touch
   if (prev_stat == true && stat == true) {
-    event = time > PERIOD_TOUCHED ? EVENT_TOUCHED : EVENT_NONE;
-  } /*else
+    event = EVENT_TOUCHED;
+  }
 
-  // untouch --> untouch
-  if (stat == false && prev_stat == false) {
-    event = EVENT_NONE;
-  }*/
-
+  // update state
   prev_stat = stat;
 
   if (event != EVENT_NONE) {
@@ -174,12 +179,12 @@ bool touch_event(Touch_t &touch) {
         y = constrain(y, 0, lcd_height - 1);
     }
 
-    //DBG_EXEC(printf("event: %d, x: %d, y: %d\n", event, x, y));
-
-    touch.event = event;
+    // TAP2 = RISING --> FALLING --> RISING
+    touch.event = (Event_t)(event | (count >= 3 ? EVENT_TAP2 : EVENT_NONE));
     touch.x = x;
     touch.y = y;
 
+    DBG_EXEC(printf("event: %d, x: %d, y: %d, dt: %d, count: %d\n", event, x, y, dt, count));
     return true;
   }
 

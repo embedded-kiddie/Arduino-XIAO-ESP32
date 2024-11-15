@@ -4,6 +4,16 @@
 #include <Arduino.h>
 
 /*--------------------------------------------------------------------------------
+ * Check the position of widget by RED rectangle
+ *--------------------------------------------------------------------------------*/
+#define CHECK_POSITION  false
+#if     CHECK_POSITION
+#define CHECK_POS(x)  x
+#else
+#define CHECK_POS(x)
+#endif
+
+/*--------------------------------------------------------------------------------
  * State of the screen
  *--------------------------------------------------------------------------------*/
 typedef enum {
@@ -38,19 +48,17 @@ typedef struct Widget {
   void            (*callback)(const struct Widget *widget, const Touch_t &touch);  // Event handler
 } Widget_t;
 
-static Widget_t const *focus = NULL;
-
 #define N_WIDGETS(w)  (sizeof(w) / sizeof(w[0]))
 
 /*--------------------------------------------------------------------------------
- * Check the position of widget by RED rectangle
+ * Focused widget
  *--------------------------------------------------------------------------------*/
-#define CHECK_POSITION  false
-#if     CHECK_POSITION
-#define CHECK_POS(x)  x
-#else
-#define CHECK_POS(x)
-#endif
+static Widget_t const *focus = NULL;
+
+/*--------------------------------------------------------------------------------
+ * Event message to command initialization
+ *--------------------------------------------------------------------------------*/
+static constexpr Touch_t doInit = { EVENT_INIT, 0, 0 };
 
 /*--------------------------------------------------------------------------------
  * Functions prototyping
@@ -58,13 +66,6 @@ static Widget_t const *focus = NULL;
 void widget_control(void);
 void widget_setup(State_t screen = STATE_OFF);
 State_t widget_state(State_t screen = STATE_OFF);
-static bool widget_watch(const Widget_t *widgets, const size_t n_widgets);
-static bool widget_event(const Widget_t *widgets, const size_t n_widgets, const Touch_t &touch);
-
-/*--------------------------------------------------------------------------------
- * Initial event message
- *--------------------------------------------------------------------------------*/
-static constexpr Touch_t doInit = { EVENT_INIT, 0, 0 };
 
 /*--------------------------------------------------------------------------------
  * Widgets
