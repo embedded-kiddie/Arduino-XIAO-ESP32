@@ -151,20 +151,26 @@ bool touch_event(Touch_t &touch) {
     if (dt < PERIOD_DEBOUNCE) {
       return false;
     } else {
+      // update the time when state changes
       prev_time = time;
+
+      // reset double tap counter
+      if (dt > PERIOD_TAP2 || count >= 4) {
+        count = 0;
+      }
     }
   }
 
   // untouch --> touch
   if (prev_stat == false && stat == true) {
     event = EVENT_FALLING;
-    count = dt < PERIOD_TAP2 ? count + 1 : 0;
+    count = (count == 0 ? count + 1 : (dt <= PERIOD_TAP2 ? count + 1 : 0));
   } else
 
   // touch --> untouch
   if (prev_stat == true && stat == false) {
     event = EVENT_RISING;
-    count = dt < PERIOD_TAP2 ? count + 1 : 0;
+    count = dt <= PERIOD_TAP2 ? count + 1 : 0;
   } else
 
   // touch --> touch
@@ -183,12 +189,12 @@ bool touch_event(Touch_t &touch) {
         y = constrain(y, 0, lcd_height - 1);
     }
 
-    // TAP2 = RISING --> FALLING --> RISING
-    touch.event = (Event_t)(event | (count >= 3 ? EVENT_TAP2 : EVENT_NONE));
+    // TAP2 = FALLING --> RISING --> FALLING --> RISING
+    touch.event = (Event_t)(event | (count >= 4 ? EVENT_TAP2 : EVENT_NONE));
     touch.x = x;
     touch.y = y;
 
-    DBG_EXEC(printf("event: %d, x: %d, y: %d, dt: %d, count: %d\n", event, x, y, dt, count));
+    DBG_EXEC(printf("event: %d, x: %d, y: %d, dt: %d, count: %d\n", touch.event, x, y, dt, count));
     return true;
   }
 

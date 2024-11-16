@@ -1107,7 +1107,7 @@ static bool SaveCalibration(TouchConfig_t &config) {
 
 static void DrawOffsetX(const Widget_t* widget, const Touch_t &touch, const Widget_t *apply) {
   // draw button when touch.event == EVENT_INIT or EVENT_UP
-  if (!(touch.event & EVENT_DOWN)) {
+  if (touch.event != EVENT_DOWN) {
     DrawButton(widget,     (tch_copy.offset[0] < TOUCH_OFFSET_MAX) ? 1 : 0);
     DrawButton(widget + 1, (tch_copy.offset[0] > TOUCH_OFFSET_MIN) ? 1 : 0);
   }
@@ -1120,7 +1120,7 @@ static void DrawOffsetX(const Widget_t* widget, const Touch_t &touch, const Widg
 
 static void DrawOffsetY(const Widget_t* widget, const Touch_t &touch, const Widget_t *apply) {
   // draw button when touch.event == EVENT_INIT or EVENT_UP
-  if (!(touch.event & EVENT_DOWN)) {
+  if (touch.event != EVENT_DOWN) {
     DrawButton(widget,     (tch_copy.offset[1] < TOUCH_OFFSET_MAX) ? 1 : 0);
     DrawButton(widget + 1, (tch_copy.offset[1] > TOUCH_OFFSET_MIN) ? 1 : 0);
   }

@@ -131,7 +131,9 @@ static bool widget_get(State_t screen, Widget_t const **widget, int *n) {
 /*--------------------------------------------------------------------------------
  * Handle the widget events on screen
  *--------------------------------------------------------------------------------*/
-static bool widget_event(const Widget_t *widgets, const size_t n_widgets, const Touch_t &touch) {
+static bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_t &touch) {
+  Event_t event = touch.event;
+
   if (focus == NULL) {
     for (int i = 0; i < n_widgets; i++) {
       // In case the touch events to be handled
@@ -148,10 +150,11 @@ static bool widget_event(const Widget_t *widgets, const size_t n_widgets, const 
 
   if (focus && (focus->event & touch.event)) {
     DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, focus->event, touch.x, touch.y));
+    touch.event = (Event_t)(touch.event & focus->event); // mask by target event
     focus->callback(focus, touch);
   }
 
-  focus = (touch.event & EVENT_RISING ? NULL : focus);
+  focus = (event & EVENT_RISING ? NULL : focus);
   return (focus != NULL);
 }
 
@@ -232,8 +235,7 @@ void widget_control(void) {
       } while (state == start);
       break;
 
-    case STATE_ON:
-    default:
+    default: /* STATE_ON */
       widget_setup(state = STATE_MAIN);
       break;
   }
