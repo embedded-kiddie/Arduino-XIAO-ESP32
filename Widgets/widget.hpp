@@ -148,13 +148,16 @@ static bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_
     }
   }
 
+  // execute the callback function for the focused widget
   if (focus && (focus->event & touch.event)) {
     DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, focus->event, touch.x, touch.y));
     touch.event = (Event_t)(touch.event & focus->event); // mask by target event
     focus->callback(focus, touch);
   }
 
+  // reset focus when touch leaves screen
   focus = (event & EVENT_RISING ? NULL : focus);
+
   return (focus != NULL);
 }
 
@@ -215,7 +218,7 @@ void widget_control(void) {
     state = STATE_ON;
   }
 
-  State_t start = state;
+  State_t initial = state;
   switch (state) {
     case STATE_MAIN:
     case STATE_THERMOGRAPH:
@@ -232,10 +235,11 @@ void widget_control(void) {
       do {
         widget_watch(widget, n);
         delay(1); // reset wdt
-      } while (state == start);
+      } while (state == initial);
       break;
 
-    default: /* STATE_ON */
+    case STATE_ON:
+    default:
       widget_setup(state = STATE_MAIN);
       break;
   }
