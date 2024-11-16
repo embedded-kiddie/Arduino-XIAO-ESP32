@@ -104,8 +104,8 @@ SdFs SD;
 typedef struct {
   std::string path;
   size_t      size;
-  bool        isSelected;
   bool        isDirectory;
+  bool        isSelected;
 } FileInfo_t;
 
 /*
@@ -188,9 +188,9 @@ static void getFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::v
 #if USE_SDFAT
         char path[BUF_SIZE];
         sprintf(path, "/%s/%s", dirname, name);
-        files.push_back({path, (uint32_t)file.fileSize(), false, isDir});
+        files.push_back({path, (size_t)file.fileSize(), isDir, false});
 #else
-        files.push_back({file.path(), file.size(), false, isDir});
+        files.push_back({file.path(), file.size(), isDir, false});
 #endif
       } catch (const std::exception &e) {
         DBG_EXEC(printf("Exception: %s\n", e.what()));
