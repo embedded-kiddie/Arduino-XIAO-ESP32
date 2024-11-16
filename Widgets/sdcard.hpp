@@ -42,15 +42,18 @@
 
 /*================================================================================
  * The configuration of the features defined in this file
- * Note: Only LovyanGFX can capture the screen with `readPixel()` or `readRect()`
+ * Note: Currently only LovyanGFX can capture the screen successfully.
  *================================================================================*/
 #define CAPTURE_SCREEN  true
 #define USE_SDFAT       true
 
-// LovyanGFX need <SdFat.h> before including <LovyanGFX.hpp>
-#if defined (SdFat_h)
+// LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
+#if     defined (SdFat_h)
 #undef  USE_SDFAT
 #define USE_SDFAT       true
+#elif   defined (_SD_H_)
+#undef  USE_SDFAT
+#define USE_SDFAT       false
 #endif
 
 /*--------------------------------------------------------------------------------
@@ -424,9 +427,11 @@ bool sdcard_save(void) {
   std::vector<FileInfo_t> files;
   GetFileList(SD, "/", 1, files);
 
-  for (const auto& file : files) {
-    DBG_EXEC(printf("%s, %lu\n", file.path.c_str(), file.size));
-  }
+  DBG_EXEC({
+    for (const auto& file : files) {
+      printf("%s, %lu\n", file.path.c_str(), file.size);
+    }
+  });
 
   // SD.end(); // Activating this line will cause some GFX libraries to stop working.
 

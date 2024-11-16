@@ -270,10 +270,10 @@ static void DrawPress(const Widget_t *widget, Event_t event /* = EVENT_INIT */) 
 
 /*--------------------------------------------------------------------------------
  * Generate and draw thumbnail from a bitmap file
- * (LovyanGFX function requires SdFat instead of the standard SD library of ESP32)
+ * (LovyanGFX requires SD library header file before including <LovyanGFX.hpp>)
  *--------------------------------------------------------------------------------*/
 static void DrawThumb(const Widget_t *widget, const char *path) {
-#if defined (LOVYANGFX_HPP_) && (!defined (ESP32) || defined (SdFat_h))
+#if defined (LOVYANGFX_HPP_) && (defined (_SD_H_) || defined (SdFat_h))
 
   GFX_EXEC(fillRect(widget->x, widget->y, widget->w, widget->h, BLACK));
   GFX_EXEC(drawBmpFile(
