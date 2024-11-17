@@ -55,7 +55,7 @@
  * Note: Currently only LovyanGFX can capture the screen successfully.
  *================================================================================*/
 #define CAPTURE_SCREEN  true
-#define USE_SDFAT       true
+#define USE_SDFAT       true  // TFT_eSPI can not work with SdFat
 
 // LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
 #if     defined (SdFat_h)

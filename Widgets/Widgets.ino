@@ -45,6 +45,8 @@ void gfx_setup(void) {
  * TFT_eSPI Library
  * https://github.com/Bodmer/TFT_eSPI
  *---------------------------------------------------*/
+// TFT_eSPI can not work with SdFat
+#include <SD.h>
 #include "TFT_eSPI.h"
 
 TFT_eSPI tft = TFT_eSPI();
