@@ -881,7 +881,7 @@ static bool file_selected;
 static void ScrollView(const Widget_t *widget, int scroll_pos) {
 #if   defined (LOVYANGFX_HPP_)
 
-  static LGFX_Sprite sprite_view;
+  static LGFX_Sprite sprite_view(&lcd);
 
 #elif defined (_TFT_eSPIH_)
 
@@ -926,21 +926,10 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
     sprite_view.print(p ? p + 1 : p);
   }
 
-#if   defined (LOVYANGFX_HPP_)
-
-//GFX_EXEC(beginTransaction());
-  sprite_view.pushSprite(&lcd, widget->x, widget->y);
-//GFX_EXEC(endTransaction());
-
-#elif defined (_TFT_eSPIH_)
-
 //GFX_EXEC(startWrite());
   sprite_view.pushSprite(widget->x, widget->y);
-//GFX_EXEC(endWrite());
-
-#endif
-
   sprite_view.deleteSprite();
+//GFX_EXEC(endWrite());
 }
 
 static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
@@ -1039,21 +1028,18 @@ static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch)
 
 #if   defined (LOVYANGFX_HPP_)
 
-  static LGFX_Sprite sprite_scroll;
-  sprite_scroll.createSprite(widget->w, widget->h);
-  sprite_scroll.fillRect(0, scroll_pos, widget->w, bar_height, SCROLL_COLOR);
-  sprite_scroll.pushSprite(&lcd, widget->x, widget->y);
-  sprite_scroll.deleteSprite();
+  static LGFX_Sprite sprite_scroll(&lcd);
 
 #elif defined (_TFT_eSPIH_)
 
   static TFT_eSprite sprite_scroll(&tft);
+
+#endif
+
   sprite_scroll.createSprite(widget->w, widget->h);
   sprite_scroll.fillRect(0, scroll_pos, widget->w, bar_height, SCROLL_COLOR);
   sprite_scroll.pushSprite(widget->x, widget->y);
   sprite_scroll.deleteSprite();
-
-#endif
 
   ScrollView(widget - 1, scroll_pos);
 

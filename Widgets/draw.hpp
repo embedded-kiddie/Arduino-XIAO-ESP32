@@ -12,7 +12,7 @@ static void DrawButton(const Widget_t *widget, uint8_t offset = 0);
 static void DrawToggle(const Widget_t *widget, bool check = false);
 static void DrawCheck (const Widget_t *widget, bool check = false);
 static void DrawPress (const Widget_t *widget, Event_t event = EVENT_INIT);
-static void DrawSlider(const Widget_t *widget, int16_t value, bool enable = true);
+static void DrawSlider(const Widget_t *widget, int16_t pos, bool enable = true);
 static void DrawRadio (const Widget_t *widget, uint8_t n_widget, uint8_t selected = 0);
 static void DrawThumb (const Widget_t *widget, const char *path);
 
@@ -25,7 +25,7 @@ static LGFX_Sprite sprite(&lcd);
 
 #elif defined (_TFT_eSPIH_)
 
-static TFT_eSprite sprite = TFT_eSprite(&tft);
+static TFT_eSprite sprite(&tft);
 
 #endif
 
@@ -141,7 +141,7 @@ static void DrawButton(const Widget_t *widget, uint8_t offset /* = 0 */) {
 #define PNG_HEADER_WIDTH    16 // PNG file signature + offset from chunk data
 #define PNG_HEADER_HEIGHT   20 // PNG file signature + offset from chunk data
 
-static void DrawSlider(const Widget_t *widget, int16_t value, bool enable /* = true */) {
+static void DrawSlider(const Widget_t *widget, int16_t pos, bool enable /* = true */) {
   const Image_t *bar  = &widget->image[0];
   const Image_t *knob = &widget->image[enable ? 1 : 2]; // [1]: enable, [2]: disable
 
@@ -171,11 +171,11 @@ static void DrawSlider(const Widget_t *widget, int16_t value, bool enable /* = t
 
 #if   defined (LOVYANGFX_HPP_)
 
-    sprite.drawPng(knob->data, knob->size, value, 0);
+    sprite.drawPng(knob->data, knob->size, pos, 0);
 
 #elif defined (_TFT_eSPIH_)
 
-    DrawPNG(knob->data, knob->size, value, 0, pngSprite);
+    DrawPNG(knob->data, knob->size, pos, 0, pngSprite);
 
 #endif
 
