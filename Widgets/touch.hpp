@@ -70,7 +70,7 @@ TouchConfig_t tch_cnf = {
 #if   defined (LOVYANGFX_HPP_)
   .cal = {319, 384, 3866, 355, 277, 3729, 3832, 3785},
 #elif defined (_TFT_eSPIH_)
-  .cal = {0, 0, 0, 0, 1, 0,},
+  .cal = {239, 3660, 266, 3550, 2},
 #endif
   .offset = {0, 0},//{-10, +5}
 };
@@ -113,6 +113,7 @@ bool touch_setup(void) {
 
 #elif defined (_TFT_eSPIH_)
 
+  // https://github.com/Bodmer/TFT_eSPI/tree/master/examples/Generic/Touch_calibrate
   GFX_EXEC(setTouch(tch_cnf.cal));
   return true;
 
@@ -142,10 +143,6 @@ bool touch_event(Touch_t &touch) {
 #else // LovyanGFX || TFT_eSPI
 
   bool stat = GFX_EXEC(getTouch(&x, &y));
-
-#if defined (_TFT_eSPIH_)
-#warning TFT_eSPI support required
-#endif
 
 #endif // _XPT2046_Touchscreen_h_
 
@@ -240,12 +237,36 @@ void touch_calibrate(TouchConfig_t *config) {
   GFX_EXEC(setTextDatum(textdatum_t::top_left));
   GFX_EXEC(calibrateTouch(config->cal, WHITE, BLACK, std::max(lcd_width, lcd_height) >> 3));
 
-  // clear offset
-  config->offset[0] = config->offset[1] = 0;
+  DBG_EXEC({
+    Serial.print(".cal = { ");
+    for (uint8_t i = 0; i < 8; i++) {
+      Serial.print(config->cal[i]);
+      Serial.print(i < 7 ? ", " : " };\n");
+    }
+  })
 
 #elif defined (_TFT_eSPIH_)
 
+  // https://github.com/Bodmer/TFT_eSPI/tree/master/examples/Generic/Touch_calibrate
+  GFX_EXEC(fillScreen(BLACK));
+  GFX_EXEC(setCursor(20, 20));
+  GFX_EXEC(setTextSize(2));
+  GFX_EXEC(setTextColor(WHITE, BLACK));
+  GFX_EXEC(println("Touch corners in order"));
+  GFX_EXEC(calibrateTouch(config->cal, MAGENTA, BLACK, 15));
+
+  DBG_EXEC({
+    Serial.print(".cal = { ");
+    for (uint8_t i = 0; i < 5; i++) {
+      Serial.print(config->cal[i]);
+      Serial.print(i < 4 ? ", " : " };\n");
+    }
+  })
+
 #endif
+
+  // clear offset
+  config->offset[0] = config->offset[1] = 0;
 }
 
 /*--------------------------------------------------------------------------------
