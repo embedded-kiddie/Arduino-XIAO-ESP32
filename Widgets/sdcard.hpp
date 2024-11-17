@@ -40,6 +40,16 @@
 #include <Arduino.h>
 #include "spi_assign.h"
 
+/*--------------------------------------------------------------------------------
+ * Uncomment and set up if you want to use custom pins for the SPI communication
+ *--------------------------------------------------------------------------------*/
+// #define REASSIGN_PINS
+
+// temporary buffer size for string manipulation
+#ifndef BUF_SIZE
+#define BUF_SIZE  64
+#endif
+
 /*================================================================================
  * The configuration of the features defined in this file
  * Note: Currently only LovyanGFX can capture the screen successfully.
@@ -55,11 +65,6 @@
 #undef  USE_SDFAT
 #define USE_SDFAT       false
 #endif
-
-/*--------------------------------------------------------------------------------
- * Uncomment and set up if you want to use custom pins for the SPI communication
- *--------------------------------------------------------------------------------*/
-// #define REASSIGN_PINS
 
 /*--------------------------------------------------------------------------------
  * SD library
@@ -94,9 +99,9 @@ SdFs SD;
 
 #endif // USE_SDFAT
 
-/*
+/*--------------------------------------------------------------------------------
  * File name and size for GetFileList()
- */
+ *--------------------------------------------------------------------------------*/
 #include <string>
 #include <vector>
 #include <exception>
@@ -108,9 +113,21 @@ typedef struct {
   bool        isSelected;
 } FileInfo_t;
 
-/*
+/*--------------------------------------------------------------------------------
+ * Function prototyping
+ *--------------------------------------------------------------------------------*/
+void sdcard_setup (void);
+bool sdcard_open  (void);
+bool sdcard_save  (void);
+void sdcard_size  (uint32_t *total, uint32_t *free);
+
+bool DeleteDir    (FS_TYPE &fs, const char *path);
+void DeleteFile   (FS_TYPE &fs, const char *path);
+void GetFileList  (FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<FileInfo_t> &files);
+
+/*--------------------------------------------------------------------------------
  * Sequence number management file
- */
+ *--------------------------------------------------------------------------------*/
 #define MLX90640_DIR  String("/MLX90640")
 #define MLX90640_NUM  String("/@number.txt")
 
@@ -149,8 +166,7 @@ static int GetFileNo(FS_TYPE &fs) {
 }
 
 /*--------------------------------------------------------------------------------
- * Basic file I/O and directory related functions
- * ex)  GetFileList(SD, "/", 0);
+ * A function to get a list of files in a specified directory.
  *--------------------------------------------------------------------------------*/
 static void getFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<FileInfo_t> &files) {
   File root = fs.open(dirname);
@@ -210,6 +226,9 @@ static void getFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::v
   }
 }
 
+/*--------------------------------------------------------------------------------
+ * A function to get a list of files in a specified directory except top directory
+ *--------------------------------------------------------------------------------*/
 void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<FileInfo_t> &files) {
   getFileList(fs, dirname, levels, files);
 
@@ -217,6 +236,9 @@ void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<F
   files.erase(files.begin());
 }
 
+/*--------------------------------------------------------------------------------
+ * Basic functions to delete a directory and a file.
+ *--------------------------------------------------------------------------------*/
 bool DeleteDir(FS_TYPE &fs, const char *path) {
   // `path` must be empty
   if (fs.rmdir(path)) {
@@ -273,6 +295,9 @@ static uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 forma
 
 #endif // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
 
+/*--------------------------------------------------------------------------------
+ * Save LCD screenshot as a 24bits bitmap file
+ *--------------------------------------------------------------------------------*/
 static bool SaveBMP24(FS_TYPE &fs, const char *path) {
 
 #if   defined (LOVYANGFX_HPP_)
@@ -416,7 +441,8 @@ bool sdcard_save(void) {
   sprintf(path, "%s/mlx%04d.bmp", MLX90640_DIR, no);
   DBG_EXEC(printf("%s\n", path));
 
-  uint32_t start = millis();
+  DBG_EXEC(uint32_t start = millis());
+
   if (!SaveBMP24(SD, path)) {
     return false;
   }
@@ -424,10 +450,9 @@ bool sdcard_save(void) {
   DBG_EXEC(printf("Elapsed time: %d msec\n", millis() - start)); // SD: 6264 msec, SdFat: 4202 msec
 #endif
 
-  std::vector<FileInfo_t> files;
-  GetFileList(SD, "/", 1, files);
-
   DBG_EXEC({
+    std::vector<FileInfo_t> files;
+    GetFileList(SD, "/", 1, files);
     for (const auto& file : files) {
       printf("%s, %lu\n", file.path.c_str(), file.size);
     }
