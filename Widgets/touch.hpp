@@ -15,7 +15,7 @@ XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);  // Param 2 - Touch IRQ Pin - inter
 #endif // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
 
 /*--------------------------------------------------------------------------------
- * Definition of events
+ * Event definition
  *--------------------------------------------------------------------------------*/
 #define PERIOD_DEBOUNCE     25  // [msec]
 #define PERIOD_TOUCHED      50  // [msec]
@@ -46,6 +46,9 @@ typedef struct Touch {
   uint16_t    x, y;   // The coordinates where the event fired
 } Touch_t;
 
+/*--------------------------------------------------------------------------------
+ * Touch panel calibration configuration
+ *--------------------------------------------------------------------------------*/
 typedef struct TouchConfig {
   // Member Variables
   uint16_t    cal[8];
@@ -78,8 +81,9 @@ TouchConfig_t tch_cnf = {
 bool touch_setup(void);
 bool touch_event(Touch_t &touch);
 void touch_clear(void);
-bool touch_save(TouchConfig_t *config);
 void touch_calibrate(TouchConfig_t *config);
+bool touch_save(TouchConfig_t *config);
+bool touch_load(TouchConfig_t *config);
 
 /*--------------------------------------------------------------------------------
  * Simple touch point correction
@@ -116,7 +120,7 @@ bool touch_setup(void) {
 }
 
 /*--------------------------------------------------------------------------------
- * Event manager
+ * Touch event manager
  *--------------------------------------------------------------------------------*/
 bool touch_event(Touch_t &touch) {
   uint32_t time = millis();
@@ -211,29 +215,18 @@ bool touch_event(Touch_t &touch) {
   return false;
 }
 
+/*--------------------------------------------------------------------------------
+ * Wait until there are no more touch events
+ *--------------------------------------------------------------------------------*/
 void touch_clear(void) {
   Touch_t touch;
   delay(PERIOD_CLEAR_EVENT);
   while(touch_event(touch));
 }
 
-bool touch_save(TouchConfig_t *config) {
-  // use preferences.h
-  // https://docs.espressif.com/projects/arduino-esp32/en/latest/tutorials/preferences.html
-  // https://github.com/espressif/arduino-esp32/tree/master/libraries/Preferences
-  delay(1000);
-
-#if   defined (_XPT2046_Touchscreen_h_)
-
-#elif defined (LOVYANGFX_HPP_)
-
-#elif defined (_TFT_eSPIH_)
-
-#endif
-
-  return true;
-}
-
+/*--------------------------------------------------------------------------------
+ * Calibrating the touch panel
+ *--------------------------------------------------------------------------------*/
 void touch_calibrate(TouchConfig_t *config) {
 #if   defined (_XPT2046_Touchscreen_h_)
 
@@ -253,4 +246,35 @@ void touch_calibrate(TouchConfig_t *config) {
 #elif defined (_TFT_eSPIH_)
 
 #endif
+}
+
+/*--------------------------------------------------------------------------------
+ * Saving and loading calibration configurations using preferences.h
+ * https://docs.espressif.com/projects/arduino-esp32/en/latest/tutorials/preferences.html
+ * https://github.com/espressif/arduino-esp32/tree/master/libraries/Preferences
+ *--------------------------------------------------------------------------------*/
+bool touch_save(TouchConfig_t *config) {
+#if   defined (_XPT2046_Touchscreen_h_)
+
+#elif defined (LOVYANGFX_HPP_)
+
+#elif defined (_TFT_eSPIH_)
+
+#endif
+
+  delay(1000);
+  return true;
+}
+
+bool touch_load(TouchConfig_t *config) {
+#if   defined (_XPT2046_Touchscreen_h_)
+
+#elif defined (LOVYANGFX_HPP_)
+
+#elif defined (_TFT_eSPIH_)
+
+#endif
+
+  delay(1000);
+  return true;
 }

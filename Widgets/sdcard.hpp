@@ -114,7 +114,7 @@ typedef struct {
 } FileInfo_t;
 
 /*--------------------------------------------------------------------------------
- * Function prototyping
+ * Functions prototyping
  *--------------------------------------------------------------------------------*/
 void sdcard_setup (void);
 bool sdcard_open  (void);
