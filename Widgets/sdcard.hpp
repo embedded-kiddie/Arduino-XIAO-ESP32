@@ -361,9 +361,9 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
 
 #if defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
 
-//  GFX_EXEC(beginTransaction());
+//  GFX_EXEC(startWrite());
     GFX_EXEC(readRect(0, y, w, 1, rgb));
-//  GFX_EXEC(endTransaction());
+//  GFX_EXEC(endWrite());
     file.write((uint8_t*)rgb, w * sizeof(rgb[0])); // SD: 2966 msec, SdFat: 2777 msec
 
 #else // defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)

@@ -16,7 +16,7 @@
 uint16_t lcd_width;
 uint16_t lcd_height;
 
-#if 1
+#if 0
 /*---------------------------------------------------
  * LovyanGFX Library
  * https://github.com/lovyan03/LovyanGFX

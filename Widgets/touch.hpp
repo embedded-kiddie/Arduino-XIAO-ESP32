@@ -195,7 +195,7 @@ bool touch_event(Touch_t &touch) {
     touch.x = x;
     touch.y = y;
 
-    DBG_EXEC(printf("event: %d, x: %d, y: %d, dt: %d, count: %d\n", touch.event, x, y, dt, count));
+//  DBG_EXEC(printf("event: %d, x: %d, y: %d, dt: %d, count: %d\n", touch.event, x, y, dt, count));
     return true;
   }
 

@@ -879,9 +879,15 @@ static int scroll_pos, scroll_max, bar_height;
 static bool file_selected;
 
 static void ScrollView(const Widget_t *widget, int scroll_pos) {
-#if defined (LOVYANGFX_HPP_)
+#if   defined (LOVYANGFX_HPP_)
+
   static LGFX_Sprite sprite_view;
-  bool invert = false;
+
+#elif defined (_TFT_eSPIH_)
+
+  static TFT_eSprite sprite_view(&tft);
+
+#endif
 
   sprite_view.setTextSize(2);
   sprite_view.setTextWrap(false);
@@ -894,7 +900,8 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
   item_tail = min(item_tail, n_files);
   DBG_EXEC(printf("item_head: %d, item_tail: %d\n", item_head, item_tail));
 
-  int base_pos  = item_head * ITEM_HEIGHT;
+  bool invert = false;
+  int base_pos = item_head * ITEM_HEIGHT;
   int delta_pos = base_pos - scaled_pos + FONT_MARGIN - ITEM_HEIGHT;
 
   for (int i = item_head; i < item_tail; i++) {
@@ -919,11 +926,21 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
     sprite_view.print(p ? p + 1 : p);
   }
 
+#if   defined (LOVYANGFX_HPP_)
+
+//GFX_EXEC(beginTransaction());
   sprite_view.pushSprite(&lcd, widget->x, widget->y);
-  sprite_view.deleteSprite();
-#else
-#warning TFT_eSPI support required
+//GFX_EXEC(endTransaction());
+
+#elif defined (_TFT_eSPIH_)
+
+//GFX_EXEC(startWrite());
+  sprite_view.pushSprite(widget->x, widget->y);
+//GFX_EXEC(endWrite());
+
 #endif
+
+  sprite_view.deleteSprite();
 }
 
 static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
@@ -1020,20 +1037,25 @@ static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch)
   scroll_pos = constrain(scroll_pos, 0, scroll_max);
 //DBG_EXEC(printf("scroll_pos: %d, scroll_max: %d\n", scroll_pos, scroll_max));
 
-#if defined (LOVYANGFX_HPP_)
-  static LGFX_Sprite sprite_scroll;
+#if   defined (LOVYANGFX_HPP_)
 
+  static LGFX_Sprite sprite_scroll;
   sprite_scroll.createSprite(widget->w, widget->h);
   sprite_scroll.fillRect(0, scroll_pos, widget->w, bar_height, SCROLL_COLOR);
   sprite_scroll.pushSprite(&lcd, widget->x, widget->y);
   sprite_scroll.deleteSprite();
 
-  GFX_EXEC(beginTransaction());
-  ScrollView(widget - 1, scroll_pos);
-  GFX_EXEC(endTransaction());
-#else
-#warning TFT_eSPI support required
+#elif defined (_TFT_eSPIH_)
+
+  static TFT_eSprite sprite_scroll(&tft);
+  sprite_scroll.createSprite(widget->w, widget->h);
+  sprite_scroll.fillRect(0, scroll_pos, widget->w, bar_height, SCROLL_COLOR);
+  sprite_scroll.pushSprite(widget->x, widget->y);
+  sprite_scroll.deleteSprite();
+
 #endif
+
+  ScrollView(widget - 1, scroll_pos);
 
   // Update the previous position
   drag_pos = touch.y;
