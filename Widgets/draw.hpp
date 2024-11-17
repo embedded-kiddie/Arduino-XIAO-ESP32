@@ -17,12 +17,25 @@ static void DrawRadio (const Widget_t *widget, uint8_t n_widget, uint8_t selecte
 static void DrawThumb (const Widget_t *widget, const char *path);
 
 /*--------------------------------------------------------------------------------
- * Helper function for TFT_eSPI
+ * Sprite object
  *--------------------------------------------------------------------------------*/
+#if defined (LOVYANGFX_HPP_)
+
+static LGFX_Sprite sprite(&lcd);
+
+#elif defined (_TFT_eSPIH_)
+
+static TFT_eSprite sprite = TFT_eSprite(&tft);
+
+#endif
+
 #ifdef _TFT_eSPIH_
-// pngDraw: Callback function to draw pixels to the display
-// https://github.com/Bodmer/TFT_eSPI/tree/master/examples/PNG%20Images
-// Include the PNG decoder library, available via the IDE library manager
+/*--------------------------------------------------------------------------------
+ * Helper function for TFT_eSPI
+ * Include the PNG decoder library, available via the IDE library manager
+ * https://github.com/Bodmer/TFT_eSPI/tree/master/examples/PNG%20Images
+ * pngDraw: Callback function to draw pixels to the display
+ *--------------------------------------------------------------------------------*/
 #include <PNGdec.h>
 
 static PNG png; // PNG decoder instance
@@ -31,24 +44,32 @@ static PNG png; // PNG decoder instance
 static uint16_t xpos = 0;
 static uint16_t ypos = 0;
 
-// This next function will be called during decoding of the png file to
-// render each image line to the TFT.  If you use a different TFT library
-// you will need to adapt this function to suit.
-void pngDraw(PNGDRAW *pDraw) {
+/*--------------------------------------------------------------------------------
+ * This next function will be called during decoding of the png file to
+ * render each image line to the TFT. If you use a different TFT library
+ * you will need to adapt this function to suit.
+ *--------------------------------------------------------------------------------*/
+static void pngDraw(PNGDRAW *pDraw) {
   uint16_t lineBuffer[TFT_WIDTH > TFT_HEIGHT ? TFT_WIDTH : TFT_HEIGHT];
   png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
   GFX_EXEC(pushImage(xpos, ypos + pDraw->y, pDraw->iWidth, 1, lineBuffer));
 }
 
-static void DrawPNG(const uint8_t *img, size_t size, uint16_t x, uint16_t y) {
+static void pngSprite(PNGDRAW *pDraw) {
+  uint16_t lineBuffer[TFT_WIDTH > TFT_HEIGHT ? TFT_WIDTH : TFT_HEIGHT];
+  png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
+  sprite.pushImage(xpos, ypos + pDraw->y, pDraw->iWidth, 1, lineBuffer);
+}
+
+static void DrawPNG(const uint8_t *img, size_t size, uint16_t x, uint16_t y, PNG_DRAW_CALLBACK *draw) {
   xpos = x;
   ypos = y;
 
-  if (png.openFLASH((uint8_t*)img, size, pngDraw) == PNG_SUCCESS) {
+  if (png.openFLASH((uint8_t*)img, size, draw) == PNG_SUCCESS) {
     GFX_EXEC(startWrite());
     png.decode(NULL, 0);
     GFX_EXEC(endWrite());
-    // png.close(); // Required for files, not needed for FLASH arrays
+//  png.close(); // Required for files, not needed for FLASH arrays
   }
 }
 #endif // _TFT_eSPIH_
@@ -56,7 +77,7 @@ static void DrawPNG(const uint8_t *img, size_t size, uint16_t x, uint16_t y) {
 /*--------------------------------------------------------------------------------
  * Converting byte order according to MCU architecture
  *--------------------------------------------------------------------------------*/
-#if defined (__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#if defined (__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 
 #define SWAP(type, a, b)  { type tmp = a; a = b; b = tmp; }
 
@@ -85,13 +106,13 @@ static void DrawWidget(const Widget_t *widget, uint8_t offset /* = 0 */) {
   if (image) {
     GFX_EXEC(startWrite());
 
-#if defined (_TFT_eSPIH_)
-
-    DrawPNG(image->data, image->size, widget->x, widget->y);
-
-#elif defined (LOVYANGFX_HPP_)
+#if   defined (LOVYANGFX_HPP_)
 
     GFX_EXEC(drawPng(image->data, image->size, widget->x, widget->y));
+
+#elif defined (_TFT_eSPIH_)
+
+    DrawPNG(image->data, image->size, widget->x, widget->y, pngDraw);
 
 #endif
 
@@ -110,45 +131,16 @@ static void DrawScreen(const Widget_t *widget) {
 /*--------------------------------------------------------------------------------
  * Draw a button-like icon
  *--------------------------------------------------------------------------------*/
-#define PNG_HEADER_WIDTH    16 // PNG file signature + offset from chunk data
-#define PNG_HEADER_HEIGHT   20 // PNG file signature + offset from chunk data
-
 static void DrawButton(const Widget_t *widget, uint8_t offset /* = 0 */) {
-#if 1
-
-  // faster
   DrawWidget(widget, offset);
-
-#else
-
-  // slower
-  const Image_t *image = &widget->image[offset];
-
-  if (image) {
-    uint32_t w, h;
-    GFX_EXEC(startWrite());
-
-    w = swap_endian(*(uint32_t*)(image->data + PNG_HEADER_WIDTH));
-    h = swap_endian(*(uint32_t*)(image->data + PNG_HEADER_HEIGHT));
-    DBG_EXEC(printf("w: %d, h: %d\n", w, h));
-
-    static LGFX_Sprite sprite(&lcd);
-    sprite.createSprite(w, h);
-    sprite.drawPng(image->data, image->size, 0, 0);
-    sprite.pushSprite(widget->x, widget->y);
-    sprite.deleteSprite();
-
-    CHECK_POS(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
-    GFX_EXEC(endWrite());
-
-  }
-
-#endif
 }
 
 /*--------------------------------------------------------------------------------
  * Draw slider
  *--------------------------------------------------------------------------------*/
+#define PNG_HEADER_WIDTH    16 // PNG file signature + offset from chunk data
+#define PNG_HEADER_HEIGHT   20 // PNG file signature + offset from chunk data
+
 static void DrawSlider(const Widget_t *widget, int16_t value, bool enable /* = true */) {
   const Image_t *bar  = &widget->image[0];
   const Image_t *knob = &widget->image[enable ? 1 : 2]; // [1]: enable, [2]: disable
@@ -156,44 +148,42 @@ static void DrawSlider(const Widget_t *widget, int16_t value, bool enable /* = t
   if (bar && knob) {
     GFX_EXEC(startWrite());
 
-#if defined (LOVYANGFX_HPP_)
-
-    // slower but no flickering
-    static LGFX_Sprite sprite_bar(&lcd);
-    static LGFX_Sprite sprite_knob(&sprite_bar);
-
     uint32_t w, h;
     w = swap_endian(*(uint32_t*)(bar->data + PNG_HEADER_WIDTH));
     h = swap_endian(*(uint32_t*)(bar->data + PNG_HEADER_HEIGHT));
     DBG_EXEC(printf("w: %d, h: %d\n", w, h));
 
-    sprite_bar.createSprite(w, h);
-    sprite_bar.drawPng(bar->data, bar->size, 0, 0);
+    sprite.createSprite(w, h);
+
+#if   defined (LOVYANGFX_HPP_)
+
+    sprite.drawPng(bar->data, bar->size, 0, 0);
+
+#elif defined (_TFT_eSPIH_)
+
+    DrawPNG(bar->data, bar->size, 0, 0, pngSprite);
+
+#endif
 
     w = swap_endian(*(uint32_t*)(knob->data + PNG_HEADER_WIDTH));
     h = swap_endian(*(uint32_t*)(knob->data + PNG_HEADER_HEIGHT));
     DBG_EXEC(printf("w: %d, h: %d\n", w, h));
 
-    sprite_knob.createSprite(w, h);
-    sprite_knob.drawPng(knob->data, knob->size, 0, 0);
+#if   defined (LOVYANGFX_HPP_)
 
-    sprite_knob.pushSprite(value, 0);
-    sprite_bar.pushSprite(widget->x, widget->y);
-
-    sprite_knob.deleteSprite();
-    sprite_bar.deleteSprite();
-
-    CHECK_POS(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
-    GFX_EXEC(endWrite());
+    sprite.drawPng(knob->data, knob->size, value, 0);
 
 #elif defined (_TFT_eSPIH_)
 
-    static TFT_eSprite sprite_bar  = TFT_eSprite(&tft);
-    static TFT_eSprite sprite_knob = TFT_eSprite(&sprite_bar);
-
-#warning TFT_eSPI support required
+    DrawPNG(knob->data, knob->size, value, 0, pngSprite);
 
 #endif
+
+    sprite.pushSprite(widget->x, widget->y);
+    sprite.deleteSprite();
+
+    CHECK_POS(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
+    GFX_EXEC(endWrite());
   }
 }
 
@@ -233,7 +223,6 @@ static void DrawPress(const Widget_t *widget, Event_t event /* = EVENT_INIT */) 
 
   uint16_t rgb[PRESSED_BUFFER_LEN];
 
-#warning TFT_eSPI support required
 #endif
 
   if (event & EVENT_FALLING) {
@@ -273,9 +262,10 @@ static void DrawPress(const Widget_t *widget, Event_t event /* = EVENT_INIT */) 
  * (LovyanGFX requires SD library header file before including <LovyanGFX.hpp>)
  *--------------------------------------------------------------------------------*/
 static void DrawThumb(const Widget_t *widget, const char *path) {
+  GFX_EXEC(fillRect(widget->x, widget->y, widget->w, widget->h, BLACK));
+
 #if defined (LOVYANGFX_HPP_) && (defined (_SD_H_) || defined (SdFat_h))
 
-  GFX_EXEC(fillRect(widget->x, widget->y, widget->w, widget->h, BLACK));
   GFX_EXEC(drawBmpFile(
     SD,
     path,
