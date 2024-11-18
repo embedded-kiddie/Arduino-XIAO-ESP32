@@ -1273,12 +1273,18 @@ static void onCalibrationApply(const Widget_t *widget, const Touch_t &touch) {
 static void onAdjustOffsetScreen(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-#if defined (LOVYANGFX_HPP_)
+#if   defined (LOVYANGFX_HPP_)
+
   GFX_EXEC(beginTransaction());
   GFX_EXEC(fillRectAlpha(0, 0, lcd_width, lcd_height, 160, BLACK));
   GFX_EXEC(endTransaction());
-#else
-#warning TFT_eSPI support required
+
+#elif defined (_TFT_eSPIH_)
+
+  GFX_EXEC(startWrite());
+  DrawPNG(screen_calibration_opacity70, sizeof(screen_calibration_opacity70), 0, 0, pngDraw);
+  GFX_EXEC(endWrite());
+
 #endif
 
   DrawScreen(widget);
