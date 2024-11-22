@@ -921,6 +921,7 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
       sprite_view.fillRect(0, delta_pos - FONT_MARGIN, VIEW_WIDTH, ITEM_HEIGHT, WHITE);
     }
 
+    // skip directory and extract file name only
     sprite_view.setCursor(FONT_MARGIN, delta_pos);
     const char *p = strrchr(files[i].path.c_str(), '/');
     sprite_view.print(p ? p + 1 : p);
@@ -954,7 +955,7 @@ static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
     files.clear();
     GetFileList(SD, "/", 1, files);
     n_files = files.size();
-/*  
+/*
     DBG_EXEC({
       for (const auto& file : files) {
         printf("%s, %lu\n", file.path.c_str(), file.size);

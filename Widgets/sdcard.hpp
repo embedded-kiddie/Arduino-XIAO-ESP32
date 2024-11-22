@@ -202,9 +202,7 @@ static void getFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::v
       // https://cpprefjp.github.io/reference/exception/exception.html
       try {
 #if USE_SDFAT
-        char path[BUF_SIZE];
-        sprintf(path, "/%s/%s", dirname, name);
-        files.push_back({path, (size_t)file.fileSize(), isDir, false});
+        files.push_back({"/" + std::string(dirname) + "/" + std::string(name), (size_t)file.fileSize(), isDir, false});
 #else
         files.push_back({file.path(), file.size(), isDir, false});
 #endif
