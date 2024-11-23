@@ -14,6 +14,11 @@
 
 [Drawio](https://drive.google.com/file/d/1W-xelIn-PvofRw0Ya43I02ksVurOTiDk/view?usp=sharing)
 
+## GUI mockup
+
+[![GUI mockup for a thermography camera using MLX90640](GUI-mockup.jpg)](https://youtu.be/9El-2NYCDNU "GUI mockup for a thermography camera using MLX90640 - YouTube")
+
+
 ## Testbed environment
 
 - [Arduino IDE 2.3.2][1]
