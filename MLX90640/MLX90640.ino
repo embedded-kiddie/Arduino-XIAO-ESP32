@@ -11,7 +11,7 @@
 
 #define DEBUG       true
 #if     DEBUG
-#define DBG_EXEC(x) {x;}
+#define DBG_EXEC(x) x
 #else
 #define DBG_EXEC(x)
 #endif
@@ -76,6 +76,8 @@ void gfx_setup(void) {
  * LovyanGFX Library
  * https://github.com/lovyan03/LovyanGFX
  *---------------------------------------------------*/
+// LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
+// #include <SD.h>
 #include <LovyanGFX.hpp>
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
 
@@ -94,6 +96,8 @@ void gfx_setup(void) {
  * TFT_eSPI Library
  * https://github.com/Bodmer/TFT_eSPI
  *---------------------------------------------------*/
+// TFT_eSPI can not work with SdFat
+#include <SD.h>
 #include "TFT_eSPI.h"
 
 TFT_eSPI tft = TFT_eSPI();

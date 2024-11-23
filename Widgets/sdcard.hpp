@@ -45,11 +45,6 @@
  *--------------------------------------------------------------------------------*/
 // #define REASSIGN_PINS
 
-// temporary buffer size for string manipulation
-#ifndef BUF_SIZE
-#define BUF_SIZE  64
-#endif
-
 /*================================================================================
  * The configuration of the features defined in this file
  * Note: Currently only LovyanGFX can capture the screen successfully.
@@ -112,6 +107,11 @@ typedef struct {
   bool        isDirectory;
   bool        isSelected;
 } FileInfo_t;
+
+// temporary buffer size for string manipulation
+#ifndef BUF_SIZE
+#define BUF_SIZE  64
+#endif
 
 /*--------------------------------------------------------------------------------
  * Functions prototyping

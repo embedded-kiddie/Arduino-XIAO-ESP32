@@ -40,15 +40,26 @@
 #include <Arduino.h>
 #include "spi_assign.h"
 
+/*--------------------------------------------------------------------------------
+ * Uncomment and set up if you want to use custom pins for the SPI communication
+ *--------------------------------------------------------------------------------*/
+// #define REASSIGN_PINS
+
 /*================================================================================
  * The configuration of the features defined in this file
- * Note: Only LovyanGFX can capture the screen with `readPixel()` or `readRect()`
+ * Note: Currently only LovyanGFX can capture the screen successfully.
  *================================================================================*/
 #define CAPTURE_SCREEN  true
-#define USE_SDFAT       true
+#define USE_SDFAT       true  // TFT_eSPI can not work with SdFat
 
-// Uncomment and set up if you want to use custom pins for the SPI communication
-// #define REASSIGN_PINS
+// LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
+#if     defined (SdFat_h)
+#undef  USE_SDFAT
+#define USE_SDFAT       true
+#elif   defined (_SD_H_)
+#undef  USE_SDFAT
+#define USE_SDFAT       false
+#endif
 
 /*--------------------------------------------------------------------------------
  * SD library
@@ -74,28 +85,49 @@ SdFs SD;
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
-#define FS_TYPE  fs::FS
+#define FS_TYPE  fs::SDFS
 #ifdef _TFT_eSPIH_
-#define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()) //, SPI_READ_FREQUENCY
+#define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()), SPI_READ_FREQUENCY
 #else
-#define SD_CONFIG SD_CS //, SPI, SPI_READ_FREQUENCY
+#define SD_CONFIG SD_CS, SPI, SPI_READ_FREQUENCY
 #endif
 
 #endif // USE_SDFAT
 
-/*
+/*--------------------------------------------------------------------------------
  * File name and size for GetFileList()
- */
+ *--------------------------------------------------------------------------------*/
 #include <string>
 #include <vector>
+#include <exception>
+
 typedef struct {
-  std::string name;
-  std::size_t size;
+  std::string path;
+  size_t      size;
+  bool        isDirectory;
+  bool        isSelected;
 } FileInfo_t;
 
-/*
+// temporary buffer size for string manipulation
+#ifndef BUF_SIZE
+#define BUF_SIZE  64
+#endif
+
+/*--------------------------------------------------------------------------------
+ * Functions prototyping
+ *--------------------------------------------------------------------------------*/
+void sdcard_setup (void);
+bool sdcard_open  (void);
+bool sdcard_save  (void);
+void sdcard_size  (uint32_t *total, uint32_t *free);
+
+bool DeleteDir    (FS_TYPE &fs, const char *path);
+void DeleteFile   (FS_TYPE &fs, const char *path);
+void GetFileList  (FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<FileInfo_t> &files);
+
+/*--------------------------------------------------------------------------------
  * Sequence number management file
- */
+ *--------------------------------------------------------------------------------*/
 #define MLX90640_DIR  String("/MLX90640")
 #define MLX90640_NUM  String("/@number.txt")
 
@@ -134,10 +166,9 @@ static int GetFileNo(FS_TYPE &fs) {
 }
 
 /*--------------------------------------------------------------------------------
- * Basic file I/O and directory related functions
- * ex)  GetFileList(SD, "/", 0);
+ * A function to get a list of files in a specified directory.
  *--------------------------------------------------------------------------------*/
-static void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<FileInfo_t> &files) {
+static void getFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<FileInfo_t> &files) {
   File root = fs.open(dirname);
   if (!root) {
     DBG_EXEC(printf("Failed to open directory.\n"));
@@ -150,37 +181,63 @@ static void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::v
 
   File file = root.openNextFile();
   while (file) {
+    bool isDir = file.isDirectory();
+
 #if USE_SDFAT
-    char buf[BUF_SIZE]; // defined in printf.hpp
-    file.getName(buf, sizeof(buf));
+    char name[BUF_SIZE]; // BUF_SIZE is defined in printf.hpp
+    file.getName(name, sizeof(name));
     if (file.isHidden())
 #else
-    if ((file.path())[1] == '.')  // [0] == '/'
+    const char *p = strrchr(file.path(), '/');
+    if (p[p ? 1 : 0] == '.')
 #endif
     {
       ; // skip dot file
-    } else if (file.isDirectory()) {
-      if (levels) {
-#if USE_SDFAT
-        GetFileList(fs, buf, levels - 1, files);
-#else
-        GetFileList(fs, file.path(), levels - 1, files);
-#endif
-      }
-    } else {
+    }
+    
+    else {
       // Add full path to vector
       // file.path(), file.name(), file.size()
+      // https://stackoverflow.com/questions/27609839/about-c-vectorpush-back-exceptions-ellipsis-catch-useful
+      // https://cpprefjp.github.io/reference/exception/exception.html
+      try {
 #if USE_SDFAT
-      files.push_back({buf, (uint32_t)file.fileSize()});
+        files.push_back({"/" + std::string(dirname) + "/" + std::string(name), (size_t)file.fileSize(), isDir, false});
 #else
-      files.push_back({file.path(), file.size()});
+        files.push_back({file.path(), file.size(), isDir, false});
 #endif
+      } catch (const std::exception &e) {
+        DBG_EXEC(printf("Exception: %s\n", e.what()));
+        return;
+      }
+
+      if (isDir && levels) {
+#if USE_SDFAT
+        getFileList(fs, name, levels - 1, files);
+#else
+        getFileList(fs, file.path(), levels - 1, files);
+#endif
+      }
     }
+
     file = root.openNextFile();
   }
 }
 
-static bool DeleteDir(FS_TYPE &fs, const char *path) {
+/*--------------------------------------------------------------------------------
+ * A function to get a list of files in a specified directory except top directory
+ *--------------------------------------------------------------------------------*/
+void GetFileList(FS_TYPE &fs, const char *dirname, uint8_t levels, std::vector<FileInfo_t> &files) {
+  getFileList(fs, dirname, levels, files);
+
+  // erase the first file because it's a directory
+  files.erase(files.begin());
+}
+
+/*--------------------------------------------------------------------------------
+ * Basic functions to delete a directory and a file.
+ *--------------------------------------------------------------------------------*/
+bool DeleteDir(FS_TYPE &fs, const char *path) {
   // `path` must be empty
   if (fs.rmdir(path)) {
     DBG_EXEC(printf("Delete %s: done.\n", path));
@@ -191,7 +248,7 @@ static bool DeleteDir(FS_TYPE &fs, const char *path) {
   }
 }
 
-static void DeleteFile(FS_TYPE &fs, const char *path) {
+void DeleteFile(FS_TYPE &fs, const char *path) {
   if (fs.remove(path)) {
     DBG_EXEC(printf("Delete %s: done.\n", path));
   } else {
@@ -210,13 +267,12 @@ inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
   b = (color<<3)&0x00F8;
 }
 
-#if defined(_ADAFRUIT_GFX_H)
+#if defined (_ADAFRUIT_GFX_H)
 
 /* create snapshot of 3.5" TFT and save to file in bitmap format
  * https://forum.arduino.cc/t/create-snapshot-of-3-5-tft-and-save-to-file-in-bitmap-format/391367/7
 */
 static uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
-
     digitalWrite(TFT_CS, LOW);
 
     GFX_EXEC(startWrite());    // needed for low-level methods. CS active
@@ -237,12 +293,24 @@ static uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 forma
 
 #endif // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
 
+/*--------------------------------------------------------------------------------
+ * Save LCD screenshot as a 24bits bitmap file
+ *--------------------------------------------------------------------------------*/
 static bool SaveBMP24(FS_TYPE &fs, const char *path) {
-#ifdef  LOVYANGFX_HPP_
+
+#if   defined (LOVYANGFX_HPP_)
+
   lgfx::rgb888_t rgb[TFT_WIDTH > TFT_HEIGHT ? TFT_WIDTH : TFT_HEIGHT];
+
+#elif defined (_TFT_eSPIH_)
+
+  uint16_t rgb[TFT_WIDTH > TFT_HEIGHT ? TFT_WIDTH : TFT_HEIGHT]; // check ReadWrite_Test
+
 #else
+
   uint16_t rgb;
   uint8_t r, g, b;
+
 #endif
 
   File file = fs.open(path, FILE_WRITE);
@@ -289,32 +357,24 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
       delay(1); // reset wdt
     }
 
-#ifdef  LOVYANGFX_HPP_
+#if defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
 
-//  GFX_EXEC(beginTransaction());
+//  GFX_EXEC(startWrite());
     GFX_EXEC(readRect(0, y, w, 1, rgb));
-//  GFX_EXEC(endTransaction());
-    file.write((uint8_t*)rgb, w * sizeof(lgfx::rgb888_t)); // SD: 2966 msec, SdFat: 2777 msec
+//  GFX_EXEC(endWrite());
+    file.write((uint8_t*)rgb, w * sizeof(rgb[0])); // SD: 2966 msec, SdFat: 2777 msec
 
-#else
+#else // defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
 
     for (int x = 0; x < w; x++) {
 
-#if   defined(_ARDUINO_GFX_LIBRARIES_H_)
+#if   defined (_ARDUINO_GFX_LIBRARIES_H_)
 
       rgb = 0; // does not support reading
 
-#elif defined(_ADAFRUIT_GFX_H)
+#elif defined (_ADAFRUIT_GFX_H)
 
       rgb = readPixA(x, y);
-
-#elif defined(_TFT_eSPIH_)
-
-      rgb = GFX_EXEC(readPixel(x, y));
-
-#else // LOVYANGFX_HPP_
-
-      rgb = GFX_EXEC(readPixel(x, y));
 
 #endif
 
@@ -325,7 +385,7 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
       file.write(r);
     }
   
-#endif // LOVYANGFX_HPP_
+#endif // defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
   }
 
   file.close();
@@ -343,8 +403,9 @@ void sdcard_setup(void) {
 #endif
 }
 
-bool sdcard_save(void) {
+bool sdcard_open(void) {
   uint8_t retry = 0;
+
   while (!SD.begin(SD_CONFIG)) {
     if (++retry >= 2) {
       DBG_EXEC(printf("Card mount failed.\n"));
@@ -354,14 +415,32 @@ bool sdcard_save(void) {
   }
 
   DBG_EXEC(printf("The card was mounted successfully.\n"));
+  return true;
+}
+
+void sdcard_size(uint32_t *total, uint32_t *free) {
+#if USE_SDFAT
+  *total = (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5);
+  *free  = (uint32_t)((SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024));
+#else
+  *total = (uint32_t)(SD.totalBytes() / (1024 * 1024));
+  *free  = (uint32_t)(*total - SD.usedBytes()  / (1024 * 1024));
+#endif
+}
+
+bool sdcard_save(void) {
+  if (!sdcard_open()) {
+    return false;
+  }
 
 #if CAPTURE_SCREEN
   int no = GetFileNo(SD);
-  char path[64];
+  char path[BUF_SIZE];
   sprintf(path, "%s/mlx%04d.bmp", MLX90640_DIR, no);
   DBG_EXEC(printf("%s\n", path));
 
-  uint32_t start = millis();
+  DBG_EXEC(uint32_t start = millis());
+
   if (!SaveBMP24(SD, path)) {
     return false;
   }
@@ -369,22 +448,21 @@ bool sdcard_save(void) {
   DBG_EXEC(printf("Elapsed time: %d msec\n", millis() - start)); // SD: 6264 msec, SdFat: 4202 msec
 #endif
 
-  std::vector<FileInfo_t> files;
-  GetFileList(SD, "/", 1, files);
-
-  for (const auto& file : files) {
-    DBG_EXEC(printf("%s, %lu\n", file.name.c_str(), file.size));
-  }
+  DBG_EXEC({
+    std::vector<FileInfo_t> files;
+    GetFileList(SD, "/", 1, files);
+    for (const auto& file : files) {
+      printf("%s, %lu\n", file.path.c_str(), file.size);
+    }
+  });
 
   // SD.end(); // Activating this line will cause some GFX libraries to stop working.
 
-#if USE_SDFAT
-  DBG_EXEC(printf("Card size: %luMB\n", (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5)));
-  DBG_EXEC(printf("Free size: %luMB\n", (SD.vol()->bytesPerCluster() * SD.vol()->freeClusterCount()) / (1024 * 1024)));
-#else
-  DBG_EXEC(printf("Card size: %lluMB\n", SD.totalBytes() / (1024 * 1024)));
-  DBG_EXEC(printf("Used size: %lluMB\n", SD.usedBytes()  / (1024 * 1024)));
-#endif
+  DBG_EXEC({
+    uint32_t total; uint32_t free;
+    sdcard_size(&total, &free);
+    printf("Card size: %luMB\nFree size: %luMB\n", total, free);
+  });
 
   return true;
 }
