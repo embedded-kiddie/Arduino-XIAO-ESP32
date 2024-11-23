@@ -90,7 +90,6 @@ bool touch_load(TouchConfig_t *config);
  *--------------------------------------------------------------------------------*/
 extern uint16_t lcd_width;
 extern uint16_t lcd_height;
-extern MLXConfig_t mlx_cnf;
 
 /*--------------------------------------------------------------------------------
  * Setup touch manager

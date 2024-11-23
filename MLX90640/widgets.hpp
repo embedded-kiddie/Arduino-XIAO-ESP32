@@ -4,11 +4,6 @@
 #include <Arduino.h>
 #include "widgets.h"
 
-#define DEMO_MODE true
-#if     DEMO_MODE
-#include "demo.h"
-#endif
-
 /*--------------------------------------------------------------------------------
  * MLX90640 configuration and Widget control da
  *--------------------------------------------------------------------------------*/
@@ -92,16 +87,6 @@ static constexpr Image_t image_target[] = {
   { target_off, sizeof(target_off) }, // 32 x 32
   { target_on,  sizeof(target_on ) }, // 32 x 32
 };
-#if defined (DEMO_MODE) && DEMO_MODE
-static constexpr Image_t image_demo[] = {
-  { screen_demo0, sizeof(screen_demo0) }, // 8:1 (256 x 192)
-  { screen_demo1, sizeof(screen_demo1) }, // 6:1 (192 x 144)
-  { screen_demo2, sizeof(screen_demo2) }, // 4:1 (128 x  96)
-  { screen_demo3, sizeof(screen_demo3) }, // 2:1 ( 64 x  48)
-  { screen_demo4, sizeof(screen_demo4) }, // 1:1 ( 32 x  24)
-  { screen_demo5, sizeof(screen_demo5) }, // 2:1 ( 64 x  48)
-};
-#endif
 
 /*--------------------------------------------------------------------------------
  * Slider model
@@ -154,9 +139,6 @@ static constexpr Widget_t widget_main[] = {
   {   0, 195, 256,  45, NULL,              EVENT_ALL,  onMainThermograph   },
   { 265, 135,  50,  50, image_icon_camera, EVENT_UP,   onMainCapture       },
   { 265, 185,  50,  50, NULL,              EVENT_ALL,  onMainConfiguration },
-#if defined (DEMO_MODE) && DEMO_MODE
-  {   0,   0, 320, 240, image_demo,        EVENT_NONE, nullptr             },
-#endif
 };
 
 // Screen - Configuration
@@ -216,9 +198,6 @@ static constexpr Widget_t widget_thermograph[] = {
   {  40, 173, 238,  26, image_slider2,     EVENT_DRAG,  onThermographSlider2 },
   {  60, 206,  30,  30, NULL,              EVENT_ALL,   onThermographClose   },
   { 230, 206,  30,  30, image_icon_apply,  EVENT_CLICK, onThermographApply   },
-#if defined (DEMO_MODE) && DEMO_MODE
-  {   0,   0, 128, 135, image_demo,        EVENT_NONE,  nullptr              },
-#endif
 };
 
 // Screen - Capture mode
@@ -342,18 +321,6 @@ static void onMainScreen(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   DrawScreen(widget);
-
-#if defined (DEMO_MODE) && DEMO_MODE
-  int N = 0;
-  switch (mlx_cnf.interpolation * mlx_cnf.box_size) {
-    case 8: N = 0; break;
-    case 6: N = 1; break;
-    case 4: N = 2; break;
-    case 2: N = 3; break;
-    case 1: N = 4; break;
-  }
-  DrawWidget(widget + 6, N);
-#endif
 
   // Draw color bar
   const int n = sizeof(camColors) / sizeof(camColors[0]);
@@ -704,10 +671,6 @@ static void onThermographRadio1(const Widget_t *widget, const Touch_t &touch) {
 
   DrawRadio(widget, 2, cnf_copy.color_scheme);
 
-#if defined (DEMO_MODE) && DEMO_MODE
-  DrawWidget(widget + 8, 2);
-#endif
-
   // Enable apply if somethig is changed
   onThermographApply(widget + 7, doInit);
 }
@@ -720,10 +683,6 @@ static void onThermographRadio2(const Widget_t *widget, const Touch_t &touch) {
   }
 
   DrawRadio(widget - 1, 2, cnf_copy.color_scheme);
-
-#if defined (DEMO_MODE) && DEMO_MODE
-  if (touch.event != EVENT_INIT) DrawWidget(widget + 7, 5);
-#endif
 
   // Enable apply if somethig is changed
   onThermographApply(widget + 6, doInit);

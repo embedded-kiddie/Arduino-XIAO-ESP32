@@ -86,6 +86,7 @@ void gfx_setup(void) {
  *---------------------------------------------------*/
 // LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
 // #include <SD.h>
+#include "SdFat.h"
 #include <LovyanGFX.hpp>
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
 
@@ -318,48 +319,49 @@ void ProcessInput(uint8_t bank) {
  * Interpolate thermal image and display on LCD.
  *--------------------------------------------------------------------------------*/
 void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
-  static uint32_t prevFinish;
-  uint32_t outputStart = millis();
-  int dst_rows = mlx_cnf.interpolation * MLX90640_ROWS;
-  int dst_cols = mlx_cnf.interpolation * MLX90640_COLS;
-  int box_size = mlx_cnf.box_size;
+  // Widget controller
+  if (widget_control() == STATE_MAIN) {
+    static uint32_t prevFinish;
+    uint32_t outputStart = millis();
+    int dst_rows = mlx_cnf.interpolation * MLX90640_ROWS;
+    int dst_cols = mlx_cnf.interpolation * MLX90640_COLS;
+    int box_size = mlx_cnf.box_size;
 
 #if ENA_INTERPOLATION
-  interpolate_image(src[bank], MLX90640_ROWS, MLX90640_COLS, dst, dst_rows, dst_cols);
-  float *drw = dst;
+    interpolate_image(src[bank], MLX90640_ROWS, MLX90640_COLS, dst, dst_rows, dst_cols);
+    float *drw = dst;
 #else
-  float *drw = src[bank];
+    float *drw = src[bank];
 #endif
 
 #if ENA_TRANSACTION
-  GFX_EXEC(startWrite());
+    GFX_EXEC(startWrite());
 #endif
 
-  for (int h = 0; h < dst_rows; h++) {
-    for (int w = 0; w < dst_cols; w++) {
-      float t = drw[h * dst_cols + w];
+    for (int h = 0; h < dst_rows; h++) {
+      for (int w = 0; w < dst_cols; w++) {
+        float t = drw[h * dst_cols + w];
 
-      t = min((int)t, MAXTEMP);
-      t = max((int)t, MINTEMP); 
+        t = min((int)t, MAXTEMP);
+        t = max((int)t, MINTEMP); 
 
-      int colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
-      colorIndex = constrain(colorIndex, 0, 255);
+        int colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
+        colorIndex = constrain(colorIndex, 0, 255);
 
 #if 0
-      // Selfie Camera
-      GFX_EXEC(fillRect(box_size * w, box_size * h, box_size, box_size, camColors[colorIndex]));
+        // Selfie Camera
+        GFX_EXEC(fillRect(box_size * w, box_size * h, box_size, box_size, camColors[colorIndex]));
 #else
-      // Front Camera
-      if (box_size == 1) {
-        GFX_EXEC(drawPixel(dst_cols - 1 - w, h, camColors[colorIndex]));
-      } else {
-        GFX_EXEC(fillRect((dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, camColors[colorIndex]));
-      }
+        // Front Camera
+        if (box_size == 1) {
+          GFX_EXEC(drawPixel(dst_cols - 1 - w, h, camColors[colorIndex]));
+        } else {
+          GFX_EXEC(fillRect((dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, camColors[colorIndex]));
+        }
 #endif
+      }
     }
-  }
 
-  if (widget_state() == STATE_RUN) {
     // MLX90640
     GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
     gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
@@ -378,14 +380,11 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     if (0.0f < v && v < 100.0f) {
       gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 6.5, "%4.1f", v);
     }
-  }
 
 #if ENA_TRANSACTION
-  GFX_EXEC(endWrite());
+    GFX_EXEC(endWrite());
 #endif
-
-  // Widget controller
-  widget_control();
+  }
 
   // Prevent the watchdog from firing
   delay(1);
@@ -404,6 +403,7 @@ void setup() {
   gfx_setup();
   touch_setup();
   sdcard_setup();
+  widget_setup();
 
   // Initialize interpolation
   interpolate_setup(mlx_cnf.interpolation);
@@ -421,7 +421,7 @@ void setup() {
   mlx.setRefreshRate(REFRESH_RATE);     
 
   // I2C bus clock for MLX90640
-  // Note: ESP32S3 supports up to 800 MHz
+  // Note: ESP32S3 supports up to 800 KHz
   Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
 
   // Start tasks

@@ -17,8 +17,7 @@
  * State of the screen
  *--------------------------------------------------------------------------------*/
 typedef enum {
-  STATE_OFF = 0,
-  STATE_ON,
+  STATE_ON = 0,
   STATE_MAIN,
   STATE_CONFIGURATION,
   STATE_RESOLUTION,
@@ -63,9 +62,9 @@ static constexpr Touch_t doInit = { EVENT_INIT, 0, 0 };
 /*--------------------------------------------------------------------------------
  * Functions prototyping
  *--------------------------------------------------------------------------------*/
-void widget_control(void);
-void widget_setup(State_t screen = STATE_OFF);
-State_t widget_state(State_t screen = STATE_OFF);
+void widget_setup(State_t screen = STATE_ON);
+void widget_state(State_t screen = STATE_ON);
+State_t widget_control(void);
 
 /*--------------------------------------------------------------------------------
  * Widgets
@@ -123,6 +122,7 @@ static bool widget_get(State_t screen, Widget_t const **widget, int *n) {
       *n = N_WIDGETS(widget_information);
       return true;
 
+    case STATE_ON:
     default:
       return false;
   }
@@ -180,7 +180,7 @@ static bool widget_watch(const Widget_t *widgets, const size_t n_widgets) {
 /*--------------------------------------------------------------------------------
  * Draw all widgets at the start of each state
  *--------------------------------------------------------------------------------*/
-void widget_setup(State_t screen /* = STATE_OFF */) {
+void widget_setup(State_t screen /* = STATE_ON */) {
   int n;
   Widget_t const *widget;
 
@@ -200,29 +200,24 @@ void widget_setup(State_t screen /* = STATE_OFF */) {
 /*--------------------------------------------------------------------------------
  * Change state
  *--------------------------------------------------------------------------------*/
-State_t widget_state(State_t screen /*= STATE_OFF */) {
-  state = screen;
+void widget_state(State_t screen /*= STATE_ON */) {
   touch_clear();
-  widget_setup(state);
-  return state;
+  widget_setup(state = screen);
 }
 
 /*--------------------------------------------------------------------------------
  * Finite State Machines
  *--------------------------------------------------------------------------------*/
-void widget_control(void) {
+State_t widget_control(void) {
   int n;
   Widget_t const *widget;
 
-  if (!widget_get(state, &widget, &n)) {
-    state = STATE_ON;
-  }
-
-  State_t initial = state;
   switch (state) {
     case STATE_MAIN:
     case STATE_THERMOGRAPH:
-      widget_watch(widget, n);
+      if (widget_get(state, &widget, &n)) {
+        widget_watch(widget, n);
+      }
       break;
 
     case STATE_CONFIGURATION:
@@ -232,15 +227,20 @@ void widget_control(void) {
     case STATE_CALIBRATION:
     case STATE_ADJUST_OFFSET:
     case STATE_INFORMATION:
-      do {
-        widget_watch(widget, n);
-        delay(1); // reset wdt
-      } while (state == initial);
+      if (widget_get(state, &widget, &n)) {
+        State_t initial = state;
+        do {
+          widget_watch(widget, n);
+          delay(1); // reset wdt
+        } while (state == initial);
+      }
       break;
 
     case STATE_ON:
     default:
-      widget_setup(state = STATE_MAIN);
+      widget_state(STATE_MAIN);
       break;
   }
+
+  return state;
 }
