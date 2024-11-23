@@ -48,7 +48,7 @@ void gfx_setup(void) {
   lcd_height = GFX_EXEC(height());
 }
 
-#elif 0
+#elif 1
 /*---------------------------------------------------
  * Arduino GFX Library
  * https://github.com/moononournation/Arduino_GFX
@@ -59,7 +59,7 @@ Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI, 
 Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
 
 #define SCREEN_ROTATION 3
-#define GFX_EXEC(x) tft.x
+#define GFX_EXEC(x) gfx->x
 
 void gfx_setup(void) {
   // Init Display
