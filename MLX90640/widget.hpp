@@ -24,8 +24,8 @@ typedef struct {
   uint16_t      w, h;   // Widget width and height
   const uint8_t *img;   // PNG image data
   size_t        size;   // Size of PNG image data
-  EventType_t   event;  // The touch event to detect
-  void          (*callback)(EventPoint_t &ep);  // Callback event handler
+  Event_t       event;  // The touch event to detect
+  void          (*callback)(Touch_t &ep);  // Callback event handler
 } Widget_t;
 
 #define N_WIDGETS(w)  (sizeof(w) / sizeof(w[0]))
@@ -94,26 +94,26 @@ const Widget_t* get_widget(State_t screen);
 const Widget_t* find_widget(State_t screen, const uint8_t* icon);
 
 // Screen - Main
-static void onInside(EventPoint_t &ep) {
+static void onInside(Touch_t &ep) {
   DBG_EXEC(printf("onInside\n"));
 }
 
-static void onOutside(EventPoint_t &ep) {
+static void onOutside(Touch_t &ep) {
   DBG_EXEC(printf("onOutside\n"));
 }
 
-static void onThermograph(EventPoint_t &ep) {
+static void onThermograph(Touch_t &ep) {
   DBG_EXEC(printf("onThermograph\n"));
 }
 
-static void onCamera(EventPoint_t &ep) {
+static void onCamera(Touch_t &ep) {
   DBG_EXEC(printf("onCamera\n"));
   DrawWidget(find_widget(STATE_RUN, icon_camera2));
   sdcard_save();
   DrawWidget(find_widget(STATE_RUN, icon_camera1));
 }
 
-static void onConfig(EventPoint_t &ep) {
+static void onConfig(Touch_t &ep) {
   DBG_EXEC(printf("onConfig\n"));
   GFX_EXEC(fillScreen(BLACK));
 
@@ -123,34 +123,34 @@ static void onConfig(EventPoint_t &ep) {
     DrawWidget(widget);
   }
 
-  touch_clear(ep);
+  touch_clear();
   state = STATE_CONFIG;
 }
 
 // Screen - Config
-static void onResolution(EventPoint_t &ep) {
+static void onResolution(Touch_t &ep) {
   DBG_EXEC(printf("onResolution\n"));
 }
 
-static void onFolder(EventPoint_t &ep) {
+static void onFolder(Touch_t &ep) {
   DBG_EXEC(printf("onFolder\n"));
 }
 
-static void onCapMode(EventPoint_t &ep) {
+static void onCapMode(Touch_t &ep) {
   DBG_EXEC(printf("onCapMode\n"));
 }
 
-static void onCalibration(EventPoint_t &ep) {
+static void onCalibration(Touch_t &ep) {
   DBG_EXEC(printf("onCalibration\n"));
 }
 
-static void onDevInfo(EventPoint_t &ep) {
+static void onDevInfo(Touch_t &ep) {
   DBG_EXEC(printf("onDevice\n"));
 }
 
-static void onReturn(EventPoint_t &ep) {
+static void onReturn(Touch_t &ep) {
   DBG_EXEC(printf("onReturn\n"));
-  touch_clear(ep);
+  touch_clear();
   state = STATE_ON;
 }
 
@@ -224,8 +224,8 @@ void widget_setup(void) {
 
   // Draw color bar
   const int n = sizeof(camColors) / sizeof(camColors[0]);
-  const int w = dsp.box_size * dsp.interpolate_scale * MLX90640_COLS;
-  int       y = dsp.box_size * dsp.interpolate_scale * MLX90640_ROWS + 3;
+  const int w = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_COLS;
+  int       y = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_ROWS + 3;
   for (int i = 0; i < n; i++) {
     int x = map(i, 0, n, 0, w);
     GFX_EXEC(fillRect(x, y, 1, FONT_HEIGHT, camColors[i]));
@@ -246,7 +246,7 @@ void widget_setup(void) {
   gfx_printf(260, LINE_HEIGHT * 6.0, "Sensor['C]");
 
   GFX_EXEC(setTextSize(2));
-  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%2d:%d", dsp.interpolate_scale, dsp.box_size);
+  gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 0.5, "%2d:%d", mlx_cnf.interpolation, mlx_cnf.box_size);
 
   DrawWidget(find_widget(STATE_RUN, icon_camera1));
   DrawWidget(find_widget(STATE_RUN, icon_config));
@@ -255,7 +255,7 @@ void widget_setup(void) {
 /*--------------------------------------------------------------------------------
  * Manage widget events
  *--------------------------------------------------------------------------------*/
-void widget_event(const Widget_t *widgets, size_t size, EventPoint_t &ep) {
+void widget_event(const Widget_t *widgets, size_t size, Touch_t &ep) {
   for (int i = 0; i < size; i++) {
 
     // In case the touch event to be detected
@@ -280,7 +280,7 @@ State_t widget_state(void) {
 }
 
 void widget_control(void) {
-  EventPoint_t ep;
+  Touch_t ep;
 
   switch (state) {
     case STATE_ON:

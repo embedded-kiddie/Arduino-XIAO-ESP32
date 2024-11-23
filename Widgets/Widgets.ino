@@ -10,9 +10,9 @@
 #define DBG_EXEC(x)
 #endif
 
-/*=============================================================
+/*--------------------------------------------------------------------------------
  * Step 1: Select GFX Library
- *=============================================================*/
+ *--------------------------------------------------------------------------------*/
 uint16_t lcd_width;
 uint16_t lcd_height;
 
@@ -29,13 +29,13 @@ uint16_t lcd_height;
 
 LGFX lcd;
 
-#define GFX_EXEC(x)     lcd.x
 #define SCREEN_ROTATION 3
+#define GFX_EXEC(x) lcd.x
 
 void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(clear(0));
-  GFX_EXEC(setRotation(3));
+  GFX_EXEC(setRotation(SCREEN_ROTATION));
   lcd_width  = GFX_EXEC(width());
   lcd_height = GFX_EXEC(height());
 }
@@ -51,13 +51,13 @@ void gfx_setup(void) {
 
 TFT_eSPI tft = TFT_eSPI();
 
-#define GFX_EXEC(x)     tft.x
 #define SCREEN_ROTATION 3
+#define GFX_EXEC(x) tft.x
 
 void gfx_setup(void) {
   GFX_EXEC(init());
   GFX_EXEC(fillScreen(0));
-  GFX_EXEC(setRotation(3));
+  GFX_EXEC(setRotation(SCREEN_ROTATION));
   lcd_width  = GFX_EXEC(width());
   lcd_height = GFX_EXEC(height());
 }

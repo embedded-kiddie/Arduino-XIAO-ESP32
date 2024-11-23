@@ -19,6 +19,9 @@
 /*--------------------------------------------------------------------------------
  * Step 1: Select GFX Library
  *--------------------------------------------------------------------------------*/
+uint16_t lcd_width;
+uint16_t lcd_height;
+
 #if 0
 /*---------------------------------------------------
  * Adafruit GFX Library
@@ -29,17 +32,20 @@
 
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
+#define SCREEN_ROTATION 1
 #define GFX_EXEC(x) tft.x
-//#define drawPixel   writePixel  // Disable because of invalid transaction 
 
 void gfx_setup(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
-  GFX_EXEC(setRotation(1));
+  GFX_EXEC(setRotation(SCREEN_ROTATION));
   GFX_EXEC(invertDisplay(false));
 
 #if defined (ARDUINO_XIAO_ESP32S3)
   GFX_EXEC(setSPISpeed(SPI_FREQUENCY));
 #endif
+
+  lcd_width  = GFX_EXEC(width());
+  lcd_height = GFX_EXEC(height());
 }
 
 #elif 0
@@ -49,11 +55,11 @@ void gfx_setup(void) {
  *---------------------------------------------------*/
 #include <Arduino_GFX_Library.h>
 
-Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC /* DC */, TFT_CS /* CS */, TFT_SCLK /* SCK */, TFT_MOSI /* MOSI */, TFT_MISO /* MISO */);
+Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI, TFT_MISO);
 Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
 
-#define GFX_EXEC(x) gfx->x
-//#define drawPixel   writePixel  // Disable because of invalid transaction 
+#define SCREEN_ROTATION 3
+#define GFX_EXEC(x) tft.x
 
 void gfx_setup(void) {
   // Init Display
@@ -67,8 +73,10 @@ void gfx_setup(void) {
   }
 
   SPI.setDataMode(SPI_MODE);
-  GFX_EXEC(setRotation(3));
+  GFX_EXEC(setRotation(SCREEN_ROTATION));
   GFX_EXEC(invertDisplay(true));
+  lcd_width  = GFX_EXEC(width());
+  lcd_height = GFX_EXEC(height());
 }
 
 #elif 1
@@ -83,12 +91,15 @@ void gfx_setup(void) {
 
 LGFX lcd;
 
+#define SCREEN_ROTATION 3
 #define GFX_EXEC(x) lcd.x
 #define drawPixel   writePixel
 
 void gfx_setup(void) {
   GFX_EXEC(init());
-  GFX_EXEC(setRotation(3));
+  GFX_EXEC(setRotation(SCREEN_ROTATION));
+  lcd_width  = GFX_EXEC(width());
+  lcd_height = GFX_EXEC(height());
 }
 
 #else
@@ -102,12 +113,14 @@ void gfx_setup(void) {
 
 TFT_eSPI tft = TFT_eSPI();
 
+#define SCREEN_ROTATION 3
 #define GFX_EXEC(x) tft.x
-//#define drawPixel   writePixel  // Disable because of missing writePixel()
 
 void gfx_setup(void) {
   GFX_EXEC(init());
-  GFX_EXEC(setRotation(3));
+  GFX_EXEC(setRotation(SCREEN_ROTATION));
+  lcd_width  = GFX_EXEC(width());
+  lcd_height = GFX_EXEC(height());
 }
 #endif
 
@@ -156,20 +169,6 @@ void gfx_setup(void) {
 #error 'REFRESH_RATE'
 #endif
 
-typedef struct {
-  uint8_t interpolate_scale;
-  uint8_t box_size;
-  uint8_t refresh_rate;
-  uint8_t color_pallet;
-} DisplayParams_t;
-
-DisplayParams_t dsp = {
-  INTERPOLATE_SCALE,
-  BOX_SIZE,
-  REFRESH_RATE,
-  0
-};
-
 // The size of thermal image (max INTERPOLATE_SCALE = 8)
 #define MLX90640_COLS 32
 #define MLX90640_ROWS 24
@@ -186,6 +185,55 @@ DisplayParams_t dsp = {
 #define FONT_WIDTH    12 // [px] (Device coordinate system)
 #define FONT_HEIGHT   16 // [px] (Device coordinate system)
 #define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
+
+/*--------------------------------------------------------------------------------
+ * Widget control parameters
+ *--------------------------------------------------------------------------------*/
+typedef struct MLXConfig {
+  // Member Variables
+  uint8_t       interpolation;
+  uint8_t       box_size;
+  uint8_t       color_scheme;
+  uint8_t       padding;
+  bool          minmax_auto;
+  bool          range_auto;
+  int16_t       range_min;
+  int16_t       range_max;
+
+  // Comparison Operator
+  bool operator != (const MLXConfig &RHS) {
+    return (
+      (interpolation != RHS.interpolation) ||
+      (box_size      != RHS.box_size     ) ||
+      (color_scheme  != RHS.color_scheme ) ||
+      (minmax_auto   != RHS.minmax_auto  ) ||
+      (range_auto    != RHS.range_auto   ) ||
+      (range_min     != RHS.range_min    ) ||
+      (range_max     != RHS.range_max    )
+    );
+  }
+} MLXConfig_t;
+
+typedef struct MLXCapture {
+  uint8_t       capture_mode; // 0: camera, 1: video
+  bool          recording;
+} MLXCapture_t;
+
+MLXConfig_t mlx_cnf = {
+  .interpolation  = INTERPOLATE_SCALE,
+  .box_size       = BOX_SIZE,
+  .color_scheme   = 0,
+  .padding        = 0,
+  .minmax_auto    = false,
+  .range_auto     = false,
+  .range_min      = MINTEMP,
+  .range_max      = MAXTEMP,
+};
+
+MLXCapture_t mlx_cap = {
+  .capture_mode   = 0,
+  .recording      = false,
+};
 
 /*--------------------------------------------------------------------------------
  * Global variables
@@ -272,9 +320,9 @@ void ProcessInput(uint8_t bank) {
 void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   static uint32_t prevFinish;
   uint32_t outputStart = millis();
-  int dst_rows = dsp.interpolate_scale * MLX90640_ROWS;
-  int dst_cols = dsp.interpolate_scale * MLX90640_COLS;
-  int box_size = dsp.box_size;
+  int dst_rows = mlx_cnf.interpolation * MLX90640_ROWS;
+  int dst_cols = mlx_cnf.interpolation * MLX90640_COLS;
+  int box_size = mlx_cnf.box_size;
 
 #if ENA_INTERPOLATION
   interpolate_image(src[bank], MLX90640_ROWS, MLX90640_COLS, dst, dst_rows, dst_cols);
@@ -358,7 +406,7 @@ void setup() {
   sdcard_setup();
 
   // Initialize interpolation
-  interpolate_setup(dsp.interpolate_scale);
+  interpolate_setup(mlx_cnf.interpolation);
 
   if (! mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire)) {
     DBG_EXEC(printf("MLX90640 not found!\n"));
