@@ -48,7 +48,7 @@ void gfx_setup(void) {
   lcd_height = GFX_EXEC(height());
 }
 
-#elif 1
+#elif 0
 /*---------------------------------------------------
  * Arduino GFX Library
  * https://github.com/moononournation/Arduino_GFX
