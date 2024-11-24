@@ -100,6 +100,7 @@ LGFX lcd;
 
 void gfx_setup(void) {
   GFX_EXEC(init());
+  GFX_EXEC(clear(0));
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
   lcd_width  = GFX_EXEC(width());
@@ -122,6 +123,7 @@ TFT_eSPI tft = TFT_eSPI();
 
 void gfx_setup(void) {
   GFX_EXEC(init());
+  GFX_EXEC(fillScreen(0));
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
   lcd_width  = GFX_EXEC(width());
@@ -174,14 +176,19 @@ void gfx_setup(void) {
 #error 'REFRESH_RATE'
 #endif
 
-// The size of thermal image (max INTERPOLATE_SCALE = 8)
+/*--------------------------------------------------------------------------------
+ * Initial values for range of tempareture
+ *--------------------------------------------------------------------------------*/
+#define MINTEMP 20  // Low range of the sensor (this will be blue on the screen)
+#define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
+
+/*--------------------------------------------------------------------------------
+ * The size of thermal image (max INTERPOLATE_SCALE = 8)
+ *--------------------------------------------------------------------------------*/
 #define MLX90640_COLS 32
 #define MLX90640_ROWS 24
 #define INTERPOLATED_COLS (MLX90640_COLS * 8)
 #define INTERPOLATED_ROWS (MLX90640_ROWS * 8)
-
-#define MINTEMP 20  // Low range of the sensor (this will be blue on the screen)
-#define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
 
 /*--------------------------------------------------------------------------------
  * Definitions of graphics helpers
@@ -192,7 +199,12 @@ void gfx_setup(void) {
 #define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
 
 /*--------------------------------------------------------------------------------
- * Widget control parameters
+ * MLX90640 instance
+ *--------------------------------------------------------------------------------*/
+Adafruit_MLX90640 mlx;
+
+/*--------------------------------------------------------------------------------
+ * MLX90640 control parameters
  *--------------------------------------------------------------------------------*/
 typedef struct MLXConfig {
   // Member Variables
@@ -221,6 +233,19 @@ typedef struct MLXConfig {
       (range_max     != RHS.range_max    )
     );
   }
+
+  // set refresh rate
+  void setup(void) {
+    if (interpolation <= 4 && interpolation * box_size <= 8) {
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ : MLX90640_16_HZ);
+    } else
+    if (interpolation <= 6 && box_size == 1) {
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_16_HZ : MLX90640_8_HZ );
+    } else
+    if (interpolation <= 8 && box_size == 1) {
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_8_HZ  : MLX90640_2_HZ );
+    }
+  }
 } MLXConfig_t;
 
 typedef struct MLXCapture {
@@ -244,11 +269,14 @@ MLXCapture_t mlx_cap = {
   .recording      = false,
 };
 
+static void mlx_refresh(void) {
+  mlx_cnf.setup();
+  mlx.setRefreshRate((mlx90640_refreshrate_t)mlx_cnf.refresh_rate);
+}
+
 /*--------------------------------------------------------------------------------
  * Global variables
  *--------------------------------------------------------------------------------*/
-Adafruit_MLX90640 mlx;
-
 #if ENA_MULTITASKING
 float src[2][MLX90640_ROWS  * MLX90640_COLS    ];
 #else
@@ -296,14 +324,14 @@ const uint16_t camColors[] = {0x480F,
 #include "sdcard.hpp"
 
 /*--------------------------------------------------------------------------------
- * Touch library
+ * Touch event manager
  *--------------------------------------------------------------------------------*/
 #include "touch.hpp"
 
 /*--------------------------------------------------------------------------------
  * Wedget manager
  *--------------------------------------------------------------------------------*/
- #include "widget.hpp"
+#include "widget.hpp"
 
 /*--------------------------------------------------------------------------------
  * Pixel interpolation
@@ -351,10 +379,10 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
       for (int w = 0; w < dst_cols; w++) {
         float t = drw[h * dst_cols + w];
 
-        t = min((int)t, MAXTEMP);
-        t = max((int)t, MINTEMP); 
+        t = min((int)t, (int)mlx_cnf.range_max);
+        t = max((int)t, (int)mlx_cnf.range_min); 
 
-        int colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
+        int colorIndex = map(t, mlx_cnf.range_min, mlx_cnf.range_max, 0, 255);
         colorIndex = constrain(colorIndex, 0, 255);
 
 #if 0
@@ -363,11 +391,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 #else
         // Front Camera
         if (box_size == 1) {
-#if defined (LOVYANGFX_HPP_)
-          GFX_EXEC(writePixel(dst_cols - 1 - w, h, camColors[colorIndex]));
-#else
           GFX_EXEC(drawPixel(dst_cols - 1 - w, h, camColors[colorIndex]));
-#endif
         } else {
           GFX_EXEC(fillRect((dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, camColors[colorIndex]));
         }
@@ -409,10 +433,8 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
  * setup() and loop()
  *--------------------------------------------------------------------------------*/
 void setup() {
-#if DEBUG
-  Serial.begin(115200);
-  while (!Serial && millis() <= 1000);
-#endif
+  DBG_EXEC(Serial.begin(115200));
+  DBG_EXEC(while (!Serial && millis() <= 1000));
 
   // Initialize LCD display with touch and SD card
   gfx_setup();
@@ -430,10 +452,10 @@ void setup() {
     DBG_EXEC(printf("Serial number: %X%X%X\n", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]));
   }
 
-  // MLX90640
+  // Set MLX90640 operating mode
   mlx.setMode(MLX90640_CHESS);
   mlx.setResolution(MLX90640_ADC_18BIT);  // 16BIT, 17BIT, 18BIT or 19BIT
-  mlx.setRefreshRate(REFRESH_RATE);     
+  mlx_refresh();
 
   // I2C bus clock for MLX90640
   // Note: ESP32S3 supports up to 800 KHz

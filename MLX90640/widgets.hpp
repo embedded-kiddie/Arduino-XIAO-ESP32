@@ -639,6 +639,7 @@ static void onResolutionApply(const Widget_t *widget, const Touch_t &touch) {
 
   if (Apply(widget, touch, (mlx_cnf >= cnf_copy))) {
     mlx_cnf = cnf_copy;
+    mlx_refresh();
   }
 }
 
@@ -687,6 +688,7 @@ static void onThermographScreen(const Widget_t *widget, const Touch_t &touch) {
   cnf_copy = mlx_copy = mlx_cnf;
   mlx_cnf.box_size = 1;
   mlx_cnf.interpolation = 4;
+  mlx_refresh();
   mlx_cap.recording = false;
 }
 
@@ -813,6 +815,7 @@ static void onThermographClose(const Widget_t *widget, const Touch_t &touch) {
 
   if (touch.event != EVENT_INIT) {
     mlx_cnf = mlx_copy;
+    mlx_refresh();
     widget_state(STATE_CONFIGURATION);
   }
 }

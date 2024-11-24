@@ -1,3 +1,9 @@
+/*================================================================================
+ * Thermograpy camera GUI mockup
+ * Copyright (c) 2024 embedded-kiddie
+ * Released under the MIT license
+ * https://opensource.org/license/mit
+ *================================================================================*/
 #include <Arduino.h>
 #include <SPI.h>
 #include "spi_assign.h"
@@ -31,6 +37,7 @@ LGFX lcd;
 
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) lcd.x
+#define drawPixel   writePixel
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -66,10 +73,29 @@ void gfx_setup(void) {
 #endif
 
 /*--------------------------------------------------------------------------------
+ * Step 2: Select whether to multitask or not
+ *--------------------------------------------------------------------------------*/
+#define ENA_MULTITASKING  true
+
+/*--------------------------------------------------------------------------------
  * Step 3: Select whether to interpolate or not
  *--------------------------------------------------------------------------------*/
 #define ENA_INTERPOLATION true
-#if     ENA_INTERPOLATION
+
+/*--------------------------------------------------------------------------------
+ * Step 4: Select whether to enable transaction or not
+ *--------------------------------------------------------------------------------*/
+#if defined (LOVYANGFX_HPP_) || defined (_TFT_eSPIH_)
+#define ENA_TRANSACTION   true
+#else
+#define ENA_TRANSACTION   false // 'true' stops display
+#endif
+
+/*--------------------------------------------------------------------------------
+ * Step 5: Configure the output image resolution
+ *--------------------------------------------------------------------------------*/
+// INTERPOLATE_SCALE x BOX_SIZE <= 8
+#if ENA_INTERPOLATION
 #define INTERPOLATE_SCALE 8
 #define BOX_SIZE          1
 #else
@@ -92,6 +118,12 @@ void gfx_setup(void) {
 #endif
 
 /*--------------------------------------------------------------------------------
+ * Initial values for range of tempareture
+ *--------------------------------------------------------------------------------*/
+#define MINTEMP 20  // Low range of the sensor (this will be blue on the screen)
+#define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
+
+/*--------------------------------------------------------------------------------
  * The size of thermal image (max INTERPOLATE_SCALE = 8)
  *--------------------------------------------------------------------------------*/
 #define MLX90640_COLS 32
@@ -108,13 +140,7 @@ void gfx_setup(void) {
 #define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
 
 /*--------------------------------------------------------------------------------
- * Initial values for range of tempareture
- *--------------------------------------------------------------------------------*/
-#define MINTEMP 20  // Low range of the sensor (this will be blue on the screen)
-#define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
-
-/*--------------------------------------------------------------------------------
- * Widget control parameters
+ * MLX90640 control parameters
  *--------------------------------------------------------------------------------*/
 typedef struct MLXConfig {
   // Member Variables
@@ -143,6 +169,19 @@ typedef struct MLXConfig {
       (range_max     != RHS.range_max    )
     );
   }
+
+  // set refresh rate
+  void setup(void) {
+    if (interpolation <= 4 && interpolation * box_size <= 8) {
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ : MLX90640_16_HZ);
+    } else
+    if (interpolation <= 6 && box_size == 1) {
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_16_HZ : MLX90640_8_HZ );
+    } else
+    if (interpolation <= 8 && box_size == 1) {
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_8_HZ  : MLX90640_2_HZ );
+    }
+  }
 } MLXConfig_t;
 
 typedef struct MLXCapture {
@@ -166,6 +205,13 @@ MLXCapture_t mlx_cap = {
   .recording      = false,
 };
 
+static void mlx_refresh(void) {
+  mlx_cnf.setup();
+}
+
+/*--------------------------------------------------------------------------------
+ * Global variables
+ *--------------------------------------------------------------------------------*/
 // The colors we will be using
 const uint16_t camColors[] = {0x480F,
 0x400F,0x400F,0x400F,0x4010,0x3810,0x3810,0x3810,0x3810,0x3010,0x3010,
@@ -195,30 +241,31 @@ const uint16_t camColors[] = {0x480F,
 0xF1E0,0xF1C0,0xF1A0,0xF180,0xF160,0xF140,0xF100,0xF0E0,0xF0C0,0xF0A0,
 0xF080,0xF060,0xF040,0xF020,0xF800,};
 
-/*=============================================================
+/*--------------------------------------------------------------------------------
  * printf library
- *=============================================================*/
+ *--------------------------------------------------------------------------------*/
 #include "printf.hpp"
 
-/*=============================================================
+/*--------------------------------------------------------------------------------
  * SD Card library
- *=============================================================*/
+ *--------------------------------------------------------------------------------*/
 #include "sdcard.hpp"
 
-/*=============================================================
+/*--------------------------------------------------------------------------------
  * Touch event manager
- *=============================================================*/
+ *--------------------------------------------------------------------------------*/
 #include "touch.hpp"
 
-/*=============================================================
+/*--------------------------------------------------------------------------------
  * Wedget manager
- *=============================================================*/
+ *--------------------------------------------------------------------------------*/
 #include "widget.hpp"
 
 void setup() {
   DBG_EXEC(Serial.begin(115200));
   DBG_EXEC(while (!Serial && millis() <= 1000));
 
+  // Initialize LCD display with touch and SD card
   gfx_setup();
   touch_setup();
   sdcard_setup();
