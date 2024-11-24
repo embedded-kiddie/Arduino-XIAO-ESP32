@@ -808,8 +808,7 @@ static void onThermographClose(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    mlx_cnf.box_size = cnf_copy.box_size;
-    mlx_cnf.interpolation = cnf_copy.interpolation;
+    mlx_cnf = mlx_copy;
     widget_state(STATE_CONFIGURATION);
   }
 }
@@ -818,7 +817,7 @@ static void onThermographApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (Apply(widget, touch, (mlx_copy != cnf_copy))) {
-    mlx_cnf = cnf_copy;
+    mlx_cnf = mlx_copy = cnf_copy;
     mlx_cnf.box_size = 1;
     mlx_cnf.interpolation = 4;
   }
