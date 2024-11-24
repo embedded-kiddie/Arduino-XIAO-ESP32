@@ -142,7 +142,7 @@ void gfx_setup(void) {
 /*--------------------------------------------------------------------------------
  * Step 4: Select whether to enable transaction or not
  *--------------------------------------------------------------------------------*/
-#if defined(LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
+#if defined (LOVYANGFX_HPP_) || defined (_TFT_eSPIH_)
 #define ENA_TRANSACTION   true
 #else
 #define ENA_TRANSACTION   false // 'true' stops display
@@ -359,7 +359,11 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 #else
         // Front Camera
         if (box_size == 1) {
+#if defined (LOVYANGFX_HPP_)
+          GFX_EXEC(writePixel(dst_cols - 1 - w, h, camColors[colorIndex]));
+#else
           GFX_EXEC(drawPixel(dst_cols - 1 - w, h, camColors[colorIndex]));
+#endif
         } else {
           GFX_EXEC(fillRect((dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, camColors[colorIndex]));
         }

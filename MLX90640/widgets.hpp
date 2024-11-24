@@ -329,7 +329,11 @@ static void DrawColorRange(uint8_t flag) {
   if (flag & 1) {
     for (int i = 0; i < n; i++) {
       int x = map(i, 0, n, 0, w);
+#if defined (LOVYANGFX_HPP_)
       GFX_EXEC(writeFastVLine(x, y, FONT_HEIGHT, camColors[i]));
+#else
+      GFX_EXEC(drawFastVLine(x, y, FONT_HEIGHT, camColors[i]));
+#endif
     }
   }
 
