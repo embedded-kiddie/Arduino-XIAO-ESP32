@@ -670,7 +670,7 @@ static void onResolutionClose(const Widget_t *widget, const Touch_t &touch) {
 static void onResolutionApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (Apply(widget, touch, (mlx_cnf != cnf_copy))) {
+  if (Apply(widget, touch, (mlx_cnf >= cnf_copy))) {
     mlx_cnf = cnf_copy;
   }
 }
