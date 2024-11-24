@@ -452,14 +452,14 @@ void setup() {
     DBG_EXEC(printf("Serial number: %X%X%X\n", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]));
   }
 
+  // I2C bus clock for MLX90640
+  // Note: ESP32S3 supports up to 800 KHz
+  Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
+
   // Set MLX90640 operating mode
   mlx.setMode(MLX90640_CHESS);
   mlx.setResolution(MLX90640_ADC_18BIT);  // 16BIT, 17BIT, 18BIT or 19BIT
   mlx_refresh();
-
-  // I2C bus clock for MLX90640
-  // Note: ESP32S3 supports up to 800 KHz
-  Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
 
   // Start tasks
 #if ENA_MULTITASKING

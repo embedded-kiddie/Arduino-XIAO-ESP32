@@ -40,8 +40,10 @@ void task_setup(void (*task1)(uint8_t), void (*task2)(uint8_t, uint32_t, uint32_
   Process1 = task1;
   Process2 = task2;
 
-  // To process tasks in parallel, the semaphore must have an initial count of 1
-  semHandle = xSemaphoreCreateCounting(1, TASK1_CORE != TASK2_CORE ? 1 : 0);
+  // Task1 start immediately --> Process1 --> Task1 send queue --> Task1 wait for semaphre
+  // --> Task2 receive queue --> Process2 --> Task2 give semaphre --> Task2 wait queue
+  // --> Task1 take sepahore --> Process1 --> ...
+  semHandle = xSemaphoreCreateCounting(1, TASK1_CORE != TASK2_CORE ? 0 : 0);
   queHandle = xQueueCreate(1, sizeof(MessageQueue_t));
 
   // Check if the queue or the semaphore was successfully created
