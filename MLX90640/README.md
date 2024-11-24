@@ -20,7 +20,6 @@
 
 [![GUI mockup for a thermography camera using MLX90640](GUI-mockup.jpg)](https://youtu.be/9El-2NYCDNU "GUI mockup for a thermography camera using MLX90640 - YouTube")
 
-
 ## Testbed environment
 
 - [Arduino IDE 2.3.2][1]

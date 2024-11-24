@@ -37,8 +37,9 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
 void gfx_setup(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
-  GFX_EXEC(setRotation(SCREEN_ROTATION));
   GFX_EXEC(invertDisplay(false));
+  GFX_EXEC(setTextColor(WHITE, BLACK));
+  GFX_EXEC(setRotation(SCREEN_ROTATION));
 
 #if defined (ARDUINO_XIAO_ESP32S3)
   GFX_EXEC(setSPISpeed(SPI_FREQUENCY));
@@ -73,8 +74,9 @@ void gfx_setup(void) {
   }
 
   SPI.setDataMode(SPI_MODE);
-  GFX_EXEC(setRotation(SCREEN_ROTATION));
   GFX_EXEC(invertDisplay(true));
+  GFX_EXEC(setTextColor(WHITE, BLACK));
+  GFX_EXEC(setRotation(SCREEN_ROTATION));
   lcd_width  = GFX_EXEC(width());
   lcd_height = GFX_EXEC(height());
 }
@@ -98,6 +100,7 @@ LGFX lcd;
 
 void gfx_setup(void) {
   GFX_EXEC(init());
+  GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
   lcd_width  = GFX_EXEC(width());
   lcd_height = GFX_EXEC(height());
@@ -119,6 +122,7 @@ TFT_eSPI tft = TFT_eSPI();
 
 void gfx_setup(void) {
   GFX_EXEC(init());
+  GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
   lcd_width  = GFX_EXEC(width());
   lcd_height = GFX_EXEC(height());
@@ -204,8 +208,8 @@ typedef struct MLXConfig {
   // Comparison Operator
   bool operator != (const MLXConfig &RHS) {
     return (
-      (interpolation != RHS.interpolation) ||
-      (box_size      != RHS.box_size     ) ||
+//    (interpolation != RHS.interpolation) ||
+//    (box_size      != RHS.box_size     ) ||
       (color_scheme  != RHS.color_scheme ) ||
       (minmax_auto   != RHS.minmax_auto  ) ||
       (range_auto    != RHS.range_auto   ) ||
@@ -320,7 +324,8 @@ void ProcessInput(uint8_t bank) {
  *--------------------------------------------------------------------------------*/
 void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   // Widget controller
-  if (widget_control() == STATE_MAIN) {
+  State_t state = widget_control();
+  if (state == STATE_MAIN || state == STATE_THERMOGRAPH) {
     static uint32_t prevFinish;
     uint32_t outputStart = millis();
     int dst_rows = mlx_cnf.interpolation * MLX90640_ROWS;
@@ -362,23 +367,25 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
       }
     }
 
-    // MLX90640
-    GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
-    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
+    if (state == STATE_MAIN) {
+      // MLX90640
+      GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
+      gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
 
-    // Interpolation
-    uint32_t outputFinish = millis();
-    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", outputFinish - outputStart);
+      // Interpolation
+      uint32_t outputFinish = millis();
+      gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", outputFinish - outputStart);
 
-    // FPS
-    float v = 1000.0f / (float)(outputFinish - prevFinish);
-    gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
-    prevFinish = outputFinish;
+      // FPS
+      float v = 1000.0f / (float)(outputFinish - prevFinish);
+      gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
+      prevFinish = outputFinish;
 
-    // Ambient temperature
-    v = mlx.getTa(false);
-    if (0.0f < v && v < 100.0f) {
-      gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 6.5, "%4.1f", v);
+      // Ambient temperature
+      v = mlx.getTa(false);
+      if (0.0f < v && v < 100.0f) {
+        gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 6.5, "%4.1f", v);
+      }
     }
 
 #if ENA_TRANSACTION

@@ -11,6 +11,7 @@ extern MLXConfig_t    mlx_cnf;
 extern MLXCapture_t   mlx_cap;
 extern TouchConfig_t  tch_cnf;
 
+static MLXConfig_t    mlx_copy;
 static MLXConfig_t    cnf_copy;
 static TouchConfig_t  tch_copy;
 static TouchConfig_t  tch_ajst;
@@ -315,6 +316,52 @@ static bool Apply(const Widget_t *widget, const Touch_t &touch, bool enable) {
 }
 
 /*--------------------------------------------------------------------------------
+ * Common method - Draw colorbar and range
+ *--------------------------------------------------------------------------------*/
+static void DrawColorRange(uint8_t flag) {
+  const int n = sizeof(camColors) / sizeof(camColors[0]);
+  const int w = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_COLS;
+  int       y = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_ROWS + 3;
+  
+  GFX_EXEC(startWrite());
+  
+  // Draw color bar
+  if (flag & 1) {
+    for (int i = 0; i < n; i++) {
+      int x = map(i, 0, n, 0, w);
+      GFX_EXEC(writeFastVLine(x, y, FONT_HEIGHT, camColors[i]));
+    }
+  }
+
+  // Draw thermal range
+  if (flag & 2) {
+    y += FONT_HEIGHT + 4;
+    uint8_t size = mlx_cnf.interpolation * mlx_cnf.box_size > 4 ? 2 : 1;
+    const int font_w = (size == 2 ? FONT_WIDTH  : FONT_WIDTH  >> 1);
+    const int font_h = (size == 2 ? FONT_HEIGHT : FONT_HEIGHT >> 1);
+    GFX_EXEC(setTextSize(size));
+
+    GFX_EXEC(setTextDatum(TL_DATUM));
+    GFX_EXEC(fillRect(0, y, font_w * 3, font_h, BLACK));
+    gfx_printf(0, y, "%d", mlx_cnf.range_min);
+
+    GFX_EXEC(setTextDatum(TR_DATUM));
+    GFX_EXEC(fillRect(w - font_w * 3, y, font_w * 2, font_h, BLACK));
+    gfx_printf(w, y, "%d", mlx_cnf.range_max);
+
+    if (mlx_cnf.interpolation * mlx_cnf.box_size > 1) {
+      GFX_EXEC(setTextDatum(TC_DATUM));
+      GFX_EXEC(fillRect(w / 2 - font_w * 3, y, font_w * 6, font_h, BLACK));
+      gfx_printf(w / 2, y, "%3.1f", (float)(mlx_cnf.range_min + mlx_cnf.range_max) / 2.0f);
+    }
+  }
+
+  GFX_EXEC(endWrite());
+  GFX_EXEC(setTextSize(2));
+  GFX_EXEC(setTextDatum(TL_DATUM));
+}
+
+/*--------------------------------------------------------------------------------
  * Callback functions - Main
  *--------------------------------------------------------------------------------*/
 static void onMainScreen(const Widget_t *widget, const Touch_t &touch) {
@@ -322,30 +369,8 @@ static void onMainScreen(const Widget_t *widget, const Touch_t &touch) {
 
   DrawScreen(widget);
 
-  // Draw color bar
-  const int n = sizeof(camColors) / sizeof(camColors[0]);
-  const int w = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_COLS;
-  int       y = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_ROWS + 3;
-  for (int i = 0; i < n; i++) {
-    int x = map(i, 0, n, 0, w);
-    GFX_EXEC(fillRect(x, y, 1, FONT_HEIGHT, camColors[i]));
-  }
-
-  // Draw thermal range
-  y += FONT_HEIGHT + 4;
-  GFX_EXEC(setTextColor(WHITE, BLACK));
-  GFX_EXEC(setTextSize(mlx_cnf.interpolation * mlx_cnf.box_size > 4 ? 2 : 1));
-
-  GFX_EXEC(setTextDatum(TL_DATUM));
-  gfx_printf(0, y, "%d", mlx_cnf.range_min);
-
-  GFX_EXEC(setTextDatum(TR_DATUM));
-  gfx_printf(w, y, "%d", mlx_cnf.range_max);
-
-  if (mlx_cnf.interpolation * mlx_cnf.box_size > 1) {
-    GFX_EXEC(setTextDatum(TC_DATUM));
-    gfx_printf(w / 2, y, "%3.1f", (float)(mlx_cnf.range_min + mlx_cnf.range_max) / 2.0f);
-  }
+  // Draw colorbar and range
+  DrawColorRange(3);
 
   // Draw resolution
   GFX_EXEC(setTextSize(2));
@@ -655,23 +680,23 @@ static void onThermographScreen(const Widget_t *widget, const Touch_t &touch) {
   DrawScreen(widget);
 
   // copy MLX90640 configuration data and stop recording video
-  cnf_copy = mlx_cnf;
+  cnf_copy = mlx_copy = mlx_cnf;
+  mlx_cnf.box_size = 1;
+  mlx_cnf.interpolation = 4;
   mlx_cap.recording = false;
-
-  GFX_EXEC(setTextSize(2));
-  GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
 }
 
 static void onThermographRadio1(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    cnf_copy.color_scheme = 0;
+    mlx_cnf.color_scheme = cnf_copy.color_scheme = 0;
   }
 
   DrawRadio(widget, 2, cnf_copy.color_scheme);
 
   // Enable apply if somethig is changed
+  DrawColorRange(1);
   onThermographApply(widget + 7, doInit);
 }
 
@@ -679,12 +704,13 @@ static void onThermographRadio2(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    cnf_copy.color_scheme = 1;
+    mlx_cnf.color_scheme = cnf_copy.color_scheme = 1;
   }
 
   DrawRadio(widget - 1, 2, cnf_copy.color_scheme);
 
   // Enable apply if somethig is changed
+  DrawColorRange(1);
   onThermographApply(widget + 6, doInit);
 }
 
@@ -692,7 +718,7 @@ static void onThermographToggle1(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    cnf_copy.minmax_auto = !cnf_copy.minmax_auto;
+    mlx_cnf.minmax_auto = cnf_copy.minmax_auto = !cnf_copy.minmax_auto;
   }
 
   DrawToggle(widget, cnf_copy.minmax_auto);
@@ -705,7 +731,7 @@ static void onThermographToggle2(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    cnf_copy.range_auto = !cnf_copy.range_auto;
+    mlx_cnf.range_auto = cnf_copy.range_auto = !cnf_copy.range_auto;
   }
 
   DrawToggle(widget, cnf_copy.range_auto);
@@ -732,18 +758,19 @@ static void onThermographSlider1(const Widget_t *widget, const Touch_t &touch) {
     int16_t v = GetThermoSlider(widget, touch);
     static int16_t V = 0xFFFF;
     if (V != v) {
-      cnf_copy.range_min = V = v;
+      mlx_cnf.range_min = cnf_copy.range_min = V = v;
       gfx_printf(TERMOGRAPH_MIN_ROW, TERMOGRAPH_MIN_COL, "%3d", cnf_copy.range_min);
 
       // Temperature minimum and maximum restrictions
       if (cnf_copy.range_max - cnf_copy.range_min < TERMOGRAPH_DIFF) {
-        cnf_copy.range_max = cnf_copy.range_min + TERMOGRAPH_DIFF;
+        mlx_cnf.range_max = cnf_copy.range_max = cnf_copy.range_min + TERMOGRAPH_DIFF;
         onThermographSlider2(widget + 1, doInit);
       }
     }
   }
 
   // Enable apply if somethig is changed
+  DrawColorRange(2);
   onThermographApply(widget + 3, doInit);
 }
 
@@ -761,18 +788,19 @@ static void onThermographSlider2(const Widget_t *widget, const Touch_t &touch) {
     int16_t v = GetThermoSlider(widget, touch);
     static int16_t V = 0xFFFF;
     if (V != v) {
-      cnf_copy.range_max = V = v;
+      mlx_cnf.range_max = cnf_copy.range_max = V = v;
       gfx_printf(TERMOGRAPH_MAX_ROW, TERMOGRAPH_MAX_COL, "%3d", cnf_copy.range_max);
 
       // Temperature minimum and maximum restrictions
       if (cnf_copy.range_max - cnf_copy.range_min < TERMOGRAPH_DIFF) {
-        cnf_copy.range_min = cnf_copy.range_max - TERMOGRAPH_DIFF;
+        mlx_cnf.range_min = cnf_copy.range_min = cnf_copy.range_max - TERMOGRAPH_DIFF;
         onThermographSlider1(widget - 1, doInit);
       }
     }
   }
 
   // Enable apply if somethig is changed
+  DrawColorRange(2);
   onThermographApply(widget + 2, doInit);
 }
 
@@ -780,6 +808,8 @@ static void onThermographClose(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
+    mlx_cnf.box_size = cnf_copy.box_size;
+    mlx_cnf.interpolation = cnf_copy.interpolation;
     widget_state(STATE_CONFIGURATION);
   }
 }
@@ -787,8 +817,10 @@ static void onThermographClose(const Widget_t *widget, const Touch_t &touch) {
 static void onThermographApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC(printf("%s\n", __func__));
 
-  if (Apply(widget, touch, (mlx_cnf != cnf_copy))) {
+  if (Apply(widget, touch, (mlx_copy != cnf_copy))) {
     mlx_cnf = cnf_copy;
+    mlx_cnf.box_size = 1;
+    mlx_cnf.interpolation = 4;
   }
 }
 
@@ -1107,7 +1139,6 @@ static void onCalibrationScreen(const Widget_t *widget, const Touch_t &touch) {
   DrawScreen(widget);
 
   GFX_EXEC(setTextSize(1));
-  GFX_EXEC(setTextColor(WHITE, BLACK));
 
   uint16_t *c = tch_cnf.cal;
   gfx_printf(115,  94, "%4d, %4d, %4d, %4d", c[0], c[1], c[2], c[3]);
