@@ -203,19 +203,49 @@ void gfx_setup(void) {
  *--------------------------------------------------------------------------------*/
 Adafruit_MLX90640 mlx;
 
+#if ENA_MULTITASKING
+float src[2][MLX90640_ROWS  * MLX90640_COLS    ];
+#else
+float src[1][MLX90640_ROWS  * MLX90640_COLS    ];
+#endif
+float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
+
+/*--------------------------------------------------------------------------------
+ * Lowpass filter
+ *--------------------------------------------------------------------------------*/
+#define CUTOFF_FREQUECCY  4.0f // [Hz]
+typedef struct {
+  float     x, y; // x: input, y: output
+  float filter(const float dt /* sampling period [sec] */) {
+    return (y = (1.0f - dt / CUTOFF_FREQUECCY) * y + dt / CUTOFF_FREQUECCY * x);
+  };
+  void  reset(void) {
+    x = y = 0.0f;
+  }
+} LowPass_t;
+
+static LowPass_t lmin, lmax, lpic;
+
+static void reset_filter(void) {
+  lmin.reset();
+  lmax.reset();
+  lpic.reset();
+}
+
 /*--------------------------------------------------------------------------------
  * MLX90640 control parameters
  *--------------------------------------------------------------------------------*/
 typedef struct MLXConfig {
   // Member Variables
-  uint8_t       interpolation;
-  uint8_t       box_size;
-  uint8_t       refresh_rate;
-  uint8_t       color_scheme;
-  bool          minmax_auto;
-  bool          range_auto;
-  int16_t       range_min;
-  int16_t       range_max;
+  uint8_t   interpolation;
+  uint8_t   box_size;
+  uint8_t   refresh_rate;
+  uint8_t   color_scheme;
+  bool      minmax_auto;
+  bool      range_auto;
+  int16_t   range_min;
+  int16_t   range_max;
+  float     sampling_period;
 
   // Comparison Operator
   bool operator >= (const MLXConfig &RHS) {
@@ -237,23 +267,26 @@ typedef struct MLXConfig {
   // set refresh rate
   void setup(void) {
     if (interpolation <= 4 && interpolation * box_size <= 8) {
-      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ : MLX90640_16_HZ);
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ /*6*/ : MLX90640_16_HZ /*5*/);
+      sampling_period = (refresh_rate == MLX90640_32_HZ ? 1.0f / 16.0f : 1.0f / 8.0f);
     } else
     if (interpolation <= 6 && box_size == 1) {
-      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_16_HZ : MLX90640_8_HZ );
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_16_HZ /*5*/ : MLX90640_8_HZ  /*4*/);
+      sampling_period = (refresh_rate == MLX90640_16_HZ ? 1.0f / 8.0f : 1.0f / 4.0f);
     } else
     if (interpolation <= 8 && box_size == 1) {
-      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_8_HZ  : MLX90640_2_HZ );
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_8_HZ  /*4*/ : MLX90640_2_HZ  /*2*/);
+      sampling_period = (refresh_rate == MLX90640_8_HZ ? 1.0f / 4.0f : 1.0f / 2.0f);
     }
   }
 } MLXConfig_t;
 
 typedef struct MLXCapture {
   uint8_t       capture_mode; // 0: camera, 1: video
-  bool          recording;
+  bool          recording;    // false: stop, true: recording video
 } MLXCapture_t;
 
-MLXConfig_t mlx_cnf = {
+static MLXConfig_t mlx_cnf = {
   .interpolation  = INTERPOLATE_SCALE,
   .box_size       = BOX_SIZE,
   .refresh_rate   = REFRESH_RATE,
@@ -264,26 +297,84 @@ MLXConfig_t mlx_cnf = {
   .range_max      = MAXTEMP,
 };
 
-MLXCapture_t mlx_cap = {
+static MLXCapture_t mlx_cap = {
   .capture_mode   = 0,
   .recording      = false,
 };
 
 static void mlx_refresh(void) {
+  // configure refresh rate
   mlx_cnf.setup();
   mlx.setRefreshRate((mlx90640_refreshrate_t)mlx_cnf.refresh_rate);
+//DBG_EXEC(printf("refresh rate: %d\n", mlx_cnf.refresh_rate));
+
+  // initialize lowpass filter
+  reset_filter();
+}
+
+/*--------------------------------------------------------------------------------
+ * Temperature
+ *--------------------------------------------------------------------------------*/
+#if     false
+#define CHECK_VALUE true
+#include <math.h>
+#endif
+
+typedef struct {
+  uint16_t  x, y;
+  float     t;
+} Temperature_t;
+
+static Temperature_t tmin, tmax, tpic;
+
+static void measure_temperature(uint8_t bank) {
+  float *s = src[bank];
+
+  // Measure the temperature at the sampling point
+  if (tpic.x != 0 || tpic.y != 0) {
+    tpic.t = s[tpic.x + (tpic.y * MLX90640_COLS)];
+  }
+
+  // Measure temperature ranges
+  if (mlx_cnf.range_auto || mlx_cnf.minmax_auto) {
+    tmin.t = 999.0f; tmax.t = -999.0f;
+    for (uint16_t x = 0; x < MLX90640_ROWS; x++) {
+      for (uint16_t y = 0; y < MLX90640_COLS; y++, s++) {
+#ifdef  CHECK_VALUE
+        if (isinf(*s) || isnan(*s) || *s < -20.0f || 180.0f < *s) {
+          continue;
+        }
+#endif
+        if (*s < tmin.t) {
+          tmin.x = x;
+          tmin.y = y;
+          tmin.t = *s;
+        }
+        if (*s > tmax.t) {
+          tmax.x = x;
+          tmax.y = y;
+          tmax.t = *s;
+        }
+      }
+    }
+
+#define RANGE_STEP  2
+    lmin.x = tmin.t;
+    lmax.x = tmax.t;
+    mlx_cnf.range_min = ((int)((float)lmin.filter(mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
+    mlx_cnf.range_max = ((int)((float)lmax.filter(mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
+
+    void DrawColorRange(uint8_t); // defined in widgets.hpp
+    DrawColorRange(2);
+
+    // debug with serial ploter
+    // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
+  }
 }
 
 /*--------------------------------------------------------------------------------
  * Global variables
  *--------------------------------------------------------------------------------*/
-#if ENA_MULTITASKING
-float src[2][MLX90640_ROWS  * MLX90640_COLS    ];
-#else
-float src[1][MLX90640_ROWS  * MLX90640_COLS    ];
-#endif
-float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
-
 // The colors we will be using
 const uint16_t camColors[] = {0x480F,
 0x400F,0x400F,0x400F,0x4010,0x3810,0x3810,0x3810,0x3810,0x3010,0x3010,
@@ -337,50 +428,6 @@ const uint16_t camColors[] = {0x480F,
  * Pixel interpolation
  *--------------------------------------------------------------------------------*/
 #include "interpolation.hpp"
-
-/*--------------------------------------------------------------------------------
- * Temperature
- *--------------------------------------------------------------------------------*/
-typedef struct {
-  uint16_t  x, y;
-  float     t;
-} Temperature_t;
-
-static Temperature_t tmin, tmax, tpic;
-
-static void measure_temperature(uint8_t bank) {
-  float *s = src[bank];
-
-  // Measure the temperature at the sampling point
-  if (tpic.x != 0 || tpic.y != 0) {
-    tpic.t = s[tpic.x + (tpic.y * MLX90640_COLS)];
-  }
-
-  // Measure temperature ranges
-  if (mlx_cnf.range_auto || mlx_cnf.minmax_auto) {
-    tmin.t = 999.0f; tmax.t = -999.0f;
-    for (uint16_t x = 0; x < MLX90640_ROWS; x++) {
-      for (uint16_t y = 0; y < MLX90640_COLS; y++) {
-        if (*s < tmin.t) {
-          tmin.x = x;
-          tmin.y = y;
-          tmin.t = *s;
-        }
-        if (*s++ > tmax.t) {
-          tmax.x = x;
-          tmax.y = y;
-          tmax.t = *s;
-        }
-      }
-    }
-
-//  DBG_EXEC(printf("min: %4.1f, max: %4.1f\n", tmin.t, tmax.t));
-#define RANGE_STEP  5
-    mlx_cnf.range_min = ((int)((float)tmin.t / (float)RANGE_STEP) + 1) * RANGE_STEP;
-    mlx_cnf.range_max = ((int)((float)tmax.t / (float)RANGE_STEP) + 1) * RANGE_STEP;
-    DrawColorRange(2);
-  }
-}
 
 /*--------------------------------------------------------------------------------
  * Input process - Get thermal image from MLX90640

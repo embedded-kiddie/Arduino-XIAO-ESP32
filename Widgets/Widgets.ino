@@ -144,14 +144,15 @@ void gfx_setup(void) {
  *--------------------------------------------------------------------------------*/
 typedef struct MLXConfig {
   // Member Variables
-  uint8_t       interpolation;
-  uint8_t       box_size;
-  uint8_t       refresh_rate;
-  uint8_t       color_scheme;
-  bool          minmax_auto;
-  bool          range_auto;
-  int16_t       range_min;
-  int16_t       range_max;
+  uint8_t   interpolation;
+  uint8_t   box_size;
+  uint8_t   refresh_rate;
+  uint8_t   color_scheme;
+  bool      minmax_auto;
+  bool      range_auto;
+  int16_t   range_min;
+  int16_t   range_max;
+  float     sampling_period;
 
   // Comparison Operator
   bool operator >= (const MLXConfig &RHS) {
@@ -173,23 +174,26 @@ typedef struct MLXConfig {
   // set refresh rate
   void setup(void) {
     if (interpolation <= 4 && interpolation * box_size <= 8) {
-      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ : MLX90640_16_HZ);
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ /*6*/ : MLX90640_16_HZ /*5*/);
+      sampling_period = (refresh_rate == MLX90640_32_HZ ? 1.0f / 16.0f : 1.0f / 8.0f);
     } else
     if (interpolation <= 6 && box_size == 1) {
-      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_16_HZ : MLX90640_8_HZ );
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_16_HZ /*5*/ : MLX90640_8_HZ  /*4*/);
+      sampling_period = (refresh_rate == MLX90640_16_HZ ? 1.0f / 8.0f : 1.0f / 4.0f);
     } else
     if (interpolation <= 8 && box_size == 1) {
-      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_8_HZ  : MLX90640_2_HZ );
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_8_HZ  /*4*/ : MLX90640_2_HZ  /*2*/);
+      sampling_period = (refresh_rate == MLX90640_8_HZ ? 1.0f / 4.0f : 1.0f / 2.0f);
     }
   }
 } MLXConfig_t;
 
 typedef struct MLXCapture {
   uint8_t       capture_mode; // 0: camera, 1: video
-  bool          recording;
+  bool          recording;    // false: stop, true: recording video
 } MLXCapture_t;
 
-MLXConfig_t mlx_cnf = {
+static MLXConfig_t mlx_cnf = {
   .interpolation  = INTERPOLATE_SCALE,
   .box_size       = BOX_SIZE,
   .refresh_rate   = REFRESH_RATE,
@@ -200,12 +204,13 @@ MLXConfig_t mlx_cnf = {
   .range_max      = MAXTEMP,
 };
 
-MLXCapture_t mlx_cap = {
+static MLXCapture_t mlx_cap = {
   .capture_mode   = 0,
   .recording      = false,
 };
 
 static void mlx_refresh(void) {
+  // configure refresh rate
   mlx_cnf.setup();
 }
 
@@ -261,6 +266,9 @@ const uint16_t camColors[] = {0x480F,
  *--------------------------------------------------------------------------------*/
 #include "widget.hpp"
 
+/*--------------------------------------------------------------------------------
+ * setup() and loop()
+ *--------------------------------------------------------------------------------*/
 void setup() {
   DBG_EXEC(Serial.begin(115200));
   DBG_EXEC(while (!Serial && millis() <= 1000));

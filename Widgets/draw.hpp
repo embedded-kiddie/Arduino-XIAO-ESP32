@@ -151,7 +151,7 @@ static void DrawSlider(const Widget_t *widget, int16_t pos, bool enable /* = tru
     uint32_t w, h;
     w = swap_endian(*(uint32_t*)(bar->data + PNG_HEADER_WIDTH));
     h = swap_endian(*(uint32_t*)(bar->data + PNG_HEADER_HEIGHT));
-    DBG_EXEC(printf("w: %d, h: %d\n", w, h));
+    // DBG_EXEC(printf("w: %d, h: %d\n", w, h));
 
     sprite.createSprite(w, h);
 
@@ -167,7 +167,7 @@ static void DrawSlider(const Widget_t *widget, int16_t pos, bool enable /* = tru
 
     w = swap_endian(*(uint32_t*)(knob->data + PNG_HEADER_WIDTH));
     h = swap_endian(*(uint32_t*)(knob->data + PNG_HEADER_HEIGHT));
-    DBG_EXEC(printf("w: %d, h: %d\n", w, h));
+    // DBG_EXEC(printf("w: %d, h: %d\n", w, h));
 
 #if   defined (LOVYANGFX_HPP_)
 
