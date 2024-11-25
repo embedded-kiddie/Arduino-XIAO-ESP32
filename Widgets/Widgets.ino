@@ -22,6 +22,9 @@
 uint16_t lcd_width;
 uint16_t lcd_height;
 
+#define TFT_WIDTH  320
+#define TFT_HEIGHT 240
+
 #if 1
 /*---------------------------------------------------
  * LovyanGFX Library
