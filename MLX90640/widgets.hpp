@@ -346,17 +346,14 @@ static void DrawColorRange(uint8_t flag) {
     GFX_EXEC(setTextSize(size));
 
     GFX_EXEC(setTextDatum(TL_DATUM));
-    GFX_EXEC(fillRect(0, y, font_w * 3, font_h, BLACK));
-    gfx_printf(0, y, "%d", mlx_cnf.range_min);
+    gfx_printf(0, y, "%d  ", mlx_cnf.range_min);
 
     GFX_EXEC(setTextDatum(TR_DATUM));
-    GFX_EXEC(fillRect(w - font_w * 3, y, font_w * 2, font_h, BLACK));
-    gfx_printf(w, y, "%d", mlx_cnf.range_max);
+    gfx_printf(w, y, "  %d", mlx_cnf.range_max);
 
     if (mlx_cnf.interpolation * mlx_cnf.box_size > 1) {
       GFX_EXEC(setTextDatum(TC_DATUM));
-      GFX_EXEC(fillRect(w / 2 - font_w * 3, y, font_w * 6, font_h, BLACK));
-      gfx_printf(w / 2, y, "%3.1f", (float)(mlx_cnf.range_min + mlx_cnf.range_max) / 2.0f);
+      gfx_printf(w / 2, y, " %3.1f ", (float)(mlx_cnf.range_min + mlx_cnf.range_max) / 2.0f);
     }
   }
 

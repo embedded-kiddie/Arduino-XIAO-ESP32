@@ -339,8 +339,51 @@ const uint16_t camColors[] = {0x480F,
 #include "interpolation.hpp"
 
 /*--------------------------------------------------------------------------------
- * Input process
- * Get thermal image from MLX90640
+ * Temperature
+ *--------------------------------------------------------------------------------*/
+typedef struct {
+  uint16_t  x, y;
+  float     t;
+} Temperature_t;
+
+static Temperature_t tmin, tmax, tpic;
+
+static void measure_temperature(uint8_t bank) {
+  float *s = src[bank];
+
+  // Measure the temperature at the sampling point
+  if (tpic.x != 0 || tpic.y != 0) {
+    tpic.t = s[tpic.x + (tpic.y * MLX90640_COLS)];
+  }
+
+  // Measure temperature ranges
+  if (mlx_cnf.range_auto || mlx_cnf.minmax_auto) {
+    tmin.t = 999.0f; tmax.t = -999.0f;
+    for (uint16_t x = 0; x < MLX90640_ROWS; x++) {
+      for (uint16_t y = 0; y < MLX90640_COLS; y++) {
+        if (*s < tmin.t) {
+          tmin.x = x;
+          tmin.y = y;
+          tmin.t = *s;
+        }
+        if (*s++ > tmax.t) {
+          tmax.x = x;
+          tmax.y = y;
+          tmax.t = *s;
+        }
+      }
+    }
+
+//  DBG_EXEC(printf("min: %4.1f, max: %4.1f\n", tmin.t, tmax.t));
+#define RANGE_STEP  5
+    mlx_cnf.range_min = ((int)((float)tmin.t / (float)RANGE_STEP) + 1) * RANGE_STEP;
+    mlx_cnf.range_max = ((int)((float)tmax.t / (float)RANGE_STEP) + 1) * RANGE_STEP;
+    DrawColorRange(2);
+  }
+}
+
+/*--------------------------------------------------------------------------------
+ * Input process - Get thermal image from MLX90640
  *--------------------------------------------------------------------------------*/
 void ProcessInput(uint8_t bank) {
   if (mlx.getFrame(src[bank]) != 0) {
@@ -351,8 +394,7 @@ void ProcessInput(uint8_t bank) {
 }
 
 /*--------------------------------------------------------------------------------
- * Output process
- * Interpolate thermal image and display on LCD.
+ * Output process - Interpolate thermal image and display on LCD.
  *--------------------------------------------------------------------------------*/
 void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   // Widget controller
@@ -360,9 +402,12 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   if (state == STATE_MAIN || state == STATE_THERMOGRAPH) {
     static uint32_t prevFinish;
     uint32_t outputStart = millis();
-    int dst_rows = mlx_cnf.interpolation * MLX90640_ROWS;
-    int dst_cols = mlx_cnf.interpolation * MLX90640_COLS;
-    int box_size = mlx_cnf.box_size;
+    const int dst_rows = mlx_cnf.interpolation * MLX90640_ROWS;
+    const int dst_cols = mlx_cnf.interpolation * MLX90640_COLS;
+    const int box_size = mlx_cnf.box_size;
+
+    // Measure temperature for min/max/pickup
+    measure_temperature(bank);
 
 #if ENA_INTERPOLATION
     interpolate_image(src[bank], MLX90640_ROWS, MLX90640_COLS, dst, dst_rows, dst_cols);
