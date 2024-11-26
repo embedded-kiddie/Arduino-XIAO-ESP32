@@ -809,6 +809,7 @@ static void onThermographReset(const Widget_t *widget, const Touch_t &touch) {
 static void onThermographApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
+  // Issue: onThermographReset() is called twice on EVENT_INIT
   onThermographReset(widget - 1, doInit);
 
   if (Apply(widget, touch, (mlx_copy != cnf_copy))) {

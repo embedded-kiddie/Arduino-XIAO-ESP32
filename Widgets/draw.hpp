@@ -59,6 +59,13 @@ void DrawColorRange(uint8_t flag) {
     }
   }
 
+  // Draw min/max point
+  if (flag & 4) {
+    const int W = mlx_cnf.box_size * mlx_cnf.interpolation;
+    GFX_EXEC(fillCircle((MLX90640_COLS - tmin.x - 1) * W, tmin.y * W, 3, BLACK));
+    GFX_EXEC(fillCircle((MLX90640_COLS - tmax.x - 1) * W, tmax.y * W, 3, BLACK));
+  }
+
   GFX_EXEC(endWrite());
   GFX_EXEC(setTextSize(2));
   GFX_EXEC(setTextDatum(TL_DATUM));

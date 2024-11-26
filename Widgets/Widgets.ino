@@ -104,6 +104,14 @@ void gfx_setup(void) {
 #endif
 
 /*--------------------------------------------------------------------------------
+ * Definitions of graphics helpers
+ *--------------------------------------------------------------------------------*/
+// Font size for setTextSize(2)
+#define FONT_WIDTH    12 // [px] (Device coordinate system)
+#define FONT_HEIGHT   16 // [px] (Device coordinate system)
+#define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
+
+/*--------------------------------------------------------------------------------
  * MLX90640 settings (optimized for LovyanGFX and TFT_eSPI)
  *--------------------------------------------------------------------------------*/
 #include <Adafruit_MLX90640.h>
@@ -132,12 +140,38 @@ void gfx_setup(void) {
 #define INTERPOLATED_ROWS (MLX90640_ROWS * 8)
 
 /*--------------------------------------------------------------------------------
- * Definitions of graphics helpers
+ * MLX90640 instance
  *--------------------------------------------------------------------------------*/
-// Font size for setTextSize(2)
-#define FONT_WIDTH    12 // [px] (Device coordinate system)
-#define FONT_HEIGHT   16 // [px] (Device coordinate system)
-#define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
+Adafruit_MLX90640 mlx;
+
+#if ENA_MULTITASKING
+float src[2][MLX90640_ROWS  * MLX90640_COLS    ];
+#else
+float src[1][MLX90640_ROWS  * MLX90640_COLS    ];
+#endif
+float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
+
+/*--------------------------------------------------------------------------------
+ * Low pass filter
+ *--------------------------------------------------------------------------------*/
+#define CUTOFF_FREQUECCY  4.0f // [Hz]
+typedef struct {
+  float     x, y; // x: input, y: output
+  float filter(float t, const float dt /* sampling period [sec] */) {
+    return (y = (1.0f - dt / CUTOFF_FREQUECCY) * y + dt / CUTOFF_FREQUECCY * (x = t));
+  };
+  void  reset(void) {
+    x = y = 0.0f;
+  }
+} LowPass_t;
+
+static LowPass_t lmin, lmax, lpic;
+
+static void reset_filter(void) {
+  lmin.reset();
+  lmax.reset();
+  lpic.reset();
+}
 
 /*--------------------------------------------------------------------------------
  * MLX90640 control parameters
@@ -193,7 +227,7 @@ typedef struct MLXCapture {
   bool          recording;    // false: stop, true: recording video
 } MLXCapture_t;
 
-static MLXConfig_t mlx_cnf = {
+static constexpr MLXConfig_t mlx_ini = {
   .interpolation  = INTERPOLATE_SCALE,
   .box_size       = BOX_SIZE,
   .refresh_rate   = REFRESH_RATE,
@@ -204,6 +238,7 @@ static MLXConfig_t mlx_cnf = {
   .range_max      = MAXTEMP,
 };
 
+static MLXConfig_t mlx_cnf = mlx_ini;
 static MLXCapture_t mlx_cap = {
   .capture_mode   = 0,
   .recording      = false,
@@ -212,6 +247,75 @@ static MLXCapture_t mlx_cap = {
 static void mlx_refresh(void) {
   // configure refresh rate
   mlx_cnf.setup();
+
+  // initialize lowpass filter
+  reset_filter();
+}
+
+/*--------------------------------------------------------------------------------
+ * Temperature
+ *--------------------------------------------------------------------------------*/
+#if     false
+#define CHECK_VALUE true
+#include <math.h>
+#endif
+
+typedef struct {
+  uint16_t  x, y;
+  float     t;
+} Temperature_t;
+
+static Temperature_t tmin, tmax, tpic;
+
+#define RANGE_STEP  2
+void DrawColorRange(uint8_t); // defined in draw.hpp
+
+static void measure_temperature(uint8_t bank) {
+  float *s = src[bank];
+
+  // Measure the temperature at the sampling point
+  if (tpic.x != 0 || tpic.y != 0) {
+    tpic.t = s[tpic.x + (tpic.y * MLX90640_COLS)];
+  }
+
+  // Measure temperature ranges
+  if (mlx_cnf.range_auto || mlx_cnf.minmax_auto) {
+    tmin.t = 999.0f; tmax.t = -999.0f;
+    for (uint16_t y = 0; y < MLX90640_ROWS; y++) {
+      for (uint16_t x = 0; x < MLX90640_COLS; x++, s++) {
+        float t = *s;
+#ifdef  CHECK_VALUE
+        if (isinf(t) || isnan(t) || t < -20.0f || 180.0f < t) {
+          continue;
+        }
+#endif
+        if (t < tmin.t) {
+          tmin.x = x;
+          tmin.y = y;
+          tmin.t = t;
+        } else
+        if (t > tmax.t) {
+          tmax.x = x;
+          tmax.y = y;
+          tmax.t = t;
+        }
+      }
+    }
+
+    if (mlx_cnf.range_auto) {
+      mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
+      mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
+
+      // debug with serial ploter
+      // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
+
+      DrawColorRange(2);
+    }
+
+    if (mlx_cnf.minmax_auto) {
+      DrawColorRange(4);
+    }
+  }
 }
 
 /*--------------------------------------------------------------------------------

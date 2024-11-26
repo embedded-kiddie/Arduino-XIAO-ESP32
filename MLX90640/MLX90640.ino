@@ -163,6 +163,14 @@ void gfx_setup(void) {
 #endif
 
 /*--------------------------------------------------------------------------------
+ * Definitions of graphics helpers
+ *--------------------------------------------------------------------------------*/
+// Font size for setTextSize(2)
+#define FONT_WIDTH    12 // [px] (Device coordinate system)
+#define FONT_HEIGHT   16 // [px] (Device coordinate system)
+#define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
+
+/*--------------------------------------------------------------------------------
  * MLX90640 settings (optimized for LovyanGFX and TFT_eSPI)
  *--------------------------------------------------------------------------------*/
 #include <Adafruit_MLX90640.h>
@@ -189,14 +197,6 @@ void gfx_setup(void) {
 #define MLX90640_ROWS 24
 #define INTERPOLATED_COLS (MLX90640_COLS * 8)
 #define INTERPOLATED_ROWS (MLX90640_ROWS * 8)
-
-/*--------------------------------------------------------------------------------
- * Definitions of graphics helpers
- *--------------------------------------------------------------------------------*/
-// Font size for setTextSize(2)
-#define FONT_WIDTH    12 // [px] (Device coordinate system)
-#define FONT_HEIGHT   16 // [px] (Device coordinate system)
-#define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
 
 /*--------------------------------------------------------------------------------
  * MLX90640 instance
