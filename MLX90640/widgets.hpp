@@ -36,12 +36,16 @@ static constexpr Image_t image_adjust_offset[]      = { { screen_adjust_offset, 
 static constexpr Image_t image_information[]        = { { screen_information,   sizeof(screen_information  ) }, }; // 320 x 240
 static constexpr Image_t image_icon_configuration[] = { { icon_configuration,   sizeof(icon_configuration  ) }, }; //  50 x  50
 
+static constexpr Image_t image_icon_close[] = {
+  { icon_close_on,  sizeof(icon_close_on ) }, // 30 x 30
+};
 static constexpr Image_t image_icon_apply[] = {
   { icon_apply_off, sizeof(icon_apply_off) }, // 30 x 30
   { icon_apply_on,  sizeof(icon_apply_on ) }, // 30 x 30
 };
-static constexpr Image_t image_icon_close[] = {
-  { icon_close_on,  sizeof(icon_close_on ) }, // 30 x 30
+static constexpr Image_t image_icon_reset[] = {
+  { icon_reset_off, sizeof(icon_reset_off) }, // 30 x 30
+  { icon_reset_on,  sizeof(icon_reset_on ) }, // 30 x 30
 };
 static constexpr Image_t image_icon_camera[] = {
   { icon_camera1, sizeof(icon_camera1) }, // 50 x 50
@@ -193,6 +197,7 @@ static void onThermographToggle2  (const Widget_t *widget, const Touch_t &touch)
 static void onThermographSlider1  (const Widget_t *widget, const Touch_t &touch);
 static void onThermographSlider2  (const Widget_t *widget, const Touch_t &touch);
 static void onThermographClose    (const Widget_t *widget, const Touch_t &touch);
+static void onThermographReset    (const Widget_t *widget, const Touch_t &touch);
 static void onThermographApply    (const Widget_t *widget, const Touch_t &touch);
 
 static constexpr Widget_t widget_thermograph[] = {
@@ -204,6 +209,7 @@ static constexpr Widget_t widget_thermograph[] = {
   {  40, 134, 238,  26, image_slider2,     EVENT_DRAG,  onThermographSlider1 },
   {  40, 173, 238,  26, image_slider2,     EVENT_DRAG,  onThermographSlider2 },
   {  60, 206,  30,  30, NULL,              EVENT_ALL,   onThermographClose   },
+  { 147, 206,  30,  30, image_icon_reset,  EVENT_CLICK, onThermographReset   },
   { 230, 206,  30,  30, image_icon_apply,  EVENT_CLICK, onThermographApply   },
 };
 
@@ -659,7 +665,7 @@ static void onThermographRadio1(const Widget_t *widget, const Touch_t &touch) {
 
   // Enable apply if somethig is changed
   DrawColorRange(1);
-  onThermographApply(widget + 7, doInit);
+  onThermographApply(widget + 8, doInit);
 }
 
 static void onThermographRadio2(const Widget_t *widget, const Touch_t &touch) {
@@ -673,7 +679,7 @@ static void onThermographRadio2(const Widget_t *widget, const Touch_t &touch) {
 
   // Enable apply if somethig is changed
   DrawColorRange(1);
-  onThermographApply(widget + 6, doInit);
+  onThermographApply(widget + 7, doInit);
 }
 
 static void onThermographToggle1(const Widget_t *widget, const Touch_t &touch) {
@@ -686,7 +692,7 @@ static void onThermographToggle1(const Widget_t *widget, const Touch_t &touch) {
   DrawToggle(widget, cnf_copy.minmax_auto);
 
   // Enable apply if somethig is changed
-  onThermographApply(widget + 5, doInit);
+  onThermographApply(widget + 6, doInit);
 }
 
 static void onThermographToggle2(const Widget_t *widget, const Touch_t &touch) {
@@ -694,6 +700,12 @@ static void onThermographToggle2(const Widget_t *widget, const Touch_t &touch) {
 
   if (touch.event != EVENT_INIT) {
     mlx_cnf.range_auto = cnf_copy.range_auto = !cnf_copy.range_auto;
+
+    // Update min/max to measured values
+    if (!cnf_copy.range_auto) {
+      cnf_copy.range_min = mlx_cnf.range_min;
+      cnf_copy.range_max = mlx_cnf.range_max;
+    }
   }
 
   DrawToggle(widget, cnf_copy.range_auto);
@@ -703,7 +715,7 @@ static void onThermographToggle2(const Widget_t *widget, const Touch_t &touch) {
   onThermographSlider2(widget + 2, doInit);
 
   // Enable apply if somethig is changed
-  onThermographApply(widget + 4, doInit);
+  onThermographApply(widget + 5, doInit);
 }
 
 static void onThermographSlider1(const Widget_t *widget, const Touch_t &touch) {
@@ -733,7 +745,7 @@ static void onThermographSlider1(const Widget_t *widget, const Touch_t &touch) {
 
   // Enable apply if somethig is changed
   DrawColorRange(2);
-  onThermographApply(widget + 3, doInit);
+  onThermographApply(widget + 4, doInit);
 }
 
 static void onThermographSlider2(const Widget_t *widget, const Touch_t &touch) {
@@ -763,7 +775,7 @@ static void onThermographSlider2(const Widget_t *widget, const Touch_t &touch) {
 
   // Enable apply if somethig is changed
   DrawColorRange(2);
-  onThermographApply(widget + 2, doInit);
+  onThermographApply(widget + 3, doInit);
 }
 
 static void onThermographClose(const Widget_t *widget, const Touch_t &touch) {
@@ -776,8 +788,28 @@ static void onThermographClose(const Widget_t *widget, const Touch_t &touch) {
   }
 }
 
+static void onThermographReset(const Widget_t *widget, const Touch_t &touch) {
+  if (touch.event == EVENT_INIT) {
+    DrawWidget(widget, (mlx_cnf != mlx_ini));
+  }
+
+  else if (Apply(widget, touch, (mlx_cnf != mlx_ini))) {
+    mlx_cnf = mlx_copy = cnf_copy = mlx_ini;
+    mlx_cnf.box_size = 1;
+    mlx_cnf.interpolation = 4;
+    mlx_cnf.setup();
+
+    onThermographRadio1 (widget - 7, doInit);
+    onThermographRadio2 (widget - 6, doInit);
+    onThermographToggle1(widget - 5, doInit);
+    onThermographToggle2(widget - 4, doInit);
+  }
+}
+
 static void onThermographApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
+
+  onThermographReset(widget - 1, doInit);
 
   if (Apply(widget, touch, (mlx_copy != cnf_copy))) {
     mlx_cnf = mlx_copy = cnf_copy;

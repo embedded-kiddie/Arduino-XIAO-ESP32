@@ -42,7 +42,7 @@ void gfx_setup(void) {
   GFX_EXEC(setRotation(SCREEN_ROTATION));
 
 #if defined (ARDUINO_XIAO_ESP32S3)
-  GFX_EXEC(setSPISpeed(SPI_FREQUENCY));
+  GFX_EXEC(setSPISpeed(SPI_FREQUENCY)); // or SPISettings() ?
 #endif
 
   lcd_width  = GFX_EXEC(width());
@@ -216,8 +216,8 @@ float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
 #define CUTOFF_FREQUECCY  4.0f // [Hz]
 typedef struct {
   float     x, y; // x: input, y: output
-  float filter(const float dt /* sampling period [sec] */) {
-    return (y = (1.0f - dt / CUTOFF_FREQUECCY) * y + dt / CUTOFF_FREQUECCY * x);
+  float filter(float t, const float dt /* sampling period [sec] */) {
+    return (y = (1.0f - dt / CUTOFF_FREQUECCY) * y + dt / CUTOFF_FREQUECCY * (x = t));
   };
   void  reset(void) {
     x = y = 0.0f;
@@ -286,7 +286,7 @@ typedef struct MLXCapture {
   bool          recording;    // false: stop, true: recording video
 } MLXCapture_t;
 
-static MLXConfig_t mlx_cnf = {
+static constexpr MLXConfig_t mlx_ini = {
   .interpolation  = INTERPOLATE_SCALE,
   .box_size       = BOX_SIZE,
   .refresh_rate   = REFRESH_RATE,
@@ -297,6 +297,7 @@ static MLXConfig_t mlx_cnf = {
   .range_max      = MAXTEMP,
 };
 
+static MLXConfig_t mlx_cnf = mlx_ini;
 static MLXCapture_t mlx_cap = {
   .capture_mode   = 0,
   .recording      = false,
@@ -327,6 +328,9 @@ typedef struct {
 
 static Temperature_t tmin, tmax, tpic;
 
+#define RANGE_STEP  2
+void DrawColorRange(uint8_t); // defined in draw.hpp
+
 static void measure_temperature(uint8_t bank) {
   float *s = src[bank];
 
@@ -338,37 +342,40 @@ static void measure_temperature(uint8_t bank) {
   // Measure temperature ranges
   if (mlx_cnf.range_auto || mlx_cnf.minmax_auto) {
     tmin.t = 999.0f; tmax.t = -999.0f;
-    for (uint16_t x = 0; x < MLX90640_ROWS; x++) {
-      for (uint16_t y = 0; y < MLX90640_COLS; y++, s++) {
+    for (uint16_t y = 0; y < MLX90640_ROWS; y++) {
+      for (uint16_t x = 0; x < MLX90640_COLS; x++, s++) {
+        float t = *s;
 #ifdef  CHECK_VALUE
-        if (isinf(*s) || isnan(*s) || *s < -20.0f || 180.0f < *s) {
+        if (isinf(t) || isnan(t) || t < -20.0f || 180.0f < t) {
           continue;
         }
 #endif
-        if (*s < tmin.t) {
+        if (t < tmin.t) {
           tmin.x = x;
           tmin.y = y;
-          tmin.t = *s;
-        }
-        if (*s > tmax.t) {
+          tmin.t = t;
+        } else
+        if (t > tmax.t) {
           tmax.x = x;
           tmax.y = y;
-          tmax.t = *s;
+          tmax.t = t;
         }
       }
     }
 
-#define RANGE_STEP  2
-    lmin.x = tmin.t;
-    lmax.x = tmax.t;
-    mlx_cnf.range_min = ((int)((float)lmin.filter(mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
-    mlx_cnf.range_max = ((int)((float)lmax.filter(mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
+    if (mlx_cnf.range_auto) {
+      mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
+      mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
 
-    void DrawColorRange(uint8_t); // defined in draw.hpp
-    DrawColorRange(2);
+      // debug with serial ploter
+      // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
 
-    // debug with serial ploter
-    // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
+      DrawColorRange(2);
+    }
+
+    if (mlx_cnf.minmax_auto) {
+      DrawColorRange(4);
+    }
   }
 }
 
