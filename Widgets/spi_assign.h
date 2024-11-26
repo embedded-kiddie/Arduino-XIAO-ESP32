@@ -1,5 +1,9 @@
 #ifndef _SPI_ASSIGN_H_
 
+// Defalult orientation: Portrait
+#define TFT_WIDTH  240 // ST7789 240 x 240 and 240 x 320
+#define TFT_HEIGHT 320 // ST7789 240 x 320
+
 #if defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_UNOR4_MINIMA)
 
 // https://github.com/arduino/ArduinoCore-renesas/blob/main/variants/MINIMA/pins_arduino.h

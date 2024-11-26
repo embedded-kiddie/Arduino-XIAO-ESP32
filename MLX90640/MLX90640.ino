@@ -22,9 +22,6 @@
 uint16_t lcd_width;
 uint16_t lcd_height;
 
-#define TFT_WIDTH  320
-#define TFT_HEIGHT 240
-
 #if 0
 /*---------------------------------------------------
  * Adafruit GFX Library
@@ -214,7 +211,7 @@ float src[1][MLX90640_ROWS  * MLX90640_COLS    ];
 float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
 
 /*--------------------------------------------------------------------------------
- * Lowpass filter
+ * Low pass filter
  *--------------------------------------------------------------------------------*/
 #define CUTOFF_FREQUECCY  4.0f // [Hz]
 typedef struct {
@@ -367,7 +364,7 @@ static void measure_temperature(uint8_t bank) {
     mlx_cnf.range_min = ((int)((float)lmin.filter(mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
     mlx_cnf.range_max = ((int)((float)lmax.filter(mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
 
-    void DrawColorRange(uint8_t); // defined in widgets.hpp
+    void DrawColorRange(uint8_t); // defined in draw.hpp
     DrawColorRange(2);
 
     // debug with serial ploter

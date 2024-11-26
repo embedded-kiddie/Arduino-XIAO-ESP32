@@ -322,53 +322,6 @@ static bool Apply(const Widget_t *widget, const Touch_t &touch, bool enable) {
 }
 
 /*--------------------------------------------------------------------------------
- * Common method - Draw colorbar and range
- *--------------------------------------------------------------------------------*/
-void DrawColorRange(uint8_t flag) {
-  const int n = sizeof(camColors) / sizeof(camColors[0]);
-  const int w = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_COLS;
-  int       y = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_ROWS + 3;
-  
-  GFX_EXEC(startWrite());
-  
-  // Draw color bar
-  if (flag & 1) {
-    for (int i = 0; i < n; i++) {
-      int x = map(i, 0, n, 0, w);
-#if defined (LOVYANGFX_HPP_)
-      GFX_EXEC(writeFastVLine(x, y, FONT_HEIGHT, camColors[i]));
-#else
-      GFX_EXEC(drawFastVLine(x, y, FONT_HEIGHT, camColors[i]));
-#endif
-    }
-  }
-
-  // Draw thermal range
-  if (flag & 2) {
-    y += FONT_HEIGHT + 4;
-    uint8_t size = mlx_cnf.interpolation * mlx_cnf.box_size > 4 ? 2 : 1;
-    const int font_w = (size == 2 ? FONT_WIDTH  : FONT_WIDTH  >> 1);
-    const int font_h = (size == 2 ? FONT_HEIGHT : FONT_HEIGHT >> 1);
-    GFX_EXEC(setTextSize(size));
-
-    GFX_EXEC(setTextDatum(TL_DATUM));
-    gfx_printf(0, y, "%d  ", mlx_cnf.range_min);
-
-    GFX_EXEC(setTextDatum(TR_DATUM));
-    gfx_printf(w, y, "  %d", mlx_cnf.range_max);
-
-    if (mlx_cnf.interpolation * mlx_cnf.box_size > 1) {
-      GFX_EXEC(setTextDatum(TC_DATUM));
-      gfx_printf(w / 2, y, " %3.1f ", (float)(mlx_cnf.range_min + mlx_cnf.range_max) / 2.0f);
-    }
-  }
-
-  GFX_EXEC(endWrite());
-  GFX_EXEC(setTextSize(2));
-  GFX_EXEC(setTextDatum(TL_DATUM));
-}
-
-/*--------------------------------------------------------------------------------
  * Callback functions - Main
  *--------------------------------------------------------------------------------*/
 static void onMainScreen(const Widget_t *widget, const Touch_t &touch) {
