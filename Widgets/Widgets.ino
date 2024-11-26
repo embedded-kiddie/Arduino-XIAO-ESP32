@@ -154,8 +154,8 @@ float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
 /*--------------------------------------------------------------------------------
  * Low pass filter
  *--------------------------------------------------------------------------------*/
-#define CUTOFF_FREQUECCY  4.0f // [Hz]
-#define TIME_CONSTANT     0.25 // [sec]
+#define TIME_CONSTANT     0.25f // [sec]
+#define CUTOFF_FREQUECCY  4.0f  // [Hz]
 typedef struct {
   float     x, y; // x: input, y: output
   float filter(float t, const float dt /* sampling period [sec] */) {
