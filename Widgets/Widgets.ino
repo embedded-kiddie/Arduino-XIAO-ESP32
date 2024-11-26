@@ -155,10 +155,11 @@ float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
  * Low pass filter
  *--------------------------------------------------------------------------------*/
 #define CUTOFF_FREQUECCY  4.0f // [Hz]
+#define TIME_CONSTANT     0.25 // [sec]
 typedef struct {
   float     x, y; // x: input, y: output
   float filter(float t, const float dt /* sampling period [sec] */) {
-    return (y = (1.0f - dt / CUTOFF_FREQUECCY) * y + dt / CUTOFF_FREQUECCY * (x = t));
+    return (y = (1.0f - dt * TIME_CONSTANT) * y + dt * TIME_CONSTANT * (x = t));
   };
   void  reset(void) {
     x = y = 0.0f;
@@ -303,8 +304,9 @@ static void measure_temperature(uint8_t bank) {
     }
 
     if (mlx_cnf.range_auto) {
+      const float d = (mlx_cnf.interpolation == 8 ? 1.0f : 0.0);
+      mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + d) * RANGE_STEP;
       mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
-      mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
 
       // debug with serial ploter
       // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
