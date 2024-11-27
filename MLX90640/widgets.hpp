@@ -953,6 +953,10 @@ static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
       files[n_files-1].isSelected = true;
     });//*/
   }
+
+  else {
+    gfx_printf(245, 13, "failed");
+  }
 }
 
 static void onFileManagerCheckAll(const Widget_t *widget, const Touch_t &touch) {
