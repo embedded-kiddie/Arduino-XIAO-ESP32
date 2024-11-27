@@ -89,14 +89,16 @@ void gfx_setup(void) {
 // LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
 // #include <SD.h>
 #include "SdFat.h"
-#include <LovyanGFX.hpp>
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
 
+// require `PSRAM: "OPT PSRAM"` in tool menu
 LGFX lcd;
+LGFX_Sprite lcd_sprite(&lcd);
 
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) lcd.x
-#define drawPixel   writePixel
+#define GFX_SPRT(x) lcd_sprite.x
+//#define drawPixel   writePixel
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -105,6 +107,7 @@ void gfx_setup(void) {
   GFX_EXEC(setRotation(SCREEN_ROTATION));
   lcd_width  = GFX_EXEC(width());
   lcd_height = GFX_EXEC(height());
+  GFX_SPRT(setPsram(true));
 }
 
 #else
@@ -116,10 +119,13 @@ void gfx_setup(void) {
 #include <SD.h>
 #include "TFT_eSPI.h"
 
+// require `CONFIG_SPIRAM_SUPPORT` in User_Setup.h
 TFT_eSPI tft = TFT_eSPI();
+TFT_eSprite tft_sprite(&tft);
 
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) tft.x
+#define GFX_SPRT(x) tft_sprite.x
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -276,8 +282,8 @@ typedef struct MLXConfig {
       sampling_period = (refresh_rate == MLX90640_16_HZ ? 1.0f / 8.0f : 1.0f / 4.0f);
     } else
     if (interpolation <= 8 && box_size == 1) {
-      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_8_HZ  /*4*/ : MLX90640_2_HZ  /*2*/);
-      sampling_period = (refresh_rate == MLX90640_8_HZ ? 1.0f / 4.0f : 1.0f / 2.0f);
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ  /*4*/ : MLX90640_2_HZ  /*2*/);
+      sampling_period = (refresh_rate == MLX90640_8_HZ ? 1.0f / 16.0f : 1.0f / 2.0f);
     }
   }
 } MLXConfig_t;
@@ -365,9 +371,8 @@ static void measure_temperature(uint8_t bank) {
     }
 
     if (mlx_cnf.range_auto) {
-      const float d = (mlx_cnf.interpolation == 8 ? 1.0f : 0.0);
-      mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + d) * RANGE_STEP;
-      mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
+      mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 1) * RANGE_STEP;
+      mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
 
       // debug with serial ploter
       // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
@@ -474,6 +479,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 
 #if ENA_TRANSACTION
     GFX_EXEC(startWrite());
+    GFX_SPRT(createSprite(dst_cols, dst_rows));
 #endif
 
     for (int h = 0; h < dst_rows; h++) {
@@ -488,17 +494,23 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 
 #if 0
         // Selfie Camera
-        GFX_EXEC(fillRect(box_size * w, box_size * h, box_size, box_size, camColors[colorIndex]));
+        GFX_SPRT(fillRect(box_size * w, box_size * h, box_size, box_size, camColors[colorIndex]));
 #else
         // Front Camera
         if (box_size == 1) {
-          GFX_EXEC(drawPixel(dst_cols - 1 - w, h, camColors[colorIndex]));
+          GFX_SPRT(drawPixel(dst_cols - 1 - w, h, camColors[colorIndex]));
         } else {
-          GFX_EXEC(fillRect((dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, camColors[colorIndex]));
+          GFX_SPRT(fillRect((dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, camColors[colorIndex]));
         }
 #endif
       }
     }
+
+#if ENA_TRANSACTION
+    GFX_SPRT(pushSprite(0, 0));
+    GFX_SPRT(deleteSprite());
+    GFX_EXEC(endWrite());
+#endif
 
     if (state == STATE_MAIN) {
       // MLX90640
@@ -520,10 +532,6 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
         gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 6.5, "%4.1f", v);
       }
     }
-
-#if ENA_TRANSACTION
-    GFX_EXEC(endWrite());
-#endif
   }
 
   // Prevent the watchdog from firing
@@ -535,7 +543,13 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
  *--------------------------------------------------------------------------------*/
 void setup() {
   DBG_EXEC(Serial.begin(115200));
-  DBG_EXEC(while (!Serial && millis() <= 1000));
+  DBG_EXEC(delay(1000));
+
+  if (psramInit()) {
+    DBG_EXEC(printf("\nThe PSRAM is correctly initialized.\n"));
+  } else {
+    DBG_EXEC(printf("\nPSRAM does not work.\n"));
+  }
 
   // Initialize LCD display with touch and SD card
   gfx_setup();
@@ -571,6 +585,10 @@ void setup() {
 
 void loop() {
 #if ENA_MULTITASKING
+  DBG_EXEC(printf("Total heap: %d\n", ESP.getHeapSize()));
+  DBG_EXEC(printf("Free  heap: %d\n", ESP.getFreeHeap()));
+  DBG_EXEC(printf("Total PSRAM: %d\n",ESP.getPsramSize()));
+  DBG_EXEC(printf("Free  PSRAM: %d\n",ESP.getFreePsram()));
   delay(1000);
 #else
   uint32_t inputStart = millis();
