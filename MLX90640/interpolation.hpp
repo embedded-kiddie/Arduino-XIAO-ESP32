@@ -12,7 +12,7 @@ inline float get_point(float *p, const int rows, const int cols, int x, int y) {
   return p[y * cols + x];
 }
 
-#if 0
+#if false
 
 /*--------------------------------------------------------------------------------------------
  * Bicubic interpolation
@@ -112,17 +112,8 @@ void interpolate_image(float *src, const int src_rows, const int src_cols,
       float frac_y = y - (int)y; // we only need the ~delta~ between the points
       float t = bicubicInterpolate(adjacents, frac_x, frac_y);
       // Serial.print("\tInterp: "); Serial.println(t);
-#if 1
+
       set_point(dst, dst_rows, dst_cols, x_idx, y_idx, t);
-#else
-      t = min((int)t, MAXTEMP);
-      t = max((int)t, MINTEMP); 
-
-      int colorIndex = map(t, MINTEMP, MAXTEMP, 0, 255);
-      colorIndex = constrain(colorIndex, 0, 255);
-
-      GFX_EXEC(fillRect(BOX_SIZE * (dst_cols - 1 - x_idx), BOX_SIZE * y_idx, BOX_SIZE, BOX_SIZE, camColors[colorIndex]));
-#endif
     }
   }
 }
@@ -144,7 +135,8 @@ void interpolate_setup(const int scale) {
 
 #define FURTHER_OPTIMIZATION  true // Is the compiler smart enough?
 
-void interpolate_image(float *src, const int src_rows, const int src_cols, float *dst, const int dst_rows, const int dst_cols) {
+void interpolate_image(float *src, const int src_rows, const int src_cols,
+                       float *dst, const int dst_rows, const int dst_cols) {
   int X, Y;
   float X0Y0, X1Y0, X0Y1, X1Y1;
   float x_ratio_lo, x_ratio_hi;

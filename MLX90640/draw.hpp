@@ -30,58 +30,6 @@ static TFT_eSprite sprite(&tft);
 
 #endif
 
-/*--------------------------------------------------------------------------------
- * Draw colorbar and range
- *--------------------------------------------------------------------------------*/
-void DrawColorRange(uint8_t flag) {
-  const int n = sizeof(camColors) / sizeof(camColors[0]);
-  const int w = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_COLS;
-  int       y = mlx_cnf.box_size * mlx_cnf.interpolation * MLX90640_ROWS + 3;
-  
-  GFX_EXEC(startWrite());
-  
-  // Draw color bar
-  if (flag & 1) {
-    for (int i = 0; i < n; i++) {
-      int x = map(i, 0, n, 0, w);
-#if defined (LOVYANGFX_HPP_)
-      GFX_EXEC(writeFastVLine(x, y, FONT_HEIGHT, camColors[i]));
-#else
-      GFX_EXEC(drawFastVLine(x, y, FONT_HEIGHT, camColors[i]));
-#endif
-    }
-  }
-
-  // Draw thermal range
-  if (flag & 2) {
-    y += FONT_HEIGHT + 4;
-    const uint8_t size = mlx_cnf.interpolation * mlx_cnf.box_size > 4 ? 2 : 1;
-    const int font_w = (size == 2 ? FONT_WIDTH  : FONT_WIDTH  >> 1);
-    const int font_h = (size == 2 ? FONT_HEIGHT : FONT_HEIGHT >> 1);
-    GFX_EXEC(setTextSize(size));
-
-    GFX_EXEC(setTextDatum(TL_DATUM));
-    gfx_printf(0, y, "%d  ", mlx_cnf.range_min);
-
-    GFX_EXEC(setTextDatum(TR_DATUM));
-    gfx_printf(w, y, "  %d", mlx_cnf.range_max);
-
-    if (mlx_cnf.interpolation * mlx_cnf.box_size > 1) {
-      GFX_EXEC(setTextDatum(TC_DATUM));
-      gfx_printf(w / 2, y, " %3.1f ", (float)(mlx_cnf.range_min + mlx_cnf.range_max) / 2.0f);
-    }
-  }
-
-  // Draw min/max point
-  if (flag & 4) {
-    const int W = mlx_cnf.box_size * mlx_cnf.interpolation;
-    GFX_EXEC(fillCircle((MLX90640_COLS - tmin.x - 1) * W, tmin.y * W, 3, BLACK));
-    GFX_EXEC(fillCircle((MLX90640_COLS - tmax.x - 1) * W, tmax.y * W, 3, BLACK));
-  }
-
-  GFX_EXEC(endWrite());
-}
-
 #ifdef _TFT_eSPIH_
 /*--------------------------------------------------------------------------------
  * Helper function for TFT_eSPI
@@ -156,10 +104,104 @@ uint32_t swap_endian(uint32_t v) {
 #define PNG_HEADER_WIDTH    16 // PNG file signature + offset from chunk data
 #define PNG_HEADER_HEIGHT   20 // PNG file signature + offset from chunk data
 
-inline uint32_t get_width (const uint8_t *data) __attribute__((always_inline));
-inline uint32_t get_height(const uint8_t *data) __attribute__((always_inline));
-inline uint32_t get_width (const uint8_t *data) { return swap_endian(*(uint32_t*)(data + PNG_HEADER_WIDTH )); }
-inline uint32_t get_height(const uint8_t *data) { return swap_endian(*(uint32_t*)(data + PNG_HEADER_HEIGHT)); }
+static inline uint32_t get_width (const uint8_t *data) __attribute__((always_inline));
+static inline uint32_t get_height(const uint8_t *data) __attribute__((always_inline));
+static inline uint32_t get_width (const uint8_t *data) { return swap_endian(*(uint32_t*)(data + PNG_HEADER_WIDTH )); }
+static inline uint32_t get_height(const uint8_t *data) { return swap_endian(*(uint32_t*)(data + PNG_HEADER_HEIGHT)); }
+
+/*--------------------------------------------------------------------------------
+ * Draw colorbar and range
+ *--------------------------------------------------------------------------------*/
+// icon-point.png
+// https://lang-ship.com/tools/image2data/
+// RAW File Dump
+static constexpr unsigned char icon_point[270] = {
+0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52, 
+0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x10, 0x08, 0x00, 0x00, 0x00, 0x00, 0x3a, 0x98, 0xa0, 
+0xbd, 0x00, 0x00, 0x00, 0xd5, 0x49, 0x44, 0x41, 0x54, 0x78, 0x01, 0x35, 0xce, 0x03, 0x52, 0x45, 
+0x01, 0x00, 0x86, 0xd1, 0x2f, 0x73, 0x09, 0xcf, 0xd6, 0x30, 0xaf, 0x24, 0xd7, 0x4e, 0xb2, 0x07, 
+0xd9, 0xe6, 0x20, 0xad, 0x23, 0x7b, 0x94, 0x5b, 0xc2, 0x33, 0xef, 0x9f, 0xcf, 0x0a, 0x0e, 0xdf, 
+0xb0, 0x37, 0x8d, 0x8d, 0x35, 0xd9, 0xf9, 0x67, 0x59, 0x8e, 0xe8, 0x4b, 0x64, 0xd9, 0x02, 0xdf, 
+0xaa, 0x9f, 0xf4, 0xb0, 0x96, 0xc9, 0xac, 0xdd, 0xeb, 0xb9, 0x1a, 0xc0, 0xfc, 0xa2, 0xc1, 0x4a, 
+0x57, 0x26, 0xe3, 0xaa, 0x1c, 0xd4, 0x8b, 0x05, 0x58, 0xd5, 0x20, 0x04, 0xa5, 0x20, 0x0c, 0x6a, 
+0x0d, 0xec, 0xd1, 0xfb, 0x62, 0x28, 0x9b, 0x9b, 0x2b, 0x83, 0xe2, 0xbb, 0x98, 0x9d, 0x26, 0x2d, 
+0x7a, 0xdc, 0x45, 0x00, 0x45, 0x6e, 0xcf, 0x82, 0x9a, 0xd8, 0x56, 0x2a, 0x99, 0x98, 0x06, 0x98, 
+0x4e, 0x24, 0x53, 0x3a, 0x60, 0x4f, 0x99, 0x4c, 0x7a, 0x01, 0x60, 0x21, 0x9d, 0xc9, 0xe8, 0x98, 
+0x66, 0x2d, 0x85, 0x82, 0x25, 0x00, 0x25, 0xc1, 0xd0, 0x92, 0x9a, 0x71, 0xc6, 0x6f, 0x0a, 0xa1, 
+0x74, 0x62, 0xa2, 0x14, 0x0a, 0xaf, 0xe3, 0x4e, 0xd8, 0x54, 0x0f, 0x04, 0xa4, 0x00, 0xf4, 0x68, 
+0x0b, 0xb0, 0xbd, 0xab, 0xbb, 0xec, 0x3b, 0x56, 0xd6, 0xad, 0x0f, 0x1b, 0x40, 0xfd, 0xbb, 0xae, 
+0x16, 0x32, 0x99, 0x85, 0x2b, 0xbd, 0x37, 0xc0, 0x37, 0xc7, 0x66, 0x42, 0x5f, 0x12, 0x5b, 0x0e, 
+0xfe, 0x79, 0x3a, 0x4e, 0x4f, 0x3b, 0x3d, 0x7c, 0xfb, 0x04, 0x7f, 0xfb, 0x69, 0x12, 0x9f, 0xf2, 
+0x94, 0x5a, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82, };
+
+void DrawColorRange(uint8_t flag) {
+  const int box = mlx_cnf.box_size * mlx_cnf.interpolation;
+  const int w = box * MLX90640_COLS;
+  int       y = box * MLX90640_ROWS + 3;
+
+  GFX_EXEC(startWrite());
+  
+  // Draw color bar
+  if (flag & 1) {
+    const int n = sizeof(camColors) / sizeof(camColors[0]);
+ 
+    for (int i = 0; i < n; i++) {
+      int x = map(i, 0, n, 0, w);
+#if defined (LOVYANGFX_HPP_)
+      GFX_EXEC(writeFastVLine(x, y, FONT_HEIGHT, camColors[i]));
+#else
+      GFX_EXEC(drawFastVLine(x, y, FONT_HEIGHT, camColors[i]));
+#endif
+    }
+  }
+
+  // Draw thermal range
+  if (flag & 2) {
+    y += FONT_HEIGHT + 4;
+    const uint8_t size = (box > 4 ? 2 : 1);
+    const int font_w = (size == 2 ? FONT_WIDTH  : FONT_WIDTH  >> 1);
+    const int font_h = (size == 2 ? FONT_HEIGHT : FONT_HEIGHT >> 1);
+    GFX_EXEC(setTextSize(size));
+
+    GFX_EXEC(setTextDatum(TL_DATUM));
+    gfx_printf(0, y, "%d  ", mlx_cnf.range_min);
+
+    GFX_EXEC(setTextDatum(TR_DATUM));
+    gfx_printf(w, y, "  %d", mlx_cnf.range_max);
+
+    if (mlx_cnf.interpolation * mlx_cnf.box_size > 1) {
+      GFX_EXEC(setTextDatum(TC_DATUM));
+      gfx_printf(w / 2, y, " %3.1f ", (float)(mlx_cnf.range_min + mlx_cnf.range_max) / 2.0f);
+    }
+  }
+
+  // Draw min/max point
+  else if (flag & 4) {
+    const int pw = get_width (icon_point);
+    const int ph = get_height(icon_point);
+    sprite.createSprite(pw, ph);
+
+#if   defined (LOVYANGFX_HPP_)
+
+    sprite.drawPng(icon_point, sizeof(icon_point), 0, 0);
+    sprite.pushSprite(&lcd_sprite, (MLX90640_COLS - _tmin.x - 1) * box - (pw >> 1), _tmin.y * box - (ph >> 1), BLACK);
+    sprite.pushSprite(&lcd_sprite, (MLX90640_COLS - _tmax.x - 1) * box - (pw >> 1), _tmax.y * box - (ph >> 1), BLACK);
+
+#elif defined (_TFT_eSPIH_)
+
+    DrawPNG(icon_point, sizeof(icon_point), 0, 0, pngSprite);
+    sprite.pushSprite(&tft_sprite, (MLX90640_COLS - _tmin.x - 1) * box - (pw >> 1), _tmin.y * box - (ph >> 1), BLACK);
+    sprite.pushSprite(&tft_sprite, (MLX90640_COLS - _tmax.x - 1) * box - (pw >> 1), _tmax.y * box - (ph >> 1), BLACK);
+
+#endif
+
+    sprite.deleteSprite();
+  }
+
+  GFX_EXEC(endWrite());
+  GFX_EXEC(setTextSize(2));
+  GFX_EXEC(setTextDatum(TL_DATUM));
+}
 
 /*--------------------------------------------------------------------------------
  * Draw widget

@@ -392,4 +392,6 @@
 
 // Allocate a memory area for the Sprite
 // https://github.com/Bodmer/TFT_eSPI/blob/master/Extensions/Sprite.cpp#L150
-#define CONFIG_SPIRAM_SUPPORT
+//#ifndef CONFIG_SPIRAM_SUPPORT
+#define CONFIG_SPIRAM_SUPPORT // originally defined in esp-idf sdkconfig?
+//#endif
