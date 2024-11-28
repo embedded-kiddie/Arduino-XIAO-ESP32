@@ -267,22 +267,22 @@ static MLXCapture_t mlx_cap = {
 
 /*--------------------------------------------------------------------------------
  * Low pass filter
+ * x: input, T: sampling time [sec]
  *--------------------------------------------------------------------------------*/
-#define TIME_CONSTANT     0.25f // [sec]
-#define CUTOFF_FREQUECCY  4.0f  // [Hz]
+#define TIME_CONSTANT     5.0f
 typedef struct {
-  float     x, y; // x: input, y: output
-  float filter(float t, const float dt /* sampling period [sec] */) {
-    return (y = (1.0f - dt * TIME_CONSTANT) * y + dt * TIME_CONSTANT * (x = t));
+  float y;
+  float filter(float x, const float T) {
+    return (y += T / (T + TIME_CONSTANT) * (x - y));
   };
 } LowPass_t;
 
 static LowPass_t lmin, lmax, lpic;
 
 static void reset_filter(void) {
-  lmin.x = lmin.y = MINTEMP;
-  lmax.x = lmax.y = MAXTEMP;
-  lpic.x = lpic.y = (MINTEMP + MAXTEMP) / 2;
+  lmin.y = MINTEMP;
+  lmax.y = MAXTEMP;
+  lpic.y = (MINTEMP + MAXTEMP) / 2;
 }
 
 /*--------------------------------------------------------------------------------
@@ -324,7 +324,9 @@ static void measure_temperature(uint8_t bank) {
 
   // Measure temperature ranges
   if (mlx_cnf.range_auto || mlx_cnf.minmax_auto) {
-    tmin.t = 999.0f; tmax.t = -999.0f;
+    tmin.t =  999.0f;
+    tmax.t = -999.0f;
+
     for (uint16_t y = 0; y < MLX90640_ROWS; y++) {
       for (uint16_t x = 0; x < MLX90640_COLS; x++, s++) {
         float t = *s;
@@ -563,7 +565,7 @@ void setup() {
 
 void loop() {
 #if ENA_MULTITASKING
-#ifdef  ESP32
+#if defined (ESP32)
   DBG_EXEC(printf("Total heap: %d\n", ESP.getHeapSize()));
   DBG_EXEC(printf("Free  heap: %d\n", ESP.getFreeHeap()));
   DBG_EXEC(printf("Total PSRAM: %d\n",ESP.getPsramSize()));
