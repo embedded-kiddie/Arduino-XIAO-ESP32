@@ -30,22 +30,26 @@ uint16_t lcd_height;
 // LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
 // #include <SD.h>
 #include "SdFat.h"
-#include <LovyanGFX.hpp>
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
 
+// require `PSRAM: "OPT PSRAM"` in tool menu
 LGFX lcd;
+LGFX_Sprite lcd_sprite(&lcd);
 
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) lcd.x
-#define drawPixel   writePixel
+#define GFX_FAST(x) lcd_sprite.x
+//#define drawPixel   writePixel
 
 void gfx_setup(void) {
   GFX_EXEC(init());
+  GFX_EXEC(initDMA());
   GFX_EXEC(clear(0));
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
   lcd_width  = GFX_EXEC(width());
   lcd_height = GFX_EXEC(height());
+  GFX_FAST(setPsram(true));
 }
 
 #else
@@ -57,10 +61,13 @@ void gfx_setup(void) {
 #include <SD.h>
 #include "TFT_eSPI.h"
 
+// require `CONFIG_SPIRAM_SUPPORT` in User_Setup.h
 TFT_eSPI tft = TFT_eSPI();
+TFT_eSprite tft_sprite(&tft);
 
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) tft.x
+#define GFX_FAST(x) tft_sprite.x
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -217,8 +224,8 @@ typedef struct MLXConfig {
       sampling_period = (refresh_rate == MLX90640_16_HZ ? 1.0f / 8.0f : 1.0f / 4.0f);
     } else
     if (interpolation <= 8 && box_size == 1) {
-      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_8_HZ  /*4*/ : MLX90640_2_HZ  /*2*/);
-      sampling_period = (refresh_rate == MLX90640_8_HZ ? 1.0f / 4.0f : 1.0f / 2.0f);
+      refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ  /*4*/ : MLX90640_2_HZ  /*2*/);
+      sampling_period = (refresh_rate == MLX90640_8_HZ ? 1.0f / 16.0f : 1.0f / 2.0f);
     }
   }
 } MLXConfig_t;
@@ -304,9 +311,8 @@ static void measure_temperature(uint8_t bank) {
     }
 
     if (mlx_cnf.range_auto) {
-      const float d = (mlx_cnf.interpolation == 8 ? 1.0f : 0.0);
-      mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + d) * RANGE_STEP;
-      mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
+      mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 1) * RANGE_STEP;
+      mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
 
       // debug with serial ploter
       // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
@@ -377,7 +383,13 @@ const uint16_t camColors[] = {0x480F,
  *--------------------------------------------------------------------------------*/
 void setup() {
   DBG_EXEC(Serial.begin(115200));
-  DBG_EXEC(while (!Serial && millis() <= 1000));
+  DBG_EXEC(delay(1000));
+
+  if (psramInit()) {
+    DBG_EXEC(printf("\nThe PSRAM is correctly initialized.\n"));
+  } else {
+    DBG_EXEC(printf("\nPSRAM does not work.\n"));
+  }
 
   // Initialize LCD display with touch and SD card
   gfx_setup();
@@ -386,11 +398,10 @@ void setup() {
   widget_setup();
 
 #ifdef  ESP32
-  // https://qiita.com/Dreamwalker/items/01cd216d48b4528c5959
-  DBG_EXEC(printf("Heap Size : %d\n", ESP.getHeapSize()));
-  DBG_EXEC(printf("Heap Free : %d\n", ESP.getFreeHeap()));
-  DBG_EXEC(printf("PSRAM Size: %d\n", ESP.getPsramSize()));
-  DBG_EXEC(printf("PSRAM Free: %d\n", ESP.getFreePsram()));
+  DBG_EXEC(printf("Total heap: %d\n", ESP.getHeapSize()));
+  DBG_EXEC(printf("Free  heap: %d\n", ESP.getFreeHeap()));
+  DBG_EXEC(printf("Total PSRAM: %d\n",ESP.getPsramSize()));
+  DBG_EXEC(printf("Free  PSRAM: %d\n",ESP.getFreePsram()));
 #endif
   /*
     https://en.cppreference.com/w/cpp/compiler_support
@@ -409,5 +420,5 @@ void setup() {
 
 void loop() {
   widget_control();
-  delay(1);
+  yield();
 }

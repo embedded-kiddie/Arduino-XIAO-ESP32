@@ -97,17 +97,18 @@ LGFX_Sprite lcd_sprite(&lcd);
 
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) lcd.x
-#define GFX_SPRT(x) lcd_sprite.x
+#define GFX_FAST(x) lcd_sprite.x
 //#define drawPixel   writePixel
 
 void gfx_setup(void) {
   GFX_EXEC(init());
+  GFX_EXEC(initDMA());
   GFX_EXEC(clear(0));
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
   lcd_width  = GFX_EXEC(width());
   lcd_height = GFX_EXEC(height());
-  GFX_SPRT(setPsram(true));
+  GFX_FAST(setPsram(true));
 }
 
 #else
@@ -125,7 +126,7 @@ TFT_eSprite tft_sprite(&tft);
 
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) tft.x
-#define GFX_SPRT(x) tft_sprite.x
+#define GFX_FAST(x) tft_sprite.x
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -467,6 +468,11 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     const int dst_cols = mlx_cnf.interpolation * MLX90640_COLS;
     const int box_size = mlx_cnf.box_size;
 
+#if ENA_TRANSACTION
+    GFX_EXEC(startWrite());
+    GFX_FAST(createSprite(dst_cols, dst_rows));
+#endif
+
     // Measure temperature for min/max/pickup
     measure_temperature(bank);
 
@@ -475,11 +481,6 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     float *drw = dst;
 #else
     float *drw = src[bank];
-#endif
-
-#if ENA_TRANSACTION
-    GFX_EXEC(startWrite());
-    GFX_SPRT(createSprite(dst_cols, dst_rows));
 #endif
 
     for (int h = 0; h < dst_rows; h++) {
@@ -494,25 +495,22 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 
 #if 0
         // Selfie Camera
-        GFX_SPRT(fillRect(box_size * w, box_size * h, box_size, box_size, camColors[colorIndex]));
+        GFX_FAST(fillRect(box_size * w, box_size * h, box_size, box_size, camColors[colorIndex]));
 #else
         // Front Camera
         if (box_size == 1) {
-          GFX_SPRT(drawPixel(dst_cols - 1 - w, h, camColors[colorIndex]));
+          GFX_FAST(drawPixel(dst_cols - 1 - w, h, camColors[colorIndex]));
         } else {
-          GFX_SPRT(fillRect((dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, camColors[colorIndex]));
+          GFX_FAST(fillRect((dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, camColors[colorIndex]));
         }
 #endif
       }
     }
 
-#if ENA_TRANSACTION
-    GFX_SPRT(pushSprite(0, 0));
-    GFX_SPRT(deleteSprite());
-    GFX_EXEC(endWrite());
-#endif
-
     if (state == STATE_MAIN) {
+      GFX_EXEC(setTextSize(2));
+      GFX_EXEC(setTextDatum(TL_DATUM));
+
       // MLX90640
       GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
       gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
@@ -534,8 +532,14 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     }
   }
 
+#if ENA_TRANSACTION
+    GFX_FAST(pushSprite(0, 0));
+    GFX_FAST(deleteSprite());
+    GFX_EXEC(endWrite());
+#endif
+
   // Prevent the watchdog from firing
-  delay(1);
+  yield();
 }
 
 /*--------------------------------------------------------------------------------
@@ -585,10 +589,12 @@ void setup() {
 
 void loop() {
 #if ENA_MULTITASKING
+#ifdef  ESP32
   DBG_EXEC(printf("Total heap: %d\n", ESP.getHeapSize()));
   DBG_EXEC(printf("Free  heap: %d\n", ESP.getFreeHeap()));
   DBG_EXEC(printf("Total PSRAM: %d\n",ESP.getPsramSize()));
   DBG_EXEC(printf("Free  PSRAM: %d\n",ESP.getFreePsram()));
+#endif
   delay(1000);
 #else
   uint32_t inputStart = millis();

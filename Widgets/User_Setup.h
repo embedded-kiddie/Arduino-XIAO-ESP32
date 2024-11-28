@@ -389,3 +389,7 @@
 // so changing it here has no effect
 
 // #define SUPPORT_TRANSACTIONS
+
+// Allocate a memory area for the Sprite
+// https://github.com/Bodmer/TFT_eSPI/blob/master/Extensions/Sprite.cpp#L150
+#define CONFIG_SPIRAM_SUPPORT

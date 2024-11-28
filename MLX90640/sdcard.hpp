@@ -354,7 +354,7 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
   for (int y = h - 1; y >= 0; y--) {
     if (y % 10 == 0) {
       DBG_EXEC(printf("."));
-      delay(1); // reset wdt
+      yield(); // Prevent the watchdog from firing
     }
 
 #if defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)

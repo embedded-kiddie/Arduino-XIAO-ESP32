@@ -89,6 +89,9 @@ static constexpr Image_t image_folder[] = {
   { icon_folder_off, sizeof(icon_folder_off) }, // 32 x 26
   { icon_folder_on,  sizeof(icon_folder_on ) }, // 32 x 26
 };
+static constexpr Image_t image_point[] = {
+  { icon_point, sizeof(icon_point) }, // 16 x 16
+};
 static constexpr Image_t image_save_flash[] = {
   { save_flash_off, sizeof(save_flash_off) }, // 70 x 70
   { save_flash_on,  sizeof(save_flash_on ) }, // 70 x 70

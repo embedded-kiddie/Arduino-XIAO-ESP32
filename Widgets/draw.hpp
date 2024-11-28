@@ -18,6 +18,19 @@ static void DrawRadio (const Widget_t *widget, uint8_t n_widget, uint8_t selecte
 static void DrawThumb (const Widget_t *widget, const char *path);
 
 /*--------------------------------------------------------------------------------
+ * Sprite object
+ *--------------------------------------------------------------------------------*/
+#if defined (LOVYANGFX_HPP_)
+
+static LGFX_Sprite sprite(&lcd);
+
+#elif defined (_TFT_eSPIH_)
+
+static TFT_eSprite sprite(&tft);
+
+#endif
+
+/*--------------------------------------------------------------------------------
  * Draw colorbar and range
  *--------------------------------------------------------------------------------*/
 void DrawColorRange(uint8_t flag) {
@@ -67,22 +80,7 @@ void DrawColorRange(uint8_t flag) {
   }
 
   GFX_EXEC(endWrite());
-  GFX_EXEC(setTextSize(2));
-  GFX_EXEC(setTextDatum(TL_DATUM));
 }
-
-/*--------------------------------------------------------------------------------
- * Sprite object
- *--------------------------------------------------------------------------------*/
-#if defined (LOVYANGFX_HPP_)
-
-static LGFX_Sprite sprite(&lcd);
-
-#elif defined (_TFT_eSPIH_)
-
-static TFT_eSprite sprite(&tft);
-
-#endif
 
 #ifdef _TFT_eSPIH_
 /*--------------------------------------------------------------------------------
@@ -153,6 +151,17 @@ uint32_t swap_endian(uint32_t v) {
 #endif // __BYTE_ORDER__
 
 /*--------------------------------------------------------------------------------
+ * Get width and height of PNG image
+ *--------------------------------------------------------------------------------*/
+#define PNG_HEADER_WIDTH    16 // PNG file signature + offset from chunk data
+#define PNG_HEADER_HEIGHT   20 // PNG file signature + offset from chunk data
+
+inline uint32_t get_width (const uint8_t *data) __attribute__((always_inline));
+inline uint32_t get_height(const uint8_t *data) __attribute__((always_inline));
+inline uint32_t get_width (const uint8_t *data) { return swap_endian(*(uint32_t*)(data + PNG_HEADER_WIDTH )); }
+inline uint32_t get_height(const uint8_t *data) { return swap_endian(*(uint32_t*)(data + PNG_HEADER_HEIGHT)); }
+
+/*--------------------------------------------------------------------------------
  * Draw widget
  *--------------------------------------------------------------------------------*/
 static void DrawWidget(const Widget_t *widget, uint8_t offset /* = 0 */) {
@@ -193,9 +202,6 @@ static void DrawButton(const Widget_t *widget, uint8_t offset /* = 0 */) {
 /*--------------------------------------------------------------------------------
  * Draw slider
  *--------------------------------------------------------------------------------*/
-#define PNG_HEADER_WIDTH    16 // PNG file signature + offset from chunk data
-#define PNG_HEADER_HEIGHT   20 // PNG file signature + offset from chunk data
-
 static void DrawSlider(const Widget_t *widget, int16_t pos, bool enable /* = true */) {
   const Image_t *bar  = &widget->image[0];
   const Image_t *knob = &widget->image[enable ? 1 : 2]; // [1]: enable, [2]: disable
@@ -203,33 +209,16 @@ static void DrawSlider(const Widget_t *widget, int16_t pos, bool enable /* = tru
   if (bar && knob) {
     GFX_EXEC(startWrite());
 
-    uint32_t w, h;
-    w = swap_endian(*(uint32_t*)(bar->data + PNG_HEADER_WIDTH));
-    h = swap_endian(*(uint32_t*)(bar->data + PNG_HEADER_HEIGHT));
-    // DBG_EXEC(printf("w: %d, h: %d\n", w, h));
-
-    sprite.createSprite(w, h);
+    sprite.createSprite(get_width(bar->data), get_height(bar->data));
 
 #if   defined (LOVYANGFX_HPP_)
 
-    sprite.drawPng(bar->data, bar->size, 0, 0);
-
-#elif defined (_TFT_eSPIH_)
-
-    DrawPNG(bar->data, bar->size, 0, 0, pngSprite);
-
-#endif
-
-    w = swap_endian(*(uint32_t*)(knob->data + PNG_HEADER_WIDTH));
-    h = swap_endian(*(uint32_t*)(knob->data + PNG_HEADER_HEIGHT));
-    // DBG_EXEC(printf("w: %d, h: %d\n", w, h));
-
-#if   defined (LOVYANGFX_HPP_)
-
+    sprite.drawPng(bar->data,  bar->size,  0,   0);
     sprite.drawPng(knob->data, knob->size, pos, 0);
 
 #elif defined (_TFT_eSPIH_)
 
+    DrawPNG(bar->data,  bar->size,  0,   0, pngSprite);
     DrawPNG(knob->data, knob->size, pos, 0, pngSprite);
 
 #endif
