@@ -442,7 +442,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 
 #if ENA_TRANSACTION
     GFX_EXEC(startWrite());
-    GFX_FAST(createSprite(dst_cols, dst_rows));
+    GFX_FAST(createSprite(dst_cols * box_size, dst_rows * box_size));
 #endif
 
     for (int h = 0; h < dst_rows; h++) {
@@ -475,7 +475,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     }
 
     if (mlx_cnf.minmax_auto) {
-      GFX_EXEC(setClipRect(0, 0, dst_cols, dst_rows));
+      GFX_EXEC(setClipRect(0, 0, dst_cols * box_size, dst_rows * box_size));
       DrawColorRange(4);
       GFX_EXEC(clearClipRect());
     }

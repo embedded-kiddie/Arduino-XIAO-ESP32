@@ -167,7 +167,7 @@ void DrawColorRange(uint8_t flag) {
     gfx_printf(0, y, "%d  ", mlx_cnf.range_min);
 
     GFX_EXEC(setTextDatum(TR_DATUM));
-    gfx_printf(w, y, "  %d", mlx_cnf.range_max);
+    gfx_printf(w, y, " %d", mlx_cnf.range_max);
 
     if (mlx_cnf.interpolation * mlx_cnf.box_size > 1) {
       GFX_EXEC(setTextDatum(TC_DATUM));
