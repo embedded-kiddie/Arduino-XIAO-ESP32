@@ -212,7 +212,7 @@ static MLXCapture_t mlx_cap = {
  * Low pass filter
  * x: input, T: sampling time [sec]
  *--------------------------------------------------------------------------------*/
-#define TIME_CONSTANT   120.0f // Something is wrong with the filter formula
+#define TIME_CONSTANT   3.0f // [sec]
 typedef struct {
   float y;
   float filter(float x, const float T) {
@@ -264,31 +264,29 @@ static void measure_temperature(float *src) {
   }
 
   // Measure temperature ranges
-  if (mlx_cnf.range_auto || mlx_cnf.minmax_auto) {
-    tmin.t =  999.0f;
-    tmax.t = -999.0f;
+  tmin.t =  999.0f;
+  tmax.t = -999.0f;
 
-    for (uint16_t y = 0; y < MLX90640_ROWS; y++) {
-      for (uint16_t x = 0; x < MLX90640_COLS; x++, src++) {
-        float t = *src;
+  for (uint16_t y = 0; y < MLX90640_ROWS; y++) {
+    for (uint16_t x = 0; x < MLX90640_COLS; x++, src++) {
+      float t = *src;
 #ifdef  CHECK_VALUE
-        if (isinf(t) || isnan(t) || t < -20.0f || 180.0f < t) {
-          continue;
-        }
+      if (isinf(t) || isnan(t) || t < -20.0f || 180.0f < t) {
+        continue;
+      }
 #endif
-        if (t < tmin.t) { tmin.x = x; tmin.y = y; tmin.t = t; } else
-        if (t > tmax.t) { tmax.x = x; tmax.y = y; tmax.t = t; }
-      }
-
-      if (mlx_cnf.range_auto) {
-        #define RANGE_STEP  2
-        mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
-        mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
-
-        // debug for serial ploter
-        // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
-      }
+      if (t < tmin.t) { tmin.x = x; tmin.y = y; tmin.t = t; } else
+      if (t > tmax.t) { tmax.x = x; tmax.y = y; tmax.t = t; }
     }
+  }
+
+  if (mlx_cnf.range_auto) {
+    #define RANGE_STEP  2
+    mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
+    mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
+
+    // debug for serial ploter
+    // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
   }
 }
 

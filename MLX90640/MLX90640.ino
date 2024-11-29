@@ -273,7 +273,7 @@ static MLXCapture_t mlx_cap = {
  * Low pass filter
  * x: input, T: sampling time [sec]
  *--------------------------------------------------------------------------------*/
-#define TIME_CONSTANT   120.0f // Something is wrong with the filter formula
+#define TIME_CONSTANT   3.0f // [sec]
 typedef struct {
   float y;
   float filter(float x, const float T) {
@@ -325,31 +325,29 @@ static void measure_temperature(float *src) {
   }
 
   // Measure temperature ranges
-  if (mlx_cnf.range_auto || mlx_cnf.minmax_auto) {
-    tmin.t =  999.0f;
-    tmax.t = -999.0f;
+  tmin.t =  999.0f;
+  tmax.t = -999.0f;
 
-    for (uint16_t y = 0; y < MLX90640_ROWS; y++) {
-      for (uint16_t x = 0; x < MLX90640_COLS; x++, src++) {
-        float t = *src;
+  for (uint16_t y = 0; y < MLX90640_ROWS; y++) {
+    for (uint16_t x = 0; x < MLX90640_COLS; x++, src++) {
+      float t = *src;
 #ifdef  CHECK_VALUE
-        if (isinf(t) || isnan(t) || t < -20.0f || 180.0f < t) {
-          continue;
-        }
+      if (isinf(t) || isnan(t) || t < -20.0f || 180.0f < t) {
+        continue;
+      }
 #endif
-        if (t < tmin.t) { tmin.x = x; tmin.y = y; tmin.t = t; } else
-        if (t > tmax.t) { tmax.x = x; tmax.y = y; tmax.t = t; }
-      }
-
-      if (mlx_cnf.range_auto) {
-        #define RANGE_STEP  2
-        mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
-        mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
-
-        // debug for serial ploter
-        // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
-      }
+      if (t < tmin.t) { tmin.x = x; tmin.y = y; tmin.t = t; } else
+      if (t > tmax.t) { tmax.x = x; tmax.y = y; tmax.t = t; }
     }
+  }
+
+  if (mlx_cnf.range_auto) {
+    #define RANGE_STEP  2
+    mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
+    mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
+
+    // debug for serial ploter
+    // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
   }
 }
 
@@ -419,6 +417,9 @@ void ProcessInput(uint8_t bank) {
     DBG_EXEC(printf("Failed\n"));
     delay(1000); // false = no new frame capture
   }
+
+  // Measure temperature for min/max/pickup
+  measure_temperature(src[bank]);
 }
 
 /*--------------------------------------------------------------------------------
@@ -428,14 +429,11 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   // Widget controller
   State_t state = widget_control();
   if (state == STATE_MAIN || state == STATE_THERMOGRAPH) {
-    static uint32_t prevFinish, prevMeasure;
+    static uint32_t prevFinish, prevUpdate;
     uint32_t outputStart = millis();
     const int dst_rows = mlx_cnf.interpolation * MLX90640_ROWS;
     const int dst_cols = mlx_cnf.interpolation * MLX90640_COLS;
     const int box_size = mlx_cnf.box_size;
-
-    // Measure temperature for min/max/pickup
-    measure_temperature(src[bank]);
 
 #if ENA_INTERPOLATION
     interpolate_image(src[bank], MLX90640_ROWS, MLX90640_COLS, dst, dst_rows, dst_cols);
@@ -473,8 +471,8 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
       }
     }
 
-    if (outputStart - prevMeasure > 1000) {
-      prevMeasure = outputStart;
+    if (outputStart - prevUpdate > 1000) {
+      prevUpdate = outputStart;
       _tmin = tmin; _tmax = tmax;
     }
 
