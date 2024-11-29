@@ -34,6 +34,7 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
 #define SCREEN_ROTATION 1
 #define GFX_EXEC(x) tft.x
+#define GFX_FAST(x) tft.x
 
 void gfx_setup(void) {
   GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
@@ -61,6 +62,7 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IP
 
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) gfx->x
+#define GFX_FAST(x) gfx->x
 
 void gfx_setup(void) {
   // Init Display
@@ -98,7 +100,7 @@ LGFX_Sprite lcd_sprite(&lcd);
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) lcd.x
 #define GFX_FAST(x) lcd_sprite.x
-//#define drawPixel   writePixel
+//#define drawPixel   writePixel /* This makes slow, why? */
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -127,6 +129,8 @@ TFT_eSprite tft_sprite(&tft);
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) tft.x
 #define GFX_FAST(x) tft_sprite.x
+#define setClipRect setViewport
+#define clearClipRect resetViewport
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -313,12 +317,10 @@ typedef struct {
 
 static Temperature_t tmin, tmax, _tmin, _tmax, tpic;
 
-static void measure_temperature(uint8_t bank) {
-  float *s = src[bank];
-
-  // Measure the temperature at the sampling point
+static void measure_temperature(float *src) {
+  // Measure the temperature at the picked up point
   if (tpic.x != 0 || tpic.y != 0) {
-    tpic.t = s[tpic.x + (tpic.y * MLX90640_COLS)];
+    tpic.t = src[tpic.x + (tpic.y * MLX90640_COLS)];
     lpic.filter(tpic.t, mlx_cnf.sampling_period);
   }
 
@@ -328,8 +330,8 @@ static void measure_temperature(uint8_t bank) {
     tmax.t = -999.0f;
 
     for (uint16_t y = 0; y < MLX90640_ROWS; y++) {
-      for (uint16_t x = 0; x < MLX90640_COLS; x++, s++) {
-        float t = *s;
+      for (uint16_t x = 0; x < MLX90640_COLS; x++, src++) {
+        float t = *src;
 #ifdef  CHECK_VALUE
         if (isinf(t) || isnan(t) || t < -20.0f || 180.0f < t) {
           continue;
@@ -433,7 +435,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     const int box_size = mlx_cnf.box_size;
 
     // Measure temperature for min/max/pickup
-    measure_temperature(bank);
+    measure_temperature(src[bank]);
 
 #if ENA_INTERPOLATION
     interpolate_image(src[bank], MLX90640_ROWS, MLX90640_COLS, dst, dst_rows, dst_cols);
@@ -565,7 +567,7 @@ void setup() {
 
 void loop() {
 #if ENA_MULTITASKING
-#if defined (ESP32)
+#if defined (ESP32) && false
   DBG_EXEC(printf("Total heap: %d\n", ESP.getHeapSize()));
   DBG_EXEC(printf("Free  heap: %d\n", ESP.getFreeHeap()));
   DBG_EXEC(printf("Total PSRAM: %d\n",ESP.getPsramSize()));

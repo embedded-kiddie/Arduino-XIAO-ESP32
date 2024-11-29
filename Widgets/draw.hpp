@@ -190,8 +190,8 @@ void DrawColorRange(uint8_t flag) {
 #elif defined (_TFT_eSPIH_)
 
     DrawPNG(icon_point, sizeof(icon_point), 0, 0, pngSprite);
-    sprite.pushSprite(&tft_sprite, (MLX90640_COLS - _tmin.x - 1) * box - (pw >> 1), _tmin.y * box - (ph >> 1), BLACK);
-    sprite.pushSprite(&tft_sprite, (MLX90640_COLS - _tmax.x - 1) * box - (pw >> 1), _tmax.y * box - (ph >> 1), BLACK);
+    sprite.pushToSprite(&tft_sprite, (MLX90640_COLS - _tmin.x - 1) * box - (pw >> 1), _tmin.y * box - (ph >> 1), BLACK);
+    sprite.pushToSprite(&tft_sprite, (MLX90640_COLS - _tmax.x - 1) * box - (pw >> 1), _tmax.y * box - (ph >> 1), BLACK);
 
 #endif
 

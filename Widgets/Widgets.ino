@@ -39,7 +39,7 @@ LGFX_Sprite lcd_sprite(&lcd);
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) lcd.x
 #define GFX_FAST(x) lcd_sprite.x
-//#define drawPixel   writePixel
+//#define drawPixel   writePixel /* This makes slow, why? */
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -68,6 +68,8 @@ TFT_eSprite tft_sprite(&tft);
 #define SCREEN_ROTATION 3
 #define GFX_EXEC(x) tft.x
 #define GFX_FAST(x) tft_sprite.x
+#define setClipRect setViewport
+#define clearClipRect resetViewport
 
 void gfx_setup(void) {
   GFX_EXEC(init());
@@ -254,12 +256,10 @@ typedef struct {
 
 static Temperature_t tmin, tmax, _tmin, _tmax, tpic;
 
-static void measure_temperature(uint8_t bank) {
-  float *s = src[bank];
-
-  // Measure the temperature at the sampling point
+static void measure_temperature(float *src) {
+  // Measure the temperature at the picked up point
   if (tpic.x != 0 || tpic.y != 0) {
-    tpic.t = s[tpic.x + (tpic.y * MLX90640_COLS)];
+    tpic.t = src[tpic.x + (tpic.y * MLX90640_COLS)];
     lpic.filter(tpic.t, mlx_cnf.sampling_period);
   }
 
@@ -269,8 +269,8 @@ static void measure_temperature(uint8_t bank) {
     tmax.t = -999.0f;
 
     for (uint16_t y = 0; y < MLX90640_ROWS; y++) {
-      for (uint16_t x = 0; x < MLX90640_COLS; x++, s++) {
-        float t = *s;
+      for (uint16_t x = 0; x < MLX90640_COLS; x++, src++) {
+        float t = *src;
 #ifdef  CHECK_VALUE
         if (isinf(t) || isnan(t) || t < -20.0f || 180.0f < t) {
           continue;
