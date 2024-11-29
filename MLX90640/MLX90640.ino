@@ -104,13 +104,12 @@ LGFX_Sprite lcd_sprite(&lcd);
 
 void gfx_setup(void) {
   GFX_EXEC(init());
-//GFX_EXEC(initDMA()); /* Probably enabled by default if available */
   GFX_EXEC(clear(0));
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
+  GFX_FAST(setPsram(true));
   lcd_width  = GFX_EXEC(width());
   lcd_height = GFX_EXEC(height());
-  GFX_FAST(setPsram(true));
 }
 
 #else
@@ -312,7 +311,7 @@ static void mlx_refresh(void) {
 
 typedef struct {
   uint16_t  x, y;
-  float     t;
+  float     v;
 } Temperature_t;
 
 static Temperature_t tmin, tmax, _tmin, _tmax, tpic;
@@ -320,13 +319,13 @@ static Temperature_t tmin, tmax, _tmin, _tmax, tpic;
 static void measure_temperature(float *src) {
   // Measure the temperature at the picked up point
   if (tpic.x != 0 || tpic.y != 0) {
-    tpic.t = src[tpic.x + (tpic.y * MLX90640_COLS)];
-    lpic.filter(tpic.t, mlx_cnf.sampling_period);
+    tpic.v = src[tpic.x + (tpic.y * MLX90640_COLS)];
+    lpic.filter(tpic.v, mlx_cnf.sampling_period);
   }
 
   // Measure temperature ranges
-  tmin.t =  999.0f;
-  tmax.t = -999.0f;
+  tmin.v =  999.0f;
+  tmax.v = -999.0f;
 
   for (uint16_t y = 0; y < MLX90640_ROWS; y++) {
     for (uint16_t x = 0; x < MLX90640_COLS; x++, src++) {
@@ -336,18 +335,18 @@ static void measure_temperature(float *src) {
         continue;
       }
 #endif
-      if (t < tmin.t) { tmin.x = x; tmin.y = y; tmin.t = t; } else
-      if (t > tmax.t) { tmax.x = x; tmax.y = y; tmax.t = t; }
+      if (t < tmin.v) { tmin.x = x; tmin.y = y; tmin.v = t; } else
+      if (t > tmax.v) { tmax.x = x; tmax.y = y; tmax.v = t; }
     }
   }
 
   if (mlx_cnf.range_auto) {
     #define RANGE_STEP  2
-    mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
-    mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
+    mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.v, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
+    mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.v, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
 
     // debug for serial ploter
-    // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
+    // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.v, lmin.y, tmax.v, lmax.y));
   }
 }
 
@@ -471,15 +470,12 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
       }
     }
 
-    if (outputStart - prevUpdate > 1000) {
-      prevUpdate = outputStart;
-      _tmin = tmin; _tmax = tmax;
-    }
-
     if (mlx_cnf.minmax_auto) {
-      GFX_EXEC(setClipRect(0, 0, dst_cols * box_size, dst_rows * box_size));
-      DrawColorRange(4);
-      GFX_EXEC(clearClipRect());
+      if (outputStart - prevUpdate > 1000) {
+        prevUpdate = outputStart;
+        _tmin = tmin; _tmax = tmax;
+      }
+      DrawTemperature();
     }
 
     if (mlx_cnf.range_auto) {

@@ -6,7 +6,9 @@
 /*--------------------------------------------------------------------------------
  * Functions prototyping
  *--------------------------------------------------------------------------------*/
+void DrawTemperature(void);
 void DrawColorRange(uint8_t flag);
+
 static void DrawScreen(const Widget_t *widget);
 static void DrawWidget(const Widget_t *widget, uint8_t offset = 0);
 static void DrawButton(const Widget_t *widget, uint8_t offset = 0);
@@ -110,37 +112,74 @@ static inline uint32_t get_width (const uint8_t *data) { return swap_endian(*(ui
 static inline uint32_t get_height(const uint8_t *data) { return swap_endian(*(uint32_t*)(data + PNG_HEADER_HEIGHT)); }
 
 /*--------------------------------------------------------------------------------
- * Draw colorbar and range
+ * The locator icons
  *--------------------------------------------------------------------------------*/
-// icon-point.png
-// https://lang-ship.com/tools/image2data/
-// RAW File Dump
-static constexpr unsigned char icon_point[270] = {
-0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52, 
-0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x10, 0x08, 0x00, 0x00, 0x00, 0x00, 0x3a, 0x98, 0xa0, 
-0xbd, 0x00, 0x00, 0x00, 0xd5, 0x49, 0x44, 0x41, 0x54, 0x78, 0x01, 0x35, 0xce, 0x03, 0x52, 0x45, 
-0x01, 0x00, 0x86, 0xd1, 0x2f, 0x73, 0x09, 0xcf, 0xd6, 0x30, 0xaf, 0x24, 0xd7, 0x4e, 0xb2, 0x07, 
-0xd9, 0xe6, 0x20, 0xad, 0x23, 0x7b, 0x94, 0x5b, 0xc2, 0x33, 0xef, 0x9f, 0xcf, 0x0a, 0x0e, 0xdf, 
-0xb0, 0x37, 0x8d, 0x8d, 0x35, 0xd9, 0xf9, 0x67, 0x59, 0x8e, 0xe8, 0x4b, 0x64, 0xd9, 0x02, 0xdf, 
-0xaa, 0x9f, 0xf4, 0xb0, 0x96, 0xc9, 0xac, 0xdd, 0xeb, 0xb9, 0x1a, 0xc0, 0xfc, 0xa2, 0xc1, 0x4a, 
-0x57, 0x26, 0xe3, 0xaa, 0x1c, 0xd4, 0x8b, 0x05, 0x58, 0xd5, 0x20, 0x04, 0xa5, 0x20, 0x0c, 0x6a, 
-0x0d, 0xec, 0xd1, 0xfb, 0x62, 0x28, 0x9b, 0x9b, 0x2b, 0x83, 0xe2, 0xbb, 0x98, 0x9d, 0x26, 0x2d, 
-0x7a, 0xdc, 0x45, 0x00, 0x45, 0x6e, 0xcf, 0x82, 0x9a, 0xd8, 0x56, 0x2a, 0x99, 0x98, 0x06, 0x98, 
-0x4e, 0x24, 0x53, 0x3a, 0x60, 0x4f, 0x99, 0x4c, 0x7a, 0x01, 0x60, 0x21, 0x9d, 0xc9, 0xe8, 0x98, 
-0x66, 0x2d, 0x85, 0x82, 0x25, 0x00, 0x25, 0xc1, 0xd0, 0x92, 0x9a, 0x71, 0xc6, 0x6f, 0x0a, 0xa1, 
-0x74, 0x62, 0xa2, 0x14, 0x0a, 0xaf, 0xe3, 0x4e, 0xd8, 0x54, 0x0f, 0x04, 0xa4, 0x00, 0xf4, 0x68, 
-0x0b, 0xb0, 0xbd, 0xab, 0xbb, 0xec, 0x3b, 0x56, 0xd6, 0xad, 0x0f, 0x1b, 0x40, 0xfd, 0xbb, 0xae, 
-0x16, 0x32, 0x99, 0x85, 0x2b, 0xbd, 0x37, 0xc0, 0x37, 0xc7, 0x66, 0x42, 0x5f, 0x12, 0x5b, 0x0e, 
-0xfe, 0x79, 0x3a, 0x4e, 0x4f, 0x3b, 0x3d, 0x7c, 0xfb, 0x04, 0x7f, 0xfb, 0x69, 0x12, 0x9f, 0xf2, 
-0x94, 0x5a, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82, };
+#include "locator.h"
 
+static constexpr Image_t icon_locator[] = {
+  { icon_locator0, sizeof(icon_locator0) }, // 14 x 14
+  { icon_locator1, sizeof(icon_locator1) }, // 16 x 16
+};
+
+/*--------------------------------------------------------------------------------
+ * Draw locator with value
+ *--------------------------------------------------------------------------------*/
+static void DrawLocator(const Image_t *image, Temperature_t *temp) {
+  const int box = mlx_cnf.box_size * mlx_cnf.interpolation;
+  const int W = box * (MLX90640_COLS);
+  const int X = box * (MLX90640_COLS - 1 - temp->x); // Front Camera
+  const int Y = box * temp->y;
+
+  const int w = get_width (image->data);
+  const int h = get_height(image->data);
+
+#if   defined (LOVYANGFX_HPP_)
+
+  sprite.createSprite(w, h);
+  sprite.drawPng(image->data, image->size, 0, 0);
+  sprite.pushSprite(&lcd_sprite, X - (w >> 1), Y - (h >> 1), BLACK);
+  sprite.deleteSprite();
+
+#elif defined (_TFT_eSPIH_)
+
+  sprite.createSprite(w, h);
+  DrawPNG(image->data, image->size, 0, 0, pngSprite);
+  sprite.pushToSprite(&tft_sprite, X - (w >> 1), Y - (h >> 1), BLACK);
+  sprite.deleteSprite();
+
+#endif
+
+  char buf[BUF_SIZE];
+  sprintf(buf, "%4.1f", temp->v);
+  GFX_FAST(drawString(buf, constrain(X, w, W - w), Y + (temp->y < MLX90640_ROWS / 2 ? h : -h)));
+}
+
+/*--------------------------------------------------------------------------------
+ * Draw temperature by locator and value
+ *--------------------------------------------------------------------------------*/
+void DrawTemperature(void) {
+  const int box = mlx_cnf.box_size * mlx_cnf.interpolation;
+
+  GFX_FAST(setTextSize(1));
+  GFX_FAST(setTextDatum(CC_DATUM));
+  GFX_EXEC(setClipRect(0, 0, MLX90640_COLS * box, MLX90640_ROWS * box));
+
+  DrawLocator(&icon_locator[0], &_tmin);
+  DrawLocator(&icon_locator[0], &_tmax);
+
+  GFX_EXEC(clearClipRect());
+}
+
+/*--------------------------------------------------------------------------------
+ * Draw temperature color bar and range
+ *--------------------------------------------------------------------------------*/
 void DrawColorRange(uint8_t flag) {
   const int box = mlx_cnf.box_size * mlx_cnf.interpolation;
   const int w = box * MLX90640_COLS;
   int       y = box * MLX90640_ROWS + 3;
 
   GFX_EXEC(startWrite());
-  
+
   // Draw color bar
   if (flag & 1) {
     const int n = sizeof(camColors) / sizeof(camColors[0]);
@@ -169,44 +208,10 @@ void DrawColorRange(uint8_t flag) {
     GFX_EXEC(setTextDatum(TR_DATUM));
     gfx_printf(w, y, " %d", mlx_cnf.range_max);
 
-    if (mlx_cnf.interpolation * mlx_cnf.box_size > 1) {
+    if (box > 1) {
       GFX_EXEC(setTextDatum(TC_DATUM));
       gfx_printf(w / 2, y, " %3.1f ", (float)(mlx_cnf.range_min + mlx_cnf.range_max) / 2.0f);
     }
-  }
-
-  // Draw min/max point
-  else if (flag & 4) {
-    const int pw = get_width (icon_point);
-    const int ph = get_height(icon_point);
-
-    const int minX = box * (MLX90640_COLS - 1 - _tmin.x); // Front Camera
-    const int maxX = box * (MLX90640_COLS - 1 - _tmax.x); // Front Camera
-    const int minY = box * _tmin.y;
-    const int maxY = box * _tmax.y;
-
-    char buf[BUF_SIZE];
-    GFX_FAST(setTextDatum(CC_DATUM));
-    sprintf(buf, "%4.1f", _tmin.t); GFX_FAST(drawString(buf, constrain(minX, pw, w - pw), minY + (_tmin.y < MLX90640_ROWS / 2 ? ph : -ph)));
-    sprintf(buf, "%4.1f", _tmax.t); GFX_FAST(drawString(buf, constrain(maxX, pw, w - pw), maxY + (_tmax.y < MLX90640_ROWS / 2 ? ph : -ph)));
-
-#if   defined (LOVYANGFX_HPP_)
-
-    sprite.createSprite(pw, ph);
-    sprite.drawPng(icon_point, sizeof(icon_point), 0, 0);
-    sprite.pushSprite(&lcd_sprite, minX - (pw >> 1), minY - (ph >> 1), BLACK);
-    sprite.pushSprite(&lcd_sprite, maxX - (pw >> 1), maxY - (ph >> 1), BLACK);
-    sprite.deleteSprite();
-
-#elif defined (_TFT_eSPIH_)
-
-    sprite.createSprite(pw, ph);
-    DrawPNG(icon_point, sizeof(icon_point), 0, 0, pngSprite);
-    sprite.pushToSprite(&tft_sprite, minX - (pw >> 1), minY - (ph >> 1), BLACK);
-    sprite.pushToSprite(&tft_sprite, maxX - (pw >> 1), maxY - (ph >> 1), BLACK);
-    sprite.deleteSprite();
-
-#endif
   }
 
   GFX_EXEC(endWrite());
