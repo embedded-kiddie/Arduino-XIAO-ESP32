@@ -179,23 +179,34 @@ void DrawColorRange(uint8_t flag) {
   else if (flag & 4) {
     const int pw = get_width (icon_point);
     const int ph = get_height(icon_point);
-    sprite.createSprite(pw, ph);
+
+    const int minX = box * (MLX90640_COLS - 1 - _tmin.x); // Front Camera
+    const int maxX = box * (MLX90640_COLS - 1 - _tmax.x); // Front Camera
+    const int minY = box * _tmin.y;
+    const int maxY = box * _tmax.y;
+
+    char buf[BUF_SIZE];
+    GFX_FAST(setTextDatum(CC_DATUM));
+    sprintf(buf, "%4.1f", _tmin.t); GFX_FAST(drawString(buf, constrain(minX, pw, w - pw), minY + (_tmin.y < MLX90640_ROWS / 2 ? ph : -ph)));
+    sprintf(buf, "%4.1f", _tmax.t); GFX_FAST(drawString(buf, constrain(maxX, pw, w - pw), maxY + (_tmax.y < MLX90640_ROWS / 2 ? ph : -ph)));
 
 #if   defined (LOVYANGFX_HPP_)
 
+    sprite.createSprite(pw, ph);
     sprite.drawPng(icon_point, sizeof(icon_point), 0, 0);
-    sprite.pushSprite(&lcd_sprite, (MLX90640_COLS - _tmin.x - 1) * box - (pw >> 1), _tmin.y * box - (ph >> 1), BLACK);
-    sprite.pushSprite(&lcd_sprite, (MLX90640_COLS - _tmax.x - 1) * box - (pw >> 1), _tmax.y * box - (ph >> 1), BLACK);
+    sprite.pushSprite(&lcd_sprite, minX - (pw >> 1), minY - (ph >> 1), BLACK);
+    sprite.pushSprite(&lcd_sprite, maxX - (pw >> 1), maxY - (ph >> 1), BLACK);
+    sprite.deleteSprite();
 
 #elif defined (_TFT_eSPIH_)
 
+    sprite.createSprite(pw, ph);
     DrawPNG(icon_point, sizeof(icon_point), 0, 0, pngSprite);
-    sprite.pushToSprite(&tft_sprite, (MLX90640_COLS - _tmin.x - 1) * box - (pw >> 1), _tmin.y * box - (ph >> 1), BLACK);
-    sprite.pushToSprite(&tft_sprite, (MLX90640_COLS - _tmax.x - 1) * box - (pw >> 1), _tmax.y * box - (ph >> 1), BLACK);
+    sprite.pushToSprite(&tft_sprite, minX - (pw >> 1), minY - (ph >> 1), BLACK);
+    sprite.pushToSprite(&tft_sprite, maxX - (pw >> 1), maxY - (ph >> 1), BLACK);
+    sprite.deleteSprite();
 
 #endif
-
-    sprite.deleteSprite();
   }
 
   GFX_EXEC(endWrite());

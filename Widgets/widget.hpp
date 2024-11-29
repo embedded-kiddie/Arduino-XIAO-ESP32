@@ -150,7 +150,7 @@ static bool widget_event(const Widget_t *widgets, const size_t n_widgets, Touch_
 
   // execute the callback function for the focused widget
   if (focus && (focus->event & touch.event)) {
-    DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, focus->event, touch.x, touch.y));
+    // DBG_EXEC(printf("event = %d(%d), x = %d, y = %d\n", touch.event, focus->event, touch.x, touch.y));
     touch.event = (Event_t)(touch.event & focus->event); // mask by target event
     focus->callback(focus, touch);
   }

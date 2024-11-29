@@ -104,7 +104,7 @@ LGFX_Sprite lcd_sprite(&lcd);
 
 void gfx_setup(void) {
   GFX_EXEC(init());
-  GFX_EXEC(initDMA());
+//GFX_EXEC(initDMA()); /* Probably enabled by default if available */
   GFX_EXEC(clear(0));
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
@@ -273,7 +273,7 @@ static MLXCapture_t mlx_cap = {
  * Low pass filter
  * x: input, T: sampling time [sec]
  *--------------------------------------------------------------------------------*/
-#define TIME_CONSTANT     5.0f
+#define TIME_CONSTANT   120.0f // Something is wrong with the filter formula
 typedef struct {
   float y;
   float filter(float x, const float T) {
@@ -343,8 +343,8 @@ static void measure_temperature(float *src) {
 
       if (mlx_cnf.range_auto) {
         #define RANGE_STEP  2
-        mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 1) * RANGE_STEP;
-        mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0) * RANGE_STEP;
+        mlx_cnf.range_min = ((int)((float)lmin.filter(tmin.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
+        mlx_cnf.range_max = ((int)((float)lmax.filter(tmax.t, mlx_cnf.sampling_period) / (float)RANGE_STEP) + 0.5f) * RANGE_STEP;
 
         // debug for serial ploter
         // DBG_EXEC(printf("%4.1f, %4.1f, %4.1f, %4.1f\n", tmin.t, lmin.y, tmax.t, lmax.y));
