@@ -381,7 +381,11 @@ static void onMainInside(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    // ToDo: plot the points and show values
+    const int box = mlx_cnf.box_size * mlx_cnf.interpolation;
+//  tpic.x = MLX90640_COLS - 1 - touch.x / box; // Front Camera
+    tpic.x = MLX90640_COLS - (touch.x + 1) / box; // check DrawLocator() in draw.hpp
+    tpic.y = touch.y / box;
+    mlx_cnf.minmax_auto |= 2;
   }
 }
 
@@ -389,7 +393,7 @@ static void onMainOutside(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    // ToDo: reset the picked up points
+    mlx_cnf.minmax_auto &= 1;
   }
 }
 
@@ -727,10 +731,10 @@ static void onThermographToggle1(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    mlx_cnf.minmax_auto = cnf_copy.minmax_auto = !cnf_copy.minmax_auto;
+    mlx_cnf.minmax_auto = cnf_copy.minmax_auto ^= 1;
   }
 
-  DrawToggle(widget, cnf_copy.minmax_auto);
+  DrawToggle(widget, cnf_copy.minmax_auto & 1);
 
   // Enable apply if somethig is changed
   onThermographApply(widget + 6, doInit);
@@ -910,6 +914,7 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
 #if   defined (LOVYANGFX_HPP_)
 
   static LGFX_Sprite sprite_view(&lcd);
+  sprite_view.setPsram(true);
 
 #elif defined (_TFT_eSPIH_)
 
@@ -955,10 +960,10 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
     sprite_view.print(p ? p + 1 : p);
   }
 
-//GFX_EXEC(startWrite());
+  GFX_EXEC(startWrite());
   sprite_view.pushSprite(widget->x, widget->y);
   sprite_view.deleteSprite();
-//GFX_EXEC(endWrite());
+  GFX_EXEC(endWrite());
 }
 
 static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
@@ -1062,6 +1067,7 @@ static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch)
 #if   defined (LOVYANGFX_HPP_)
 
   static LGFX_Sprite sprite_scroll(&lcd);
+  sprite_scroll.setPsram(true);
 
 #elif defined (_TFT_eSPIH_)
 

@@ -24,11 +24,11 @@ static void DrawThumb (const Widget_t *widget, const char *path);
  *--------------------------------------------------------------------------------*/
 #if defined (LOVYANGFX_HPP_)
 
-static LGFX_Sprite sprite(&lcd);
+static LGFX_Sprite sprite_draw(&lcd);
 
 #elif defined (_TFT_eSPIH_)
 
-static TFT_eSprite sprite(&tft);
+static TFT_eSprite sprite_draw(&tft);
 
 #endif
 
@@ -61,7 +61,7 @@ static void pngDraw(PNGDRAW *pDraw) {
 static void pngSprite(PNGDRAW *pDraw) {
   uint16_t lineBuffer[TFT_WIDTH > TFT_HEIGHT ? TFT_WIDTH : TFT_HEIGHT];
   png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
-  sprite.pushImage(xpos, ypos + pDraw->y, pDraw->iWidth, 1, lineBuffer);
+  sprite_draw.pushImage(xpos, ypos + pDraw->y, pDraw->iWidth, 1, lineBuffer);
 }
 
 static void DrawPNG(const uint8_t *img, size_t size, uint16_t x, uint16_t y, PNG_DRAW_CALLBACK *draw) {
@@ -125,9 +125,16 @@ static constexpr Image_t icon_locator[] = {
  * Draw locator with value
  *--------------------------------------------------------------------------------*/
 static void DrawLocator(const Image_t *image, Temperature_t *temp) {
+#define TEST  false
+#if TEST
+  temp->x = MLX90640_COLS / 2;
+  temp->y = MLX90640_ROWS / 2;
+#endif
+
   const int box = mlx_cnf.box_size * mlx_cnf.interpolation;
   const int W = box * (MLX90640_COLS);
-  const int X = box * (MLX90640_COLS - 1 - temp->x); // Front Camera
+//const int X = box * (MLX90640_COLS - 1 - temp->x); // Front Camera
+  const int X = box * (MLX90640_COLS - temp->x) - 1; // check onMainInside() in widgets.hpp
   const int Y = box * temp->y;
 
   const int w = get_width (image->data);
@@ -135,18 +142,24 @@ static void DrawLocator(const Image_t *image, Temperature_t *temp) {
 
 #if   defined (LOVYANGFX_HPP_)
 
-  sprite.createSprite(w, h);
-  sprite.drawPng(image->data, image->size, 0, 0);
-  sprite.pushSprite(&lcd_sprite, X - (w >> 1), Y - (h >> 1), BLACK);
-  sprite.deleteSprite();
+  sprite_draw.setPsram(true);
+  sprite_draw.createSprite(w, h);
+  sprite_draw.drawPng(image->data, image->size, 0, 0);
+  sprite_draw.pushSprite(&lcd_sprite, X - (w >> 1), Y - (h >> 1), BLACK);
+  sprite_draw.deleteSprite();
 
 #elif defined (_TFT_eSPIH_)
 
-  sprite.createSprite(w, h);
+  sprite_draw.createSprite(w, h);
   DrawPNG(image->data, image->size, 0, 0, pngSprite);
-  sprite.pushToSprite(&tft_sprite, X - (w >> 1), Y - (h >> 1), BLACK);
-  sprite.deleteSprite();
+  sprite_draw.pushToSprite(&tft_sprite, X - (w >> 1), Y - (h >> 1), BLACK);
+  sprite_draw.deleteSprite();
 
+#endif
+
+#if TEST
+  GFX_FAST(drawLine(0, 0, MLX90640_COLS * box - 1, MLX90640_ROWS * box - 1, RED));
+  GFX_FAST(drawLine(MLX90640_COLS * box - 1, 0, 0, MLX90640_ROWS * box - 1, RED));
 #endif
 
   char buf[BUF_SIZE];
@@ -164,8 +177,14 @@ void DrawTemperature(void) {
   GFX_FAST(setTextDatum(CC_DATUM));
   GFX_EXEC(setClipRect(0, 0, MLX90640_COLS * box, MLX90640_ROWS * box));
 
-  DrawLocator(&icon_locator[0], &_tmin);
-  DrawLocator(&icon_locator[0], &_tmax);
+  if (mlx_cnf.minmax_auto & 1) {
+    DrawLocator(&icon_locator[0], &_tmin);
+    DrawLocator(&icon_locator[0], &_tmax);
+  }
+
+  if (mlx_cnf.minmax_auto & 2) {
+    DrawLocator(&icon_locator[1], &tpic);
+  }
 
   GFX_EXEC(clearClipRect());
 }
@@ -267,12 +286,12 @@ static void DrawSlider(const Widget_t *widget, int16_t pos, bool enable /* = tru
   if (bar && knob) {
     GFX_EXEC(startWrite());
 
-    sprite.createSprite(get_width(bar->data), get_height(bar->data));
+    sprite_draw.createSprite(get_width(bar->data), get_height(bar->data));
 
 #if   defined (LOVYANGFX_HPP_)
 
-    sprite.drawPng(bar->data,  bar->size,  0,   0);
-    sprite.drawPng(knob->data, knob->size, pos, 0);
+    sprite_draw.drawPng(bar->data,  bar->size,  0,   0);
+    sprite_draw.drawPng(knob->data, knob->size, pos, 0);
 
 #elif defined (_TFT_eSPIH_)
 
@@ -281,8 +300,8 @@ static void DrawSlider(const Widget_t *widget, int16_t pos, bool enable /* = tru
 
 #endif
 
-    sprite.pushSprite(widget->x, widget->y);
-    sprite.deleteSprite();
+    sprite_draw.pushSprite(widget->x, widget->y);
+    sprite_draw.deleteSprite();
 
     CHECK_POS(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());

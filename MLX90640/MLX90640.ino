@@ -216,7 +216,7 @@ typedef struct MLXConfig {
   uint8_t   box_size;
   uint8_t   refresh_rate;
   uint8_t   color_scheme;
-  bool      minmax_auto;
+  uint8_t   minmax_auto;
   bool      range_auto;
   int16_t   range_min;
   int16_t   range_max;
@@ -320,7 +320,7 @@ static void measure_temperature(float *src) {
   // Measure the temperature at the picked up point
   if (tpic.x != 0 || tpic.y != 0) {
     tpic.v = src[tpic.x + (tpic.y * MLX90640_COLS)];
-    lpic.filter(tpic.v, mlx_cnf.sampling_period);
+    tpic.v = lpic.filter(tpic.v, mlx_cnf.sampling_period);
   }
 
   // Measure temperature ranges
