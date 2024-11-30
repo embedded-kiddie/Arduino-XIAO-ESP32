@@ -383,7 +383,7 @@ static void onMainInside(const Widget_t *widget, const Touch_t &touch) {
   if (touch.event != EVENT_INIT) {
     const int box = mlx_cnf.box_size * mlx_cnf.interpolation;
 //  tpic.x = MLX90640_COLS - 1 - touch.x / box; // Front Camera
-    tpic.x = MLX90640_COLS - (touch.x + 1) / box; // check DrawLocator() in draw.hpp
+    tpic.x = MLX90640_COLS - (touch.x + 1) / box; // check DrawMarker() in draw.hpp
     tpic.y = touch.y / box;
     mlx_cnf.temperature |= 2;
   }
@@ -393,6 +393,8 @@ static void onMainOutside(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
+    tpic.x = tpic.y = 0;
+    lpic.y = (MINTEMP + MAXTEMP) / 2;
     mlx_cnf.temperature &= 1;
   }
 }
