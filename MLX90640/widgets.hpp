@@ -352,7 +352,7 @@ static void onMainInside(const Widget_t *widget, const Touch_t &touch) {
 //  tpic.x = MLX90640_COLS - 1 - touch.x / box; // Front Camera
     tpic.x = MLX90640_COLS - (touch.x + 1) / box; // check DrawLocator() in draw.hpp
     tpic.y = touch.y / box;
-    mlx_cnf.minmax_auto |= 2;
+    mlx_cnf.temperature |= 2;
   }
 }
 
@@ -360,7 +360,7 @@ static void onMainOutside(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    mlx_cnf.minmax_auto &= 1;
+    mlx_cnf.temperature &= 1;
   }
 }
 
@@ -690,10 +690,10 @@ static void onThermographToggle1(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event != EVENT_INIT) {
-    mlx_cnf.minmax_auto = cnf_copy.minmax_auto ^= 1;
+    mlx_cnf.temperature = cnf_copy.temperature ^= 1;
   }
 
-  DrawToggle(widget, cnf_copy.minmax_auto & 1);
+  DrawToggle(widget, cnf_copy.temperature & 1);
 
   // Enable apply if somethig is changed
   onThermographApply(widget + 6, doInit);

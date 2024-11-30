@@ -216,7 +216,7 @@ typedef struct MLXConfig {
   uint8_t   box_size;
   uint8_t   refresh_rate;
   uint8_t   color_scheme;
-  uint8_t   minmax_auto;
+  uint8_t   temperature;
   bool      range_auto;
   int16_t   range_min;
   int16_t   range_max;
@@ -232,7 +232,7 @@ typedef struct MLXConfig {
   bool operator != (const MLXConfig &RHS) {
     return (
       (color_scheme  != RHS.color_scheme ) ||
-      (minmax_auto   != RHS.minmax_auto  ) ||
+      (temperature   != RHS.temperature  ) ||
       (range_auto    != RHS.range_auto   ) ||
       (range_min     != RHS.range_min    ) ||
       (range_max     != RHS.range_max    )
@@ -256,7 +256,7 @@ static constexpr MLXConfig_t mlx_ini = {
   .box_size       = BOX_SIZE,
   .refresh_rate   = 0,
   .color_scheme   = 0,
-  .minmax_auto    = false,
+  .temperature    = false,
   .range_auto     = false,
   .range_min      = MINTEMP,
   .range_max      = MAXTEMP,
@@ -470,7 +470,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
       }
     }
 
-    if (mlx_cnf.minmax_auto) {
+    if (mlx_cnf.temperature) {
       if (outputStart - prevUpdate > 1000) {
         prevUpdate = outputStart;
         _tmin = tmin; _tmax = tmax;

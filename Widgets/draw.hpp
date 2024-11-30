@@ -112,19 +112,19 @@ static inline uint32_t get_width (const uint8_t *data) { return swap_endian(*(ui
 static inline uint32_t get_height(const uint8_t *data) { return swap_endian(*(uint32_t*)(data + PNG_HEADER_HEIGHT)); }
 
 /*--------------------------------------------------------------------------------
- * The locator icons
+ * Marker icons
  *--------------------------------------------------------------------------------*/
-#include "locator.h"
+#include "marker.h"
 
-static constexpr Image_t icon_locator[] = {
-  { icon_locator0, sizeof(icon_locator0) }, // 14 x 14
-  { icon_locator1, sizeof(icon_locator1) }, // 16 x 16
+static constexpr Image_t icon_marker[] = {
+  { icon_marker0, sizeof(icon_marker0) }, // 14 x 14
+  { icon_marker1, sizeof(icon_marker1) }, // 16 x 16
 };
 
 /*--------------------------------------------------------------------------------
- * Draw locator with value
+ * Draw marker with value
  *--------------------------------------------------------------------------------*/
-static void DrawLocator(const Image_t *image, Temperature_t *temp) {
+static void DrawMarker(const Image_t *image, Temperature_t *temp) {
 #define TEST  false
 #if TEST
   temp->x = MLX90640_COLS / 2;
@@ -168,7 +168,7 @@ static void DrawLocator(const Image_t *image, Temperature_t *temp) {
 }
 
 /*--------------------------------------------------------------------------------
- * Draw temperature by locator and value
+ * Draw temperature by marker and value
  *--------------------------------------------------------------------------------*/
 void DrawTemperature(void) {
   const int box = mlx_cnf.box_size * mlx_cnf.interpolation;
@@ -177,13 +177,13 @@ void DrawTemperature(void) {
   GFX_FAST(setTextDatum(CC_DATUM));
   GFX_EXEC(setClipRect(0, 0, MLX90640_COLS * box, MLX90640_ROWS * box));
 
-  if (mlx_cnf.minmax_auto & 1) {
-    DrawLocator(&icon_locator[0], &_tmin);
-    DrawLocator(&icon_locator[0], &_tmax);
+  if (mlx_cnf.temperature & 1) {
+    DrawMarker(&icon_marker[0], &_tmin);
+    DrawMarker(&icon_marker[0], &_tmax);
   }
 
-  if (mlx_cnf.minmax_auto & 2) {
-    DrawLocator(&icon_locator[1], &tpic);
+  if (mlx_cnf.temperature & 2) {
+    DrawMarker(&icon_marker[1], &tpic);
   }
 
   GFX_EXEC(clearClipRect());
