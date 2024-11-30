@@ -6,9 +6,8 @@
 /*--------------------------------------------------------------------------------
  * Functions prototyping
  *--------------------------------------------------------------------------------*/
-void DrawTemperature(void);
-void DrawColorRange(uint8_t flag);
-
+static void DrawTemperatureMarker(void);
+static void DrawTemperatureRange(uint8_t type);
 static void DrawScreen(const Widget_t *widget);
 static void DrawWidget(const Widget_t *widget, uint8_t offset = 0);
 static void DrawButton(const Widget_t *widget, uint8_t offset = 0);
@@ -168,21 +167,21 @@ static void DrawMarker(const Image_t *image, Temperature_t *temp) {
 }
 
 /*--------------------------------------------------------------------------------
- * Draw temperature by marker and value
+ * Draw temperature with markers and values
  *--------------------------------------------------------------------------------*/
-void DrawTemperature(void) {
+void DrawTemperatureMarker(void) {
   const int box = mlx_cnf.box_size * mlx_cnf.interpolation;
 
   GFX_FAST(setTextSize(1));
   GFX_FAST(setTextDatum(CC_DATUM));
   GFX_EXEC(setClipRect(0, 0, MLX90640_COLS * box, MLX90640_ROWS * box));
 
-  if (mlx_cnf.temperature & 1) {
+  if (mlx_cnf.marker_mode & 1) {
     DrawMarker(&icon_marker[0], &_tmin);
     DrawMarker(&icon_marker[0], &_tmax);
   }
 
-  if (mlx_cnf.temperature & 2) {
+  if (mlx_cnf.marker_mode & 2) {
     DrawMarker(&icon_marker[1], &tpic);
   }
 
@@ -192,7 +191,7 @@ void DrawTemperature(void) {
 /*--------------------------------------------------------------------------------
  * Draw temperature color bar and range
  *--------------------------------------------------------------------------------*/
-void DrawColorRange(uint8_t flag) {
+void DrawTemperatureRange(uint8_t type) {
   const int box = mlx_cnf.box_size * mlx_cnf.interpolation;
   const int w = box * MLX90640_COLS;
   int       y = box * MLX90640_ROWS + 3;
@@ -200,7 +199,7 @@ void DrawColorRange(uint8_t flag) {
   GFX_EXEC(startWrite());
 
   // Draw color bar
-  if (flag & 1) {
+  if (type & 1) {
     const int n = sizeof(camColors) / sizeof(camColors[0]);
  
     for (int i = 0; i < n; i++) {
@@ -214,7 +213,7 @@ void DrawColorRange(uint8_t flag) {
   }
 
   // Draw thermal range
-  if (flag & 2) {
+  if (type & 2) {
     y += FONT_HEIGHT + 4;
     const uint8_t size = (box > 4 ? 2 : 1);
     const int font_w = (size == 2 ? FONT_WIDTH  : FONT_WIDTH  >> 1);

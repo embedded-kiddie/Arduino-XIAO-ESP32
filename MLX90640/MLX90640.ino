@@ -212,17 +212,17 @@ float dst[INTERPOLATED_ROWS * INTERPOLATED_COLS];
  *--------------------------------------------------------------------------------*/
 typedef struct MLXConfig {
   // Member Variables
-  uint8_t   interpolation;
-  uint8_t   box_size;
-  uint8_t   refresh_rate;
-  uint8_t   color_scheme;
-  uint8_t   temperature;
-  bool      range_auto;
-  int16_t   range_min;
-  int16_t   range_max;
-  float     sampling_period;
+  uint8_t   interpolation;    // 1, 2, 4, 6, 8
+  uint8_t   box_size;         // 1, 2, 4, 8
+  uint8_t   refresh_rate;     // sampline frequency (mlx90640_refreshrate_t)
+  uint8_t   color_scheme;     // 0: rainbow, 1: orange
+  uint8_t   marker_mode;      // 0: min/max, 1: picked up by user
+  bool      range_auto;       // automatic measurement of temperature min/max
+  int16_t   range_min;        // minimum temperature
+  int16_t   range_max;        // maximum temperature
+  float     sampling_period;  // Sampling Period [sec]
 
-  // Comparison Operator
+  // Comparison Operators
   bool operator >= (const MLXConfig &RHS) {
     return (
       (interpolation != RHS.interpolation) ||
@@ -232,7 +232,7 @@ typedef struct MLXConfig {
   bool operator != (const MLXConfig &RHS) {
     return (
       (color_scheme  != RHS.color_scheme ) ||
-      (temperature   != RHS.temperature  ) ||
+      (marker_mode   != RHS.marker_mode  ) ||
       (range_auto    != RHS.range_auto   ) ||
       (range_min     != RHS.range_min    ) ||
       (range_max     != RHS.range_max    )
@@ -256,7 +256,7 @@ static constexpr MLXConfig_t mlx_ini = {
   .box_size       = BOX_SIZE,
   .refresh_rate   = 0,
   .color_scheme   = 0,
-  .temperature    = 0,
+  .marker_mode    = 0,
   .range_auto     = false,
   .range_min      = MINTEMP,
   .range_max      = MAXTEMP,
@@ -323,7 +323,7 @@ static void measure_temperature(float *src) {
     tpic.v = lpic.filter(tpic.v, mlx_cnf.sampling_period);
   }
 
-  // Measure temperature ranges
+  // Measure min/max temperature
   tmin.v =  999.0f;
   tmax.v = -999.0f;
 
@@ -417,7 +417,7 @@ void ProcessInput(uint8_t bank) {
     delay(1000); // false = no new frame capture
   }
 
-  // Measure temperature for min/max/pickup
+  // Measure temperature of min/max/pickup
   measure_temperature(src[bank]);
 }
 
@@ -470,16 +470,16 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
       }
     }
 
-    if (mlx_cnf.temperature) {
+    if (mlx_cnf.marker_mode) {
       if (outputStart - prevUpdate > 1000) {
         prevUpdate = outputStart;
         _tmin = tmin; _tmax = tmax;
       }
-      DrawTemperature();
+      DrawTemperatureMarker();
     }
 
     if (mlx_cnf.range_auto) {
-      DrawColorRange(2);
+      DrawTemperatureRange(2);
     }
 
     if (state == STATE_MAIN) {
