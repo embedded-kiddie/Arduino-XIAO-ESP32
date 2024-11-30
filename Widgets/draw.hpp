@@ -285,6 +285,7 @@ static void DrawSlider(const Widget_t *widget, int16_t pos, bool enable /* = tru
   if (bar && knob) {
     GFX_EXEC(startWrite());
 
+    sprite_draw.setPsram(true);
     sprite_draw.createSprite(get_width(bar->data), get_height(bar->data));
 
 #if   defined (LOVYANGFX_HPP_)
