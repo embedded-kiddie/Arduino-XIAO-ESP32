@@ -285,23 +285,25 @@ static void DrawSlider(const Widget_t *widget, int16_t pos, bool enable /* = tru
   if (bar && knob) {
     GFX_EXEC(startWrite());
 
-    sprite_draw.setPsram(true);
-    sprite_draw.createSprite(get_width(bar->data), get_height(bar->data));
 
 #if   defined (LOVYANGFX_HPP_)
 
+    sprite_draw.setPsram(true);
+    sprite_draw.createSprite(get_width(bar->data), get_height(bar->data));
     sprite_draw.drawPng(bar->data,  bar->size,  0,   0);
     sprite_draw.drawPng(knob->data, knob->size, pos, 0);
+    sprite_draw.pushSprite(widget->x, widget->y);
+    sprite_draw.deleteSprite();
 
 #elif defined (_TFT_eSPIH_)
 
+    sprite_draw.createSprite(get_width(bar->data), get_height(bar->data));
     DrawPNG(bar->data,  bar->size,  0,   0, pngSprite);
     DrawPNG(knob->data, knob->size, pos, 0, pngSprite);
-
-#endif
-
     sprite_draw.pushSprite(widget->x, widget->y);
     sprite_draw.deleteSprite();
+
+#endif
 
     CHECK_POS(GFX_EXEC(drawRect(widget->x, widget->y, widget->w, widget->h, RED)));
     GFX_EXEC(endWrite());

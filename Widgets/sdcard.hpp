@@ -75,7 +75,12 @@
 #define FILE_WRITE  (O_RDWR | O_CREAT | O_TRUNC)
 
 // SHARED_SPI makes SD very slow, while DEDICATED_SPI causes GFX libraries to stop working.
-#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SD_SCK_MHZ(24))
+#ifdef _TFT_eSPIH_
+// https://github.com/greiman/SdFat/issues/462
+#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SD_SCK_MHZ(10), &GFX_EXEC(getSPIinstance()))
+#else
+#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SD_SCK_MHZ(10))
+#endif
 typedef FsFile  File;
 #define FS_TYPE SdFs
 SdFs SD;
@@ -156,9 +161,9 @@ static int GetFileNo(FS_TYPE &fs) {
 
   file = fs.open(path, FILE_WRITE);
   if (file.print(++number)) {
-    DBG_EXEC(printf("done: %d\n", number));
+    DBG_EXEC(printf("Sequential number: %d\n", number));
   } else {
-    DBG_EXEC(printf("fail: %d\n", number));
+    DBG_EXEC(printf("Failed: %d\n", number));
   }
 
   file.close();
@@ -362,7 +367,15 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
 //  GFX_EXEC(startWrite());
     GFX_EXEC(readRect(0, y, w, 1, rgb));
 //  GFX_EXEC(endWrite());
-    file.write((uint8_t*)rgb, w * sizeof(rgb[0])); // SD: 2966 msec, SdFat: 2777 msec
+
+    // SD: 2966 msec, SdFat: 2753 msec
+    int len = file.write((uint8_t*)rgb, w * sizeof(rgb[0]));
+
+    if (file.getWriteError() != 0) {
+      DBG_EXEC(printf("Error: len: %d, code: %d\n", len, file.getWriteError()));
+      file.close();
+      return false;
+    };
 
 #else // defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
 

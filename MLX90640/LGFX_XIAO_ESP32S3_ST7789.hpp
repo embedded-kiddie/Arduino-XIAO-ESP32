@@ -2,6 +2,7 @@
 
 #define LGFX_USE_V1
 
+#include "spi_assign.h"
 #include <LovyanGFX.hpp>
 
 // Configuration to share the SPI bus host with SD
