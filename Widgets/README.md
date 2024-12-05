@@ -12,7 +12,7 @@
 - Dialog and Arrow buttons  
   ![Dialog and Arrow buttons](samples/widget-arrows-dialog.png "Dialog and Arrow buttons")
 
-### How iit work
+### How it works
 
 ![Overall flow](samples/Overall-flow.jpg "Overall flow")
 
