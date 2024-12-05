@@ -1,14 +1,18 @@
 ### Sample widgets
 
-![Icons](samples/widget-icons.png "Icons")
+- Icons  
+  ![Icons](samples/widget-icons.png "Icons")
 
-![Radio/Toggle buttons and Sliders](samples/widget-radio-toggle-slider.png "Radio/Toggle buttons and Sliders")
+- Radio/Toggle buttons and Sliders  
+  ![Radio/Toggle buttons and Sliders](samples/widget-radio-toggle-slider.png "Radio/Toggle buttons and Sliders")
 
-![File explorer](samples/widget-file-explorer.png "File explorer")
+- File explorer  
+  ![File explorer](samples/widget-file-explorer.png "File explorer")
 
-![Dialog and Arrow buttons](samples/widget-arrows-dialog.png "Dialog and Arrow buttons")
+- Dialog and Arrow buttons  
+  ![Dialog and Arrow buttons](samples/widget-arrows-dialog.png "Dialog and Arrow buttons")
 
-### How is it work?
+### How iit work
 
 ![Overall flow](samples/Overall-flow.jpg "Overall flow")
 

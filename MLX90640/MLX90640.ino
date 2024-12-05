@@ -6,6 +6,7 @@
  *================================================================================*/
 #include <Arduino.h>
 #include <SPI.h>
+#include "spi_assign.h"
 #include "colors.h"
 
 #define DEBUG       true

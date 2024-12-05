@@ -650,7 +650,7 @@ static void onResolutionApply(const Widget_t *widget, const Touch_t &touch) {
 #define TERMOGRAPH_MIN      (-20)
 #define TERMOGRAPH_MAX      (180)
 #define TERMOGRAPH_STEP     (5)
-#define TERMOGRAPH_DIFF     (10)
+#define TERMOGRAPH_DIFF     (5)
 #define TERMOGRAPH_MIN_ROW  282
 #define TERMOGRAPH_MIN_COL  139
 #define TERMOGRAPH_MAX_ROW  282
