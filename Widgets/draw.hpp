@@ -200,14 +200,14 @@ void DrawTemperatureRange(uint8_t type) {
 
   // Draw color bar
   if (type & 1) {
-    const int n = sizeof(camColors) / sizeof(camColors[0]);
+    const uint16_t *hm = heatmap[mlx_cnf.color_scheme];
  
-    for (int i = 0; i < n; i++) {
-      int x = map(i, 0, n, 0, w);
+    for (int i = 0; i < N_HEATMAP; i++) {
+      int x = map(i, 0, N_HEATMAP, 0, w);
 #if defined (LOVYANGFX_HPP_)
-      GFX_EXEC(writeFastVLine(x, y, FONT_HEIGHT, camColors[i]));
+      GFX_EXEC(writeFastVLine(x, y, FONT_HEIGHT, hm[i]));
 #else
-      GFX_EXEC(drawFastVLine(x, y, FONT_HEIGHT, camColors[i]));
+      GFX_EXEC(drawFastVLine(x, y, FONT_HEIGHT, hm[i]));
 #endif
     }
   }
