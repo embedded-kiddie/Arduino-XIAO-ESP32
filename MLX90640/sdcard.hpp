@@ -46,10 +46,9 @@
 // #define REASSIGN_PINS
 
 /*================================================================================
- * The configuration of the features defined in this file
+ * Select the SD library
  * Note: Currently only LovyanGFX can capture the screen successfully.
  *================================================================================*/
-#define CAPTURE_SCREEN  true
 #define USE_SDFAT       true  // TFT_eSPI can not work with SdFat
 
 // LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
@@ -122,8 +121,10 @@ typedef struct {
  * Functions prototyping
  *--------------------------------------------------------------------------------*/
 void sdcard_setup (void);
+int  sdcard_fileno(void);
 bool sdcard_open  (void);
 bool sdcard_save  (void);
+bool sdcard_video (uint8_t *adrs, size_t size, int no);
 void sdcard_size  (uint32_t *total, uint32_t *free);
 
 bool DeleteDir    (FS_TYPE &fs, const char *path);
@@ -321,7 +322,7 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
   File file = fs.open(path, FILE_WRITE);
 
   if (!file) {
-    DBG_EXEC(printf("SD open failed.\n"));
+    DBG_EXEC(printf("SD: open %s failed.\n", path));
     return false;
   }
 
@@ -431,6 +432,14 @@ bool sdcard_open(void) {
   return true;
 }
 
+int sdcard_fileno(void) {
+  if (!sdcard_open()) {
+    return 0;
+  }
+
+  return GetFileNo(SD);
+}
+
 void sdcard_size(uint32_t *total, uint32_t *free) {
 #if USE_SDFAT
   *total = (uint32_t)(0.000512 * (uint32_t)SD.card()->sectorCount() + 0.5);
@@ -442,25 +451,21 @@ void sdcard_size(uint32_t *total, uint32_t *free) {
 }
 
 bool sdcard_save(void) {
+  DBG_EXEC(uint32_t start = millis());
+
   if (!sdcard_open()) {
     return false;
   }
 
-#if CAPTURE_SCREEN
   int no = GetFileNo(SD);
   char path[BUF_SIZE];
   sprintf(path, "%s/mlx%04d.bmp", MLX90640_DIR, no);
-  DBG_EXEC(printf("%s\n", path));
-
-  DBG_EXEC(uint32_t start = millis());
 
   if (!SaveBMP24(SD, path)) {
     return false;
   }
 
   DBG_EXEC(printf("Elapsed time: %d msec\n", millis() - start)); // SD: 6264 msec, SdFat: 4202 msec
-#endif
-
   DBG_EXEC({
     std::vector<FileInfo_t> files;
     GetFileList(SD, "/", 1, files);
@@ -476,6 +481,23 @@ bool sdcard_save(void) {
     sdcard_size(&total, &free);
     printf("Card size: %luMB\nFree size: %luMB\n", total, free);
   });
+
+  return true;
+}
+
+bool sdcard_video(uint8_t *adrs, size_t size, int no) {
+  DBG_EXEC(uint32_t start = millis());
+
+  char path[BUF_SIZE];
+  sprintf(path, "%s/mlx%04d.raw", MLX90640_DIR, no);
+
+  File file = SD.open(path, FILE_APPEND);
+  int len = file.write(adrs, sizeof(float) * MLX90640_ROWS * MLX90640_COLS);
+  file.close();
+
+  DBG_EXEC(printf("Saved %d bytes, Elapsed time: %d msec\n", len, millis() - start)); // 3072 byte, 17[msec] - 38[msec]
+
+  // SD.end(); // Activating this line will cause some GFX libraries to stop working.
 
   return true;
 }

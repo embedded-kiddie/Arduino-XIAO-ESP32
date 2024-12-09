@@ -249,7 +249,7 @@ typedef struct MLXConfig {
 
 typedef struct MLXCapture {
   uint8_t       capture_mode; // 0: camera, 1: video
-  bool          recording;    // false: stop, true: recording video
+  int           recording;    // 0: stop, otherwise: file number
 } MLXCapture_t;
 
 static constexpr MLXConfig_t mlx_ini = {
@@ -266,7 +266,7 @@ static constexpr MLXConfig_t mlx_ini = {
 static MLXConfig_t mlx_cnf = mlx_ini;
 static MLXCapture_t mlx_cap = {
   .capture_mode   = 0,
-  .recording      = false,
+  .recording      = 0,
 };
 
 /*--------------------------------------------------------------------------------
@@ -412,6 +412,11 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     const int box_size = mlx_cnf.box_size;
     const uint16_t *hm = heatmap[mlx_cnf.color_scheme];
 
+    // Save video
+    if (mlx_cap.recording) {
+      sdcard_video((uint8_t*)src[bank], sizeof(src[bank]), mlx_cap.recording);
+    }
+
 #if ENA_INTERPOLATION
     interpolate_image(src[bank], MLX90640_ROWS, MLX90640_COLS, dst, dst_rows, dst_cols);
     float *drw = dst;
@@ -479,13 +484,13 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
         gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 6.5, "%4.1f", v);
       }
     }
-  }
 
 #if ENA_TRANSACTION
     GFX_FAST(pushSprite(0, 0));
     GFX_FAST(deleteSprite());
     GFX_EXEC(endWrite());
 #endif
+  }
 
   // Prevent the watchdog from firing
   yield();

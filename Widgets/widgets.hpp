@@ -420,14 +420,16 @@ static void onMainCapture(const Widget_t *widget, const Touch_t &touch) {
     DrawButton(widget, 0); // draw icon_camera1
   }
 
-  else if (mlx_cap.recording == false) {
-    DrawButton(widget, 3); // draw icon_stop
-    mlx_cap.recording = true;
+  else if (mlx_cap.recording == 0) {
+    if ((mlx_cap.recording = sdcard_fileno()) != 0) {
+      sdcard_open();
+      DrawButton(widget, 3); // draw icon_stop
+    }
   }
 
   else {
     DrawButton(widget, 2); // draw icon_video
-    mlx_cap.recording = false;
+    mlx_cap.recording = 0;
   }
 }
 
