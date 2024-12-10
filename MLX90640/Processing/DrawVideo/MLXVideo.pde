@@ -13,15 +13,18 @@ int INTERPOLATED_ROWS = (MLX90640_ROWS * INTERPOLATE_SCALE);
 
 // Inferno
 int N_POINTS = 25;
-float calcR(float x) { float y =   -0.0186f * pow(x, 3.0f) + 0.3123f * pow(x, 2.0f) + 11.9230f * x + 36.6580f; return y > 0.0 ? y : 0.0f; }
-float calcG(float x) { float y =    0.0042f * pow(x, 3.0f) + 0.2183f * pow(x, 2.0f) +  1.0843f * x +  8.0676f; return y > 0.0 ? y : 0.0f; }
-float calcB(float x) { float y =    0.0743f * pow(x, 3.0f) - 2.7407f * pow(x, 2.0f) + 23.1360f * x + 61.5370f; return y > 0.0 ? y : 0.0f; }
-//float calcB(float x) { float y = -3.221e-5f * pow(x, 6.0f) + 0.0026f * pow(x, 5.0f) -  0.0780f * pow(x, 4.0f) + 1.0976f * pow(x, 3.0f) - 8.2067f * pow(x, 2.0f) + 30.074f * x + 68.001f; return y > 0.0 ? y : 0.0f; }
+float calcR(float x) { float y = -0.0186f * pow(x, 3.0f) + 0.3123f * pow(x, 2.0f) + 11.9230f * x + 36.6580f; return constrain(y, 0.0f, 255.0f); }
+float calcG(float x) { float y =  0.0042f * pow(x, 3.0f) + 0.2183f * pow(x, 2.0f) +  1.0843f * x +  8.0676f; return constrain(y, 0.0f, 255.0f); }
+float calcB(float x) { float y =  0.0743f * pow(x, 3.0f) - 2.7407f * pow(x, 2.0f) + 23.1360f * x + 61.5370f; return constrain(y, 0.0f, 255.0f); }
 
 int N_GRADATION = 1024;
 
 public class ColorMap {
-  public ColorMap(float[] r, float[] g, float[] b) {
+  public float[] r = new float[N_GRADATION];
+  public float[] g = new float[N_GRADATION];
+  public float[] b = new float[N_GRADATION];
+
+  public ColorMap() {
     float x = 1.0f;
     float step = (float)(N_POINTS - 1) / (float)N_GRADATION;
 
@@ -35,12 +38,7 @@ public class ColorMap {
 
 public class MLXVideo {
   private boolean autoRange = false;
-
-  private ColorMap cmap = null;
-  private float[] r = new float[N_GRADATION];
-  private float[] g = new float[N_GRADATION];
-  private float[] b = new float[N_GRADATION];
-
+  private ColorMap heatmap = null;
   private RandomAccessFile reader = null;
   private long frameNo = 0;
   private long frameCount = 0;
@@ -50,7 +48,7 @@ public class MLXVideo {
   public MLXVideo(String filename) {
     noStroke();
     colorMode(RGB);
-    cmap = new ColorMap(r, g, b);
+    heatmap = new ColorMap();
 
     try {
       // https://zawaworks.hatenablog.com/entry/2017/10/08/213602
@@ -150,7 +148,7 @@ public class MLXVideo {
     for (int y = 0; y < DISPLAY_ROWS; y += DISPLAY_SCALE) {
       for (int x = 0; x < DISPLAY_COLS; x += DISPLAY_SCALE) {
         int t = temp[i];
-        fill(r[t], g[t], b[t]);
+        fill(heatmap.r[t], heatmap.g[t], heatmap.b[t]);
         rect(x, y, DISPLAY_SCALE, DISPLAY_SCALE);
         i++;
       }
@@ -176,7 +174,7 @@ public class MLXVideo {
     for (int intervals = 0; intervals < 6; intervals++) {
       int t = round(map(legendTemp, minTemp, maxTemp, 0.0f, (float)(N_GRADATION - 1)));
       t = constrain(t, 0, N_GRADATION - 1);
-      fill(r[t], g[t], b[t]);
+      fill(heatmap.r[t], heatmap.g[t], heatmap.b[t]);
       text(legendTemp + "°", 70 * intervals, 390);
       legendTemp += legendInterval;
     }
