@@ -20,14 +20,14 @@ float calcB(float x) { float y = -3.221e-5f * pow(x, 6.0f) + 0.0026f * pow(x, 5.
 int N_GRADATION = 1024;
 
 public class ColorMap {
-  public ColorMap(int[] r, int[] g, int[] b) {
+  public ColorMap(float[] r, float[] g, float[] b) {
     float x = 1.0f;
     float step = (float)(N_POINTS - 1) / (float)N_GRADATION;
 
     for (int i = 0; i < N_GRADATION; i++, x += step) {
-      r[i] = constrain(round(calcR(x)), 0, 255);
-      g[i] = constrain(round(calcG(x)), 0, 255);
-      b[i] = constrain(round(calcB(x)), 0, 255);
+      r[i] = calcR(x);
+      g[i] = calcG(x);
+      b[i] = calcB(x);
     }
   }
 }
@@ -36,9 +36,9 @@ public class MLXVideo {
   private boolean autoRange = false;
 
   private ColorMap cmap = null;
-  private int[] r = new int[N_GRADATION];
-  private int[] g = new int[N_GRADATION];
-  private int[] b = new int[N_GRADATION];
+  private float[] r = new float[N_GRADATION];
+  private float[] g = new float[N_GRADATION];
+  private float[] b = new float[N_GRADATION];
 
   private RandomAccessFile reader = null;
   private long frameNo = 0;
@@ -148,8 +148,8 @@ public class MLXVideo {
     int i = 0;
     for (int y = 0; y < DISPLAY_ROWS; y += DISPLAY_SCALE) {
       for (int x = 0; x < DISPLAY_COLS; x += DISPLAY_SCALE) {
-        int c = temp[i];
-        fill(r[c], g[c], b[c]);
+        int t = temp[i];
+        fill(r[t], g[t], b[t]);
         rect(x, y, DISPLAY_SCALE, DISPLAY_SCALE);
         i++;
       }
@@ -173,9 +173,9 @@ public class MLXVideo {
 
     // Print each interval temperature in its corresponding heatmap color
     for (int intervals = 0; intervals < 6; intervals++) {
-      int c = round(map(legendTemp, minTemp, maxTemp, 0.0f, (float)(N_GRADATION - 1)));
-      c = constrain(c, 0, N_GRADATION - 1);
-      fill(r[c], g[c], b[c]);
+      int t = round(map(legendTemp, minTemp, maxTemp, 0.0f, (float)(N_GRADATION - 1)));
+      t = constrain(t, 0, N_GRADATION - 1);
+      fill(r[t], g[t], b[t]);
       text(legendTemp + "°", 70 * intervals, 390);
       legendTemp += legendInterval;
     }
