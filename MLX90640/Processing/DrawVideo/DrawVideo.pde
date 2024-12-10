@@ -11,12 +11,12 @@ int INTERPOLATE_SCALE = 8;
 int INTERPOLATED_COLS = (MLX90640_COLS * INTERPOLATE_SCALE);
 int INTERPOLATED_ROWS = (MLX90640_ROWS * INTERPOLATE_SCALE);
 
-MLXVideo video = null;
+MLXVideo video;
 
 void setup() {
   size(480, 400);  // Size must be the first statement
   noStroke();
-  //frameRate(30);
+  frameRate(16);
 
   video = new MLXVideo(file);
   video.rewind();
