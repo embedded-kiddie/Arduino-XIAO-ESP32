@@ -25,6 +25,10 @@ float calcR(float x) { float y = -0.0186f * pow(x, 3.0f) + 0.3123f * pow(x, 2.0f
 float calcG(float x) { float y =  0.0042f * pow(x, 3.0f) + 0.2183f * pow(x, 2.0f) +  1.0843f * x +  8.0676f; return constrain(y, 0.0f, 255.0f); }
 float calcB(float x) { float y =  0.0743f * pow(x, 3.0f) - 2.7407f * pow(x, 2.0f) + 23.1360f * x + 61.5370f; return constrain(y, 0.0f, 255.0f); }
 
+// Default range of temperature
+int MINTEMP = 20;  // Low  temperature range
+int MAXTEMP = 35;  // High temperature range
+
 public class HeatMap {
   public float[] r = new float[N_GRADATION];
   public float[] g = new float[N_GRADATION];
@@ -111,7 +115,7 @@ public class Interpolate {
   }
 }
 
-public class MLXVideo {
+public class Viewer {
   private boolean autoRange = false;
   private boolean interpolation = false;
   private float minTmp = +999.0f;
@@ -128,7 +132,7 @@ public class MLXVideo {
   private float[] dst = new float[INTERPOLATED_ROWS * INTERPOLATED_COLS];
   private int  [] tmp = new int  [INTERPOLATED_ROWS * INTERPOLATED_COLS];
 
-  public MLXVideo(String filename) {
+  public Viewer(String filename) {
     noStroke();
     colorMode(RGB);
     pol = new Interpolate();
@@ -228,8 +232,8 @@ public class MLXVideo {
         }
       }
     } else {
-      maxTmp = 35.0f;
-      minTmp = 20.0f;
+      maxTmp = MAXTEMP;
+      minTmp = MINTEMP;
     }
 
     float [] img = src;

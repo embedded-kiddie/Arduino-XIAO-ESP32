@@ -121,10 +121,10 @@ void gfx_setup(void) {
 #define LINE_HEIGHT   18 // [px] (FONT_HEIGHT + margin)
 
 /*--------------------------------------------------------------------------------
- * Initial values for range of tempareture
+ * Initial values for range of temperature
  *--------------------------------------------------------------------------------*/
-#define MINTEMP 20  // Low range of the sensor (this will be blue on the screen)
-#define MAXTEMP 35  // high range of the sensor (this will be red on the screen)
+#define MINTEMP 20  // Low  temperature range
+#define MAXTEMP 35  // High temperature range
 
 /*--------------------------------------------------------------------------------
  * The size of thermal image (max INTERPOLATE_SCALE = 8)

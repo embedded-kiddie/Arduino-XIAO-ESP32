@@ -1,0 +1,38 @@
+import java.io.*;
+import java.nio.*;
+
+String file = "./data/mlx0100.raw";
+
+Viewer viewer;
+
+int counter = 0;
+
+void setup() {
+  size(480, 400);
+  frameRate(16);
+
+  viewer = new Viewer(file);
+  viewer.Rewind();
+  viewer.SetFilterSize(0);
+  viewer.SetInterpolation(false);
+}
+
+void draw() {
+  viewer.Draw();
+  if (!viewer.Next()) {
+    viewer.Rewind();
+    switch (++counter % 3) {
+      case 0:
+        viewer.SetFilterSize(0);
+        viewer.SetInterpolation(false);
+        break;
+      case 1:
+        viewer.SetInterpolation(true);
+        break;
+      case 2:
+        viewer.SetFilterSize(7);
+        viewer.SetInterpolation(false);
+        break;
+    }
+  }
+}
