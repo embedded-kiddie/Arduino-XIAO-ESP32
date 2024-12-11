@@ -1,7 +1,8 @@
 // MLX90640 device resolution
 int MLX90640_COLS = 32;
 int MLX90640_ROWS = 24;
-int MLX90640_SIZE = (MLX90640_COLS * MLX90640_ROWS * 4);
+int MLX90640_SIZE  = (MLX90640_COLS * MLX90640_ROWS);
+int MLX90640_FRAME = (MLX90640_COLS * MLX90640_ROWS * 4);
 
 // Interpolation: false
 int DISPLAY_SCALE = 15;  // Box size
@@ -17,6 +18,7 @@ int INTERPOLATED_ROWS = (MLX90640_ROWS * INTERPOLATE_SCALE);
 int INTERPOLATED_SIZE = (INTERPOLATED_COLS * INTERPOLATED_ROWS);
 
 // Heatmap: Inferno
+// https://matplotlib.org/stable/users/explain/colors/colormaps.html
 int N_POINTS = 25;
 int N_GRADATION = 1024;
 float calcR(float x) { float y = -0.0186f * pow(x, 3.0f) + 0.3123f * pow(x, 2.0f) + 11.9230f * x + 36.6580f; return constrain(y, 0.0f, 255.0f); }
@@ -122,7 +124,7 @@ public class MLXVideo {
 
   private long frameNo = 0;
   private long frameCount = 0;
-  private float[] src = new float[768];
+  private float[] src = new float[MLX90640_SIZE];
   private float[] dst = new float[INTERPOLATED_ROWS * INTERPOLATED_COLS];
   private int  [] tmp = new int  [INTERPOLATED_ROWS * INTERPOLATED_COLS];
 
@@ -135,7 +137,7 @@ public class MLXVideo {
     try {
       // https://zawaworks.hatenablog.com/entry/2017/10/08/213602
       reader = new RandomAccessFile(sketchPath() + "/" + filename, "r");
-      frameCount = reader.length() / MLX90640_SIZE;
+      frameCount = reader.length() / MLX90640_FRAME;
       frameNo = 0;
       println("frameCount: " + frameCount);
     }
@@ -167,10 +169,10 @@ public class MLXVideo {
 
   public void Read(long n) {
     try {
-      reader.seek(n * MLX90640_SIZE);
+      reader.seek(n * MLX90640_FRAME);
       
       byte[] buffer = new byte[4];
-      for (int i = 0; i < 768; i++) {
+      for (int i = 0; i < MLX90640_SIZE; i++) {
         if (reader.read(buffer) != 4) {
           throw new IOException("Unexpected End of Stream");
         }
@@ -217,7 +219,7 @@ public class MLXVideo {
     if (autoRange) {
       // For each floating point value, double check that we've acquired a number,
       // then determine the min and max temperature values for this frame
-      for (int i = 0; i < 768; i++) {
+      for (int i = 0; i < MLX90640_SIZE; i++) {
         if (Float.isNaN(src[i])) continue;
         if (src[i] > maxTmp) {
           maxTmp = src[i];
@@ -231,7 +233,7 @@ public class MLXVideo {
     }
 
     float [] img = src;
-    int size = 768;
+    int size = MLX90640_SIZE;
     int rows = DISPLAY_ROWS;
     int cols = DISPLAY_COLS;
     int step = DISPLAY_SCALE;
