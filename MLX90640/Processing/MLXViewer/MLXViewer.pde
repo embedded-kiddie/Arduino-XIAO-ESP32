@@ -11,7 +11,7 @@ int counter = 0;
 String file = "./data/mlx0100.raw";
 
 void setup() {
-  size(480, 400);
+  size(480, 420);
   frameRate(16);
   viewer = new Viewer(file);
   viewer.Rewind();

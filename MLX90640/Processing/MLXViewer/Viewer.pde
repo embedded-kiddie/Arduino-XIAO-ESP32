@@ -145,9 +145,19 @@ public class Viewer {
 
   public Viewer(String filename) {
     noStroke();
+    textSize(32);
     colorMode(RGB);
+    background(0);
+
     pol = new Interpolate();
     heatmap = new HeatMap();
+
+    // Draw heatmap
+    for (int i = 0; i < N_GRADATION; i++) {
+      int x = floor(map(i, 0, N_GRADATION, 0, 480));
+      fill(heatmap.r[i], heatmap.g[i], heatmap.b[i]);
+      rect(x, 360, 1, 30);
+    }
 
     try {
       // https://zawaworks.hatenablog.com/entry/2017/10/08/213602
@@ -226,7 +236,6 @@ public class Viewer {
 
   void Draw() {
     Read(frameNo);  // Read frame into src[]
-    background(0);  // Clear the screen with a black background
 
     maxTmp = -999.0f;
     minTmp = +999.0f;
@@ -242,6 +251,8 @@ public class Viewer {
           minTmp = src[i];
         }
       }
+      maxTmp = floor(maxTmp);
+      minTmp = floor(minTmp);
     } else {
       maxTmp = MAXTEMP;
       minTmp = MINTEMP;
@@ -263,8 +274,7 @@ public class Viewer {
       step = INTERPOLATE_BOX;
     }
 
-    // for each of the 768 values, map the temperatures between min and max
-    // to the blue through red portion of the color space
+    // Scale temperature between min and max
     for (int i = 0; i < size; i++) {
       if (!Float.isNaN(img[i])) {
         int t = round(map(img[i], minTmp, maxTmp, 0.0f, (float)(N_GRADATION - 1)));
@@ -285,31 +295,22 @@ public class Viewer {
       }
     }
 
-    // Add a gaussian blur to the canvas in order to create a rough
-    // visual interpolation between pixels.
+    // Apply Gaussian blur filter
     if (!interpolation) {
+      clip(0, 0, 480, 400);
       filter(BLUR, filterSize);
+      noClip();
     }
 
-    // Generate the legend on the bottom of the screen
-    textSize(32);
+    // Draw legend
+    fill(#FFFFFF);
+    textAlign(LEFT, TOP);
+    text(String.format("%d°C", (int)minTmp), 0, 390);
 
-    // Find the difference between the max and min temperatures in this frame
-    float tempDif = maxTmp - minTmp;
+    textAlign(RIGHT, TOP);
+    text(String.format("%d°C", (int)maxTmp), 479, 390);
 
-    // Find 5 intervals between the max and min
-    int legendInterval = round(tempDif / 5);
-
-    // Set the first legend key to the min temp
-    int legendTmp = round(minTmp);
-
-    // Print each interval temperature in its corresponding heatmap color
-    for (int intervals = 0; intervals < 6; intervals++) {
-      int t = round(map(legendTmp, minTmp, maxTmp, 0.0f, (float)(N_GRADATION - 1)));
-      t = constrain(t, 0, N_GRADATION - 1);
-      fill(heatmap.r[t], heatmap.g[t], heatmap.b[t]);
-      text(legendTmp + "°", 70 * intervals, 390);
-      legendTmp += legendInterval;
-    }
+    textAlign(CENTER, TOP);
+    text(String.format("%.1f", (maxTmp + minTmp) / 2.0f), 240, 390);
   }
 }
