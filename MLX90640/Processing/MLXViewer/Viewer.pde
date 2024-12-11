@@ -144,21 +144,16 @@ public class Viewer {
   private int  [] tmp = new int  [INTERPOLATED_ROWS * INTERPOLATED_COLS];
 
   public Viewer(String filename) {
+    // Graphics setting
     noStroke();
     textSize(32);
     colorMode(RGB);
-    background(0);
 
+    // Related instances
     pol = new Interpolate();
     heatmap = new HeatMap();
 
-    // Draw heatmap
-    for (int i = 0; i < N_GRADATION; i++) {
-      int x = floor(map(i, 0, N_GRADATION, 0, 480));
-      fill(heatmap.r[i], heatmap.g[i], heatmap.b[i]);
-      rect(x, 360, 1, 30);
-    }
-
+    // Create file reader object
     try {
       // https://zawaworks.hatenablog.com/entry/2017/10/08/213602
       reader = new RandomAccessFile(sketchPath() + "/" + filename, "r");
@@ -236,6 +231,7 @@ public class Viewer {
 
   void Draw() {
     Read(frameNo);  // Read frame into src[]
+    background(0);
 
     maxTmp = -999.0f;
     minTmp = +999.0f;
@@ -264,8 +260,8 @@ public class Viewer {
     int cols = DISPLAY_COLS;
     int step = DISPLAY_SCALE;
 
+    // Pixel interpolation by Bilinear interpolation
     if (interpolation) {
-      // Pixel interpolation by Bilinear interpolation
       pol.interpolate(src, MLX90640_ROWS, MLX90640_COLS, dst, INTERPOLATE_SCALE);
       img = dst;
       size = INTERPOLATED_SIZE;
@@ -297,19 +293,23 @@ public class Viewer {
 
     // Apply Gaussian blur filter
     if (!interpolation) {
-      clip(0, 0, 480, 400);
       filter(BLUR, filterSize);
-      noClip();
+    }
+
+    // Draw heatmap
+    // Note: It's needed every cyecle since the filter applies to the entire screen.
+    for (i = 0; i < N_GRADATION; i++) {
+      int x = floor(map(i, 0, N_GRADATION, 0, 480));
+      fill(heatmap.r[i], heatmap.g[i], heatmap.b[i]);
+      rect(x, 360, 1, 30);
     }
 
     // Draw legend
     fill(#FFFFFF);
     textAlign(LEFT, TOP);
     text(String.format("%d°C", (int)minTmp), 0, 390);
-
     textAlign(RIGHT, TOP);
     text(String.format("%d°C", (int)maxTmp), 479, 390);
-
     textAlign(CENTER, TOP);
     text(String.format("%.1f", (maxTmp + minTmp) / 2.0f), 240, 390);
   }
