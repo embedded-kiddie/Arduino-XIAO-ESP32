@@ -1,3 +1,12 @@
+/*================================================================================
+ * MLX90640 raw file viewer
+ * Copyright (c) 2024 embedded-kiddie
+ * Released under the MIT license
+ * https://opensource.org/license/mit
+ *================================================================================*/
+import java.io.*;
+import java.nio.*;
+
 // MLX90640 device resolution
 int MLX90640_COLS = 32;
 int MLX90640_ROWS = 24;
@@ -46,6 +55,7 @@ public class HeatMap {
   }
 }
 
+// Pixel Bilinear interpolation
 public class Interpolate {
   private float ratio[][];
   private void init(int scale) {
@@ -115,6 +125,7 @@ public class Interpolate {
   }
 }
 
+// Viewer class
 public class Viewer {
   private boolean autoRange = false;
   private boolean interpolation = false;

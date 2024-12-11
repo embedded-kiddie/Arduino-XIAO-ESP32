@@ -1,16 +1,18 @@
-import java.io.*;
-import java.nio.*;
-
-String file = "./data/mlx0100.raw";
-
+/*================================================================================
+ * MLX90640 raw file viewer
+ * Copyright (c) 2024 embedded-kiddie
+ * Released under the MIT license
+ * https://opensource.org/license/mit
+ *================================================================================*/
 Viewer viewer;
-
 int counter = 0;
+
+// MLX90640 raw file
+String file = "./data/mlx0100.raw";
 
 void setup() {
   size(480, 400);
   frameRate(16);
-
   viewer = new Viewer(file);
   viewer.Rewind();
   viewer.SetFilterSize(0);
