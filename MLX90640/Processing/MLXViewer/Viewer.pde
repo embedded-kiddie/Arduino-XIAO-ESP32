@@ -136,7 +136,7 @@ public class Interpolate {
  *--------------------------------------------------------------------------------*/
 public class Viewer {
   private boolean autoRange = false;
-  private boolean interpolation = false;
+  private boolean interpolation = true;
   private float minTmp = +999.0f;
   private float maxTmp = -999.0f;
   private int filterSize = DISPLAY_FILTER;
