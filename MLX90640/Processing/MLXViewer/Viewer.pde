@@ -4,8 +4,8 @@
  * Released under the MIT license
  * https://opensource.org/license/mit
  *================================================================================*/
-import java.io.*;
-import java.nio.*;
+import java.io.*;   // RandomAccessFile
+import java.nio.*;  // ByteBuffer, ByteOrder
 
 // MLX90640 device resolution
 int MLX90640_COLS = 32;
@@ -26,8 +26,10 @@ int INTERPOLATED_COLS = (MLX90640_COLS * INTERPOLATE_SCALE);
 int INTERPOLATED_ROWS = (MLX90640_ROWS * INTERPOLATE_SCALE);
 int INTERPOLATED_SIZE = (INTERPOLATED_COLS * INTERPOLATED_ROWS);
 
-// Heatmap: Inferno
-// https://matplotlib.org/stable/users/explain/colors/colormaps.html
+/*--------------------------------------------------------------------------------
+ * Heatmap: Inferno
+ * https://matplotlib.org/stable/users/explain/colors/colormaps.html
+ *--------------------------------------------------------------------------------*/
 int N_POINTS = 25;
 int N_GRADATION = 1024;
 float calcR(float x) { float y = -0.0186f * pow(x, 3.0f) + 0.3123f * pow(x, 2.0f) + 11.9230f * x + 36.6580f; return constrain(y, 0.0f, 255.0f); }
@@ -55,9 +57,12 @@ public class HeatMap {
   }
 }
 
-// Pixel Bilinear interpolation
+/*--------------------------------------------------------------------------------
+ * Pixel Bilinear interpolation
+ *--------------------------------------------------------------------------------*/
 public class Interpolate {
   private float ratio[][];
+
   private void init(int scale) {
     ratio = new float[scale][2];
     for (int i = 0; i < scale; i++) {
@@ -65,6 +70,7 @@ public class Interpolate {
       ratio[i][1] = 1.0f - ratio[i][0];
     }
   }
+
   private float get_point(float[] p, int rows, int cols, int x, int y) {
     if (x < 0) { x = 0; }
     if (y < 0) { y = 0; }
@@ -125,7 +131,9 @@ public class Interpolate {
   }
 }
 
-// Viewer class
+/*--------------------------------------------------------------------------------
+ * Viewer class
+ *--------------------------------------------------------------------------------*/
 public class Viewer {
   private boolean autoRange = false;
   private boolean interpolation = false;
@@ -142,6 +150,7 @@ public class Viewer {
   private float[] src = new float[MLX90640_SIZE];
   private float[] dst = new float[INTERPOLATED_ROWS * INTERPOLATED_COLS];
   private int  [] tmp = new int  [INTERPOLATED_ROWS * INTERPOLATED_COLS];
+  private PGraphics colorBar = createGraphics(480, 30);
 
   public Viewer(String filename) {
     // Graphics setting
@@ -152,6 +161,17 @@ public class Viewer {
     // Related instances
     pol = new Interpolate();
     heatmap = new HeatMap();
+
+    // Create heatmap color bar
+    colorBar.beginDraw();
+    colorBar.noStroke();
+    colorBar.colorMode(RGB);
+    for (int i = 0; i < N_GRADATION; i++) {
+      int x = floor(map(i, 0, N_GRADATION, 0, 480));
+      colorBar.fill(heatmap.r[i], heatmap.g[i], heatmap.b[i]);
+      colorBar.rect(x, 0, 1, 30);
+    }
+    colorBar.endDraw();
 
     // Create file reader object
     try {
@@ -280,14 +300,13 @@ public class Viewer {
       }
     }
 
-    // Draw heatmap
+    // Draw image
     int i = 0;
     for (int y = 0; y < rows; y += step) {
       for (int x = 0; x < cols; x += step) {
-        int t = tmp[i];
+        int t = tmp[i++];
         fill(heatmap.r[t], heatmap.g[t], heatmap.b[t]);
         rect(x, y, step, step);
-        i++;
       }
     }
 
@@ -296,13 +315,8 @@ public class Viewer {
       filter(BLUR, filterSize);
     }
 
-    // Draw heatmap
-    // Note: It's needed every cyecle since the filter applies to the entire screen.
-    for (i = 0; i < N_GRADATION; i++) {
-      int x = floor(map(i, 0, N_GRADATION, 0, 480));
-      fill(heatmap.r[i], heatmap.g[i], heatmap.b[i]);
-      rect(x, 360, 1, 30);
-    }
+    // Draw heatmap color bar
+    image(colorBar, 0, 360);
 
     // Draw legend
     fill(#FFFFFF);
