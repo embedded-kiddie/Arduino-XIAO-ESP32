@@ -373,7 +373,7 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
     int len = file.write((uint8_t*)rgb, w * sizeof(rgb[0]));
 
     if (file.getWriteError() != 0) {
-      DBG_EXEC(printf("Error: len: %d, code: %d\n", len, file.getWriteError()));
+      DBG_EXEC(printf("SD write error: len: %d\n", len)); // getWriteError() returns 1
       file.close();
       return false;
     };
