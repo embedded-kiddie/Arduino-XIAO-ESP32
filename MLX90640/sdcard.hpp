@@ -76,7 +76,7 @@
 // SHARED_SPI makes SD very slow, while DEDICATED_SPI causes GFX libraries to stop working.
 #ifdef _TFT_eSPIH_
 // https://github.com/greiman/SdFat/issues/462
-#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SD_SCK_MHZ(10), &GFX_EXEC(getSPIinstance()))
+#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SD_SCK_MHZ(10), &GFX_EXEC(getSPIinstance())) // 1MHz also NG
 #else
 #define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SD_SCK_MHZ(10))
 #endif

@@ -56,7 +56,7 @@ void gfx_setup(void) {
  * TFT_eSPI Library
  * https://github.com/Bodmer/TFT_eSPI
  *---------------------------------------------------*/
-// Neither standard SD nor SdFat works!
+// Neither standard SD nor SdFat works when writing! (reading is OK)
 // #include <SD.h>
 #include "SdFat.h"
 #include "TFT_eSPI.h"
