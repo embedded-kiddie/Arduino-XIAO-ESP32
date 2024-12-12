@@ -5,9 +5,9 @@
 
 inline float get_point(float *p, const int rows, const int cols, int x, int y) __attribute__((always_inline));
 inline float get_point(float *p, const int rows, const int cols, int x, int y) {
-  if (x < 0) { x = 0; }
-  if (y < 0) { y = 0; }
+  if (x < 0) { x = 0; } else
   if (x >= cols) { x = cols - 1; }
+  if (y < 0) { y = 0; } else
   if (y >= rows) { y = rows - 1; }
   return p[y * cols + x];
 }
