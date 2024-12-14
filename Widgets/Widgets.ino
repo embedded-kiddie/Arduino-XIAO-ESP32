@@ -188,7 +188,8 @@ typedef struct MLXConfig {
 
 typedef struct MLXCapture {
   uint8_t       capture_mode; // 0: camera, 1: video
-  int           recording;    // 0: stop, otherwise: file number
+  bool          recording;    // false: stop, true: recording
+  char          filename[30]; // "/MLX90640/mlx%04d.raw"
 } MLXCapture_t;
 
 static constexpr MLXConfig_t mlx_ini = {
@@ -205,7 +206,7 @@ static constexpr MLXConfig_t mlx_ini = {
 static MLXConfig_t mlx_cnf = mlx_ini;
 static MLXCapture_t mlx_cap = {
   .capture_mode   = 0,
-  .recording      = 0,
+  .recording      = false,
 };
 
 /*--------------------------------------------------------------------------------

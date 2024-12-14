@@ -81,13 +81,22 @@ static constexpr Image_t image_checkbox[] = {
   { icon_checkbox_off, sizeof(icon_checkbox_off) }, // 26 x 26
   { icon_checkbox_on,  sizeof(icon_checkbox_on ) }, // 26 x 26
 };
-static constexpr Image_t image_movie[] = {
-  { icon_movie_off, sizeof(icon_movie_off) }, // 32 x 26
-  { icon_movie_on,  sizeof(icon_movie_on ) }, // 32 x 26
+static constexpr Image_t image_rewind[] = {
+  { icon_rewind_off, sizeof(icon_rewind_off) }, // 24 x 24
+  { icon_rewind_on,  sizeof(icon_rewind_on ) }, // 24 x 24
 };
-static constexpr Image_t image_folder[] = {
-  { icon_folder_off, sizeof(icon_folder_off) }, // 32 x 26
-  { icon_folder_on,  sizeof(icon_folder_on ) }, // 32 x 26
+static constexpr Image_t image_play[] = {
+  { icon_play_off,  sizeof(icon_play_off ) }, // 24 x 24
+  { icon_play_on,   sizeof(icon_play_on  ) }, // 24 x 24
+  { icon_play_stop, sizeof(icon_play_stop) }, // 24 x 24
+};
+static constexpr Image_t image_fast[] = {
+  { icon_fast_off, sizeof(icon_fast_off) }, // 24 x 24
+  { icon_fast_on,  sizeof(icon_fast_on ) }, // 24 x 24
+};
+static constexpr Image_t image_trashbox[] = {
+  { icon_trashbox_off, sizeof(icon_trashbox_off) }, // 30 x 30
+  { icon_trashbox_on,  sizeof(icon_trashbox_on ) }, // 30 x 30
 };
 static constexpr Image_t image_save_flash[] = {
   { save_flash_off, sizeof(save_flash_off) }, // 70 x 70
@@ -242,22 +251,25 @@ static void onFileManagerScreen   (const Widget_t *widget, const Touch_t &touch)
 static void onFileManagerCheckAll (const Widget_t *widget, const Touch_t &touch);
 static void onFileManagerScrollBox(const Widget_t *widget, const Touch_t &touch);
 static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch);
-static void onFileManagerThumbnail(const Widget_t *widget, const Touch_t &touch);
-static void onFileManagerMovie    (const Widget_t *widget, const Touch_t &touch);
-static void onFileManagerFolder   (const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerRewind   (const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerPlay     (const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerFast     (const Widget_t *widget, const Touch_t &touch);
 static void onFileManagerClose    (const Widget_t *widget, const Touch_t &touch);
 static void onFileManagerApply    (const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerWatch    (const Widget_t *widget, const Touch_t &touch);
 
 static constexpr Widget_t widget_file_manager[] = {
   {   0,   0, 320, 240, image_file_manager, EVENT_NONE,   onFileManagerScreen    },
   {   0,   9,  26,  26, image_checkbox,     EVENT_DOWN,   onFileManagerCheckAll  },
   {  29,  10, 138, 220, NULL,               EVENT_SELECT, onFileManagerScrollBox }, // VIEW_WIDTH x VIEW_HEIGHT
   { 170,   9,  15, 220, NULL,               EVENT_DRAG,   onFileManagerScrollBar }, // scroll bar x VIEW_HEIGHT
-  { 191,  62, 128,  96, NULL,               EVENT_NONE,   onFileManagerThumbnail },
-  { 207, 166,  32,  28, image_movie,        EVENT_CLICK,  onFileManagerMovie     }, // 32 x 26 --> 32 x 28 for DrawPress()
-  { 276, 166,  32,  28, image_folder,       EVENT_CLICK,  onFileManagerFolder    }, // 32 x 26 --> 32 x 28 for DrawPress()
-  { 208, 206,  30,  32, NULL,               EVENT_ALL,    onFileManagerClose     }, // 30 x 30 --> 30 x 32 for DrawPress()
-  { 276, 206,  30,  32, NULL,               EVENT_CLICK,  onFileManagerApply     }, // 30 x 30 --> 30 x 32 for DrawPress()
+  { 190,  62, 128,  96, NULL,               EVENT_NONE,   nullptr                },
+  { 194, 166,  24,  26, image_rewind,       EVENT_CLICK,  onFileManagerRewind    }, // 24 x 24 --> 24 x 26 for DrawPress()
+  { 242, 166,  24,  26, image_play,         EVENT_CLICK,  onFileManagerPlay      }, // 24 x 24 --> 24 x 26 for DrawPress()
+  { 287, 166,  24,  26, image_fast,         EVENT_CLICK,  onFileManagerFast      }, // 24 x 24 --> 24 x 26 for DrawPress()
+  { 282, 205,  30,  32, image_trashbox,     EVENT_CLICK,  onFileManagerApply     }, // 30 x 30 --> 30 x 32 for DrawPress()
+  { 193, 205,  30,  32, NULL,               EVENT_ALL,    onFileManagerClose     }, // 30 x 30 --> 30 x 32 for DrawPress()
+  {   0,   0,   0,   0, NULL,               EVENT_WATCH,  onFileManagerWatch     }, // special callback executed every cycle
 };
 
 // Screen - Calibration
@@ -378,7 +390,7 @@ static void onMainCapture(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
-    DrawButton(widget, mlx_cap.capture_mode == 0 ? 0 : 2);
+    DrawButton(widget, mlx_cap.capture_mode == 0 ? 0 : 2); // 0: Camera, 2: Video
   }
 
   else if (mlx_cap.capture_mode == 0) {
@@ -387,16 +399,16 @@ static void onMainCapture(const Widget_t *widget, const Touch_t &touch) {
     DrawButton(widget, 0); // draw icon_camera1
   }
 
-  else if (mlx_cap.recording == 0) {
-    if ((mlx_cap.recording = sdcard_fileno()) != 0) {
-      sdcard_open();
+  else if (mlx_cap.recording == false) {
+    if (mlx_cap.recording = sdcard_record_begin(mlx_cap.filename, sizeof(mlx_cap.filename))) {
       DrawButton(widget, 3); // draw icon_stop
     }
   }
 
   else {
     DrawButton(widget, 2); // draw icon_video
-    mlx_cap.recording = 0;
+    sdcard_record_end();
+    mlx_cap.recording = false;
   }
 }
 
@@ -1049,15 +1061,7 @@ static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch)
   drag_pos = touch.y;
 }
 
-static void onFileManagerThumbnail(const Widget_t *widget, const Touch_t &touch) {
-  DBG_FUNC(printf("%s\n", __func__));
-
-  if (touch.event == EVENT_INIT) {
-    GFX_EXEC(drawRect(widget->x - 1, widget->y - 1, widget->w + 2, widget->h + 2, DARKGREY));
-  }
-}
-
-static void onFileManagerMovie(const Widget_t *widget, const Touch_t &touch) {
+static void onFileManagerRewind(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
@@ -1067,7 +1071,17 @@ static void onFileManagerMovie(const Widget_t *widget, const Touch_t &touch) {
   }
 }
 
-static void onFileManagerFolder(const Widget_t *widget, const Touch_t &touch) {
+static void onFileManagerPlay(const Widget_t *widget, const Touch_t &touch) {
+  DBG_FUNC(printf("%s\n", __func__));
+
+  if (touch.event == EVENT_INIT) {
+    DrawButton(widget);
+  } else {
+    DrawPress(widget, touch.event);
+  }
+}
+
+static void onFileManagerFast(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
@@ -1088,11 +1102,18 @@ static void onFileManagerClose(const Widget_t *widget, const Touch_t &touch) {
 static void onFileManagerApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
-  DrawPress(widget, touch.event);
+  if (touch.event == EVENT_INIT) {
+    DrawButton(widget);
+  } else {
+    DrawPress(widget, touch.event);
 
-  if (touch.event != EVENT_INIT) {
     // ToDo: remove selected files
   }
+}
+
+static void onFileManagerWatch(const Widget_t *widget, const Touch_t &touch) {
+  DBG_FUNC(printf("%s\n", __func__));
+
 }
 
 /*--------------------------------------------------------------------------------

@@ -174,6 +174,12 @@ static bool widget_watch(const Widget_t *widgets, const size_t n_widgets) {
     }
   }
 
+  // Execute a special callback every watch cycle
+  else if (widgets[n_widgets-1].event == EVENT_WATCH) {
+    widgets[n_widgets-1].callback(&widgets[n_widgets-1], doInit);
+    return true;
+  }
+
   return false;
 }
 

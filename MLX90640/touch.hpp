@@ -28,6 +28,7 @@ typedef enum {
   EVENT_FALLING = (0x02), // untouch -->   touch
   EVENT_TOUCHED = (0x04), //   touch -->   touch
   EVENT_TAP2    = (0x08), // double tap
+  EVENT_WATCH   = (0x10), // execute a callback every watch cycle
 
   // alias
   EVENT_INIT    = (EVENT_NONE),

@@ -124,8 +124,11 @@ void sdcard_setup (void);
 int  sdcard_fileno(void);
 bool sdcard_open  (void);
 bool sdcard_save  (void);
-bool sdcard_video (uint8_t *adrs, size_t size, int no);
 void sdcard_size  (uint32_t *total, uint32_t *free);
+
+bool sdcard_record_begin(char *filename, size_t size);
+bool sdcard_record_end(void);
+bool sdcard_record(uint8_t *adrs, size_t size, char *filename);
 
 bool DeleteDir    (FS_TYPE &fs, const char *path);
 void DeleteFile   (FS_TYPE &fs, const char *path);
@@ -485,19 +488,31 @@ bool sdcard_save(void) {
   return true;
 }
 
-bool sdcard_video(uint8_t *adrs, size_t size, int no) {
-  DBG_EXEC(uint32_t start = millis());
+/*--------------------------------------------------------------------------------
+ * Video recording
+ *--------------------------------------------------------------------------------*/
+bool sdcard_record_begin(char *filename, size_t size) {
+  int no = sdcard_fileno();
+  if (no) {
+    snprintf(filename, size, "%s/mlx%04d.raw", MLX90640_DIR, no);
+    return true;
+  }
+  return false;
+}
 
-  char path[BUF_SIZE];
-  sprintf(path, "%s/mlx%04d.raw", MLX90640_DIR, no);
+bool sdcard_record_end(void) {
+  // SD.end(); // Activating this line will cause some GFX libraries to stop working.
+  return true;
+}
 
-  File file = SD.open(path, FILE_APPEND);
+bool sdcard_record(uint8_t *adrs, size_t size, char *filename) {
+//DBG_EXEC(uint32_t start = millis());
+
+  File file = SD.open(filename, FILE_APPEND);
   int len = file.write(adrs, sizeof(float) * MLX90640_ROWS * MLX90640_COLS);
   file.close();
 
-  DBG_EXEC(printf("Saved %d bytes, Elapsed time: %d msec\n", len, millis() - start)); // 3072 byte, 17[msec] - 38[msec]
-
-  // SD.end(); // Activating this line will cause some GFX libraries to stop working.
+//DBG_EXEC(printf("Saved %d bytes, Elapsed time: %d msec\n", len, millis() - start)); // 3072 byte, 17[msec] - 38[msec]
 
   return true;
 }
