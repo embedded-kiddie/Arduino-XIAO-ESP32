@@ -434,6 +434,13 @@ static void onMainCapture(const Widget_t *widget, const Touch_t &touch) {
 
   else if (mlx_cap.recording == false) {
     if (mlx_cap.recording = sdcard_record_begin(mlx_cap.filename, sizeof(mlx_cap.filename))) {
+      // adjust scale to mitigate the impact on input cycles
+      if (mlx_cnf.interpolation * mlx_cnf.box_size == INTERPOLATE_SCALE && mlx_cnf.interpolation > 2) {
+        mlx_copy = mlx_cnf;
+        mlx_cnf.interpolation = 2;
+        mlx_cnf.box_size = INTERPOLATE_SCALE / 2;
+        mlx_cnf.setup();
+      }
       DrawButton(widget, 3); // draw icon_stop
     }
   }
@@ -442,6 +449,8 @@ static void onMainCapture(const Widget_t *widget, const Touch_t &touch) {
     DrawButton(widget, 2); // draw icon_video
     sdcard_record_end();
     mlx_cap.recording = false;
+    mlx_cnf = mlx_copy;
+    mlx_cnf.setup();
   }
 }
 
@@ -596,8 +605,8 @@ static void onResolutionSlider1(const Widget_t *widget, const Touch_t &touch) {
   cnf_copy.interpolation = scale[i];
 
   // restrict pixel interpolation and block size
-  if (cnf_copy.interpolation * cnf_copy.box_size > 8) {
-    cnf_copy.box_size = 8 / cnf_copy.interpolation;
+  if (cnf_copy.interpolation * cnf_copy.box_size > INTERPOLATE_SCALE) {
+    cnf_copy.box_size = INTERPOLATE_SCALE / cnf_copy.interpolation;
     onResolutionSlider2(widget + 1, doInit);
   }
 
@@ -632,8 +641,8 @@ static void onResolutionSlider2(const Widget_t *widget, const Touch_t &touch) {
   cnf_copy.box_size = scale[i];
 
   // restrict pixel interpolation and block size
-  if (cnf_copy.interpolation * cnf_copy.box_size > 8) {
-    cnf_copy.interpolation = 8 / cnf_copy.box_size;
+  if (cnf_copy.interpolation * cnf_copy.box_size > INTERPOLATE_SCALE) {
+    cnf_copy.interpolation = INTERPOLATE_SCALE / cnf_copy.box_size;
     onResolutionSlider1(widget - 1, doInit);
   }
 
