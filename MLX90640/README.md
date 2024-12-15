@@ -2,23 +2,23 @@
 
 ## Block diagram
 
-![Block diagram](BlockDiagram.jpg)
+![Block diagram](images/BlockDiagram.jpg)
 
 ## Wiring diagram
 
 [Wiring at cirkitdesigner.com](https://app.cirkitdesigner.com/project/837fd6ec-a7d8-4381-a41f-4b953adefee0 "Cirkit Designer IDE")
 
-![MLX90640 on bread board](MLX90640-XIAO-ESP32.jpg)
+![MLX90640 on bread board](images/MLX90640-XIAO-ESP32.jpg)
 
 ## Timing diagram
 
 [Drawio](https://drive.google.com/file/d/1W-xelIn-PvofRw0Ya43I02ksVurOTiDk/view?usp=sharing)
 
-![Timing diagram](TimingDiagram.png)
+![Timing diagram](images/TimingDiagram.png)
 
 ## GUI mockup
 
-[![GUI mockup for a thermography camera using MLX90640](GUI-mockup.jpg)](https://youtu.be/9El-2NYCDNU "GUI mockup for a thermography camera using MLX90640 - YouTube")
+[![GUI mockup for a thermography camera using MLX90640](images/GUI-mockup.jpg)](https://youtu.be/9El-2NYCDNU "GUI mockup for a thermography camera using MLX90640 - YouTube")
 
 ## Testbed environment
 

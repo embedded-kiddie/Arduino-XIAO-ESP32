@@ -17,6 +17,7 @@ static void DrawPress (const Widget_t *widget, Event_t event = EVENT_INIT);
 static void DrawSlider(const Widget_t *widget, int16_t pos, bool enable = true);
 static void DrawRadio (const Widget_t *widget, uint8_t n_widget, uint8_t selected = 0);
 static void DrawThumb (const Widget_t *widget, const char *path);
+static void DrawVideo (const Widget_t *widget, const char *path);
 
 /*--------------------------------------------------------------------------------
  * Sprite object
@@ -381,8 +382,7 @@ static void DrawPress(const Widget_t *widget, Event_t event /* = EVENT_INIT */) 
 }
 
 /*--------------------------------------------------------------------------------
- * Generate and draw thumbnail from a bitmap file
- * (LovyanGFX requires SD library header file before including <LovyanGFX.hpp>)
+ * Draw an image from a bitmap file
  *--------------------------------------------------------------------------------*/
 static void DrawThumb(const Widget_t *widget, const char *path) {
   GFX_EXEC(fillRect(widget->x, widget->y, widget->w, widget->h, BLACK));
@@ -400,4 +400,11 @@ static void DrawThumb(const Widget_t *widget, const char *path) {
 #else
 #warning TFT_eSPI support required
 #endif
+}
+
+/*--------------------------------------------------------------------------------
+ * Draw an image from a raw file
+ *--------------------------------------------------------------------------------*/
+static void DrawVideo (const Widget_t *widget, const char *path) {
+
 }

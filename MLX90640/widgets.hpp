@@ -1017,8 +1017,12 @@ static void onFileManagerScrollBox(const Widget_t *widget, const Touch_t &touch)
 
     const Widget_t *thumbnail = widget + 2; 
     if (files[selected].isSelected) {
-      DBG_FUNC(printf("path: %s\n", files[selected].path.c_str()));
-      DrawThumb(thumbnail, files[selected].path.c_str());
+      const char *path = files[selected].path.c_str();
+      if (strcmp(strrchr(path, '.'), ".bmp") == 0) {
+        DrawThumb(thumbnail, files[selected].path.c_str());
+      } else if (strcmp(strrchr(path, '.'), ".raw") == 0) {
+        DrawVideo(thumbnail, files[selected].path.c_str());
+      }
     } else {
       GFX_EXEC(fillRect(thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h, BLACK));
     }
