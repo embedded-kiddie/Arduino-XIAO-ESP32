@@ -1030,6 +1030,7 @@ static void onFileManagerCheckAll(const Widget_t *widget, const Touch_t &touch) 
       file.isSelected = file_selected;
     }
     ScrollView(widget + 1, scroll_pos);
+    onFileManagerApply(widget + 7, doInit);
   }
 
   DrawCheck(widget, file_selected);
@@ -1044,6 +1045,7 @@ static void onFileManagerScrollBox(const Widget_t *widget, const Touch_t &touch)
     files[selected].isSelected = !files[selected].isSelected;
 
     ScrollView(widget, scroll_pos);
+    onFileManagerApply(widget + 6, doInit);
 
     const Widget_t *thumbnail = widget + 2; 
     if (files[selected].isSelected) {
@@ -1144,7 +1146,13 @@ static void onFileManagerApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
-    DrawButton(widget);
+    for (auto& file : files) {
+      if (file.isSelected) {
+        DrawButton(widget, 1);
+        return;
+      }
+    }
+    DrawButton(widget, 0);
   } else {
     DrawPress(widget, touch.event);
 
