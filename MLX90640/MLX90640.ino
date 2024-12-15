@@ -488,14 +488,10 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 #endif
 
     // Save video
-    // Note: It's recommended that mlx_cnf.interpolation less than 8 to reduce the impact on input cycles.
     if (mlx_cap.recording) {
       sdcard_record((uint8_t*)src[bank], sizeof(src[bank]), mlx_cap.filename);
     }
   }
-
-  // Prevent the watchdog from firing
-  yield();
 }
 
 /*--------------------------------------------------------------------------------
