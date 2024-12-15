@@ -490,6 +490,8 @@ bool sdcard_save(void) {
 
 /*--------------------------------------------------------------------------------
  * Video recording
+ * Note: Can't keep opening file at begin until it close at the end.
+ * https://github.com/greiman/SdFat/issues/168#issuecomment-557874243  
  *--------------------------------------------------------------------------------*/
 bool sdcard_record_begin(char *filename, size_t size) {
   int no = sdcard_fileno();
@@ -512,7 +514,7 @@ bool sdcard_record(uint8_t *adrs, size_t size, char *filename) {
   int len = file.write(adrs, sizeof(float) * MLX90640_ROWS * MLX90640_COLS);
   file.close();
 
-//DBG_EXEC(printf("Saved %d bytes, Elapsed time: %d msec\n", len, millis() - start)); // 3072 byte, 17[msec] - 38[msec]
+//DBG_EXEC(printf("Saved %d bytes, Elapsed time: %d msec\n", len, millis() - start)); // 3072 byte, 17[msec] - 45[msec]
 
   return true;
 }
