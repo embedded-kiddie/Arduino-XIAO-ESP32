@@ -463,7 +463,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
 
     if (state == STATE_MAIN) {
       // MLX90640
-      GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
+      // GFX_EXEC(setTextColor(WHITE, BLACK)); // Use opaque text output
       gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
 
       // Interpolation
@@ -472,7 +472,6 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
       // FPS
       float v = 1000.0f / (float)(outputStart - prevStart);
       gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
-      prevStart = outputStart;
 
       // Ambient temperature
       v = mlx.getTa(false);
@@ -493,6 +492,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     }
 
     // Update processing time
+    prevStart = outputStart;
     outputFinish = millis();
     outputPeriod = outputFinish - outputStart;
   }
