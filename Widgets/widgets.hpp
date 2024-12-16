@@ -437,6 +437,7 @@ static void onMainCapture(const Widget_t *widget, const Touch_t &touch) {
       // adjust scale to mitigate the impact on input cycles
       if (mlx_cnf.interpolation * mlx_cnf.box_size == INTERPOLATE_SCALE && mlx_cnf.interpolation > 2) {
         mlx_copy = mlx_cnf;
+        mlx_cnf.marker_mode = 0;
         mlx_cnf.interpolation = 2;
         mlx_cnf.box_size = INTERPOLATE_SCALE / 2;
         mlx_cnf.setup();

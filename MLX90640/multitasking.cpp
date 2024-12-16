@@ -130,8 +130,6 @@ void Task1(void *pvParameters) {
     // some process
     Process1(bank);
 
-//  Serial.println(millis() - start);
-
     bank = SendQueue(bank, start, millis());
 
     TakeSemaphore();
@@ -147,7 +145,6 @@ void Task2(void *pvParameters) {
     // some process
     Process2(queue.bank, queue.start, queue.finish);
 
-    // Prevent the watchdog from firing
-    yield();
+    yield(); // Prevent the watchdog from firing
   }
 }

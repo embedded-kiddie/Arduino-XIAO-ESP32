@@ -217,7 +217,7 @@ typedef struct MLXConfig {
   uint8_t   box_size;         // 1, 2, 4, 8
   uint8_t   refresh_rate;     // sampline frequency (mlx90640_refreshrate_t)
   uint8_t   color_scheme;     // 0: rainbow, 1: orange
-  uint8_t   marker_mode;      // 0: min/max, 1: picked up by user
+  uint8_t   marker_mode;      // 1: min/max, 2: picked up by user
   bool      range_auto;       // automatic measurement of temperature min/max
   int16_t   range_min;        // minimum temperature
   int16_t   range_max;        // maximum temperature
@@ -406,7 +406,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
   // Widget controller
   State_t state = widget_control();
   if (state == STATE_MAIN || state == STATE_THERMOGRAPH) {
-    static uint32_t prevFinish, prevUpdate;
+    static uint32_t outputFinish, outputPeriod, prevStart;
     uint32_t outputStart = millis();
     const int dst_rows = mlx_cnf.interpolation * MLX90640_ROWS;
     const int dst_cols = mlx_cnf.interpolation * MLX90640_COLS;
@@ -449,6 +449,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     }
 
     if (mlx_cnf.marker_mode) {
+      static uint32_t prevUpdate;
       if (outputStart - prevUpdate > 1000) {
         prevUpdate = outputStart;
         _tmin = tmin; _tmax = tmax;
@@ -466,13 +467,12 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
       gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 3.5, "%4d", inputFinish - inputStart);
 
       // Interpolation
-      uint32_t outputFinish = millis();
-      gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", outputFinish - outputStart);
+      gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 5.0, "%4d", outputPeriod);
 
       // FPS
-      float v = 1000.0f / (float)(outputFinish - prevFinish);
+      float v = 1000.0f / (float)(outputStart - prevStart);
       gfx_printf(260 + FONT_WIDTH, LINE_HEIGHT * 2.0, "%4.1f", v);
-      prevFinish = outputFinish;
+      prevStart = outputStart;
 
       // Ambient temperature
       v = mlx.getTa(false);
@@ -491,6 +491,10 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
     if (mlx_cap.recording) {
       sdcard_record((uint8_t*)src[bank], sizeof(src[bank]), mlx_cap.filename);
     }
+
+    // Update processing time
+    outputFinish = millis();
+    outputPeriod = outputFinish - outputStart;
   }
 }
 

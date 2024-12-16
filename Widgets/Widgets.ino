@@ -156,7 +156,7 @@ typedef struct MLXConfig {
   uint8_t   box_size;         // 1, 2, 4, 8
   uint8_t   refresh_rate;     // sampline frequency (mlx90640_refreshrate_t)
   uint8_t   color_scheme;     // 0: rainbow, 1: orange
-  uint8_t   marker_mode;      // 0: min/max, 1: picked up by user
+  uint8_t   marker_mode;      // 1: min/max, 2: picked up by user
   bool      range_auto;       // automatic measurement of temperature min/max
   int16_t   range_min;        // minimum temperature
   int16_t   range_max;        // maximum temperature
