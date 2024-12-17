@@ -405,6 +405,8 @@ static void DrawThumb(const Widget_t *widget, const char *path) {
 /*--------------------------------------------------------------------------------
  * Render images from a raw file
  *--------------------------------------------------------------------------------*/
+extern void interpolate_image(float *src, const int src_rows, const int src_cols,
+                              float *dst, const int dst_rows, const int dst_cols);
 class MLXViewer {
  private:
   String path;
