@@ -82,17 +82,21 @@ static constexpr Image_t image_checkbox[] = {
   { icon_checkbox_on,  sizeof(icon_checkbox_on ) }, // 26 x 26
 };
 static constexpr Image_t image_rewind[] = {
-  { icon_rewind_off, sizeof(icon_rewind_off) }, // 24 x 24
-  { icon_rewind_on,  sizeof(icon_rewind_on ) }, // 24 x 24
+  { icon_player_rewind_off, sizeof(icon_player_rewind_off) }, // 24 x 24
+  { icon_player_rewind_on,  sizeof(icon_player_rewind_on ) }, // 24 x 24
 };
 static constexpr Image_t image_play[] = {
-  { icon_play_off,  sizeof(icon_play_off ) }, // 24 x 24
-  { icon_play_on,   sizeof(icon_play_on  ) }, // 24 x 24
-  { icon_play_stop, sizeof(icon_play_stop) }, // 24 x 24
+  { icon_player_play_off,  sizeof(icon_player_play_off ) }, // 24 x 24
+  { icon_player_play_on,   sizeof(icon_player_play_on  ) }, // 24 x 24
+  { icon_player_play_stop, sizeof(icon_player_play_stop) }, // 24 x 24
 };
-static constexpr Image_t image_fast[] = {
-  { icon_fast_off, sizeof(icon_fast_off) }, // 24 x 24
-  { icon_fast_on,  sizeof(icon_fast_on ) }, // 24 x 24
+static constexpr Image_t image_prev[] = {
+  { icon_player_prev_off, sizeof(icon_player_prev_off) }, // 24 x 24
+  { icon_player_prev_on,  sizeof(icon_player_prev_on ) }, // 24 x 24
+};
+static constexpr Image_t image_next[] = {
+  { icon_player_next_off, sizeof(icon_player_next_off) }, // 24 x 24
+  { icon_player_next_on,  sizeof(icon_player_next_on ) }, // 24 x 24
 };
 static constexpr Image_t image_trashbox[] = {
   { icon_trashbox_off, sizeof(icon_trashbox_off) }, // 30 x 30
@@ -253,7 +257,8 @@ static void onFileManagerScrollBox(const Widget_t *widget, const Touch_t &touch)
 static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch);
 static void onFileManagerRewind   (const Widget_t *widget, const Touch_t &touch);
 static void onFileManagerPlay     (const Widget_t *widget, const Touch_t &touch);
-static void onFileManagerFast     (const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerPrev     (const Widget_t *widget, const Touch_t &touch);
+static void onFileManagerNext     (const Widget_t *widget, const Touch_t &touch);
 static void onFileManagerClose    (const Widget_t *widget, const Touch_t &touch);
 static void onFileManagerApply    (const Widget_t *widget, const Touch_t &touch);
 static void onFileManagerWatch    (const Widget_t *widget, const Touch_t &touch);
@@ -263,12 +268,13 @@ static constexpr Widget_t widget_file_manager[] = {
   {   0,   9,  26,  26, image_checkbox,     EVENT_DOWN,   onFileManagerCheckAll  },
   {  29,  10, 138, 220, NULL,               EVENT_SELECT, onFileManagerScrollBox }, // VIEW_WIDTH x VIEW_HEIGHT
   { 170,   9,  15, 220, NULL,               EVENT_DRAG,   onFileManagerScrollBar }, // scroll bar x VIEW_HEIGHT
-  { 190,  62, 128,  96, NULL,               EVENT_NONE,   nullptr                },
-  { 194, 166,  24,  26, image_rewind,       EVENT_CLICK,  onFileManagerRewind    }, // 24 x 24 --> 24 x 26 for DrawPress()
-  { 242, 166,  24,  26, image_play,         EVENT_CLICK,  onFileManagerPlay      }, // 24 x 24 --> 24 x 26 for DrawPress()
-  { 287, 166,  24,  26, image_fast,         EVENT_CLICK,  onFileManagerFast      }, // 24 x 24 --> 24 x 26 for DrawPress()
-  { 282, 205,  30,  32, image_trashbox,     EVENT_CLICK,  onFileManagerApply     }, // 30 x 30 --> 30 x 32 for DrawPress()
-  { 193, 205,  30,  32, NULL,               EVENT_ALL,    onFileManagerClose     }, // 30 x 30 --> 30 x 32 for DrawPress()
+  { 190,  62, 128,  96, NULL,               EVENT_NONE,   nullptr                }, // thumbnail area
+  { 194, 165,  24,  26, image_rewind,       EVENT_CLICK,  onFileManagerRewind    }, // 24 x 24 --> 24 x 26 for DrawPress()
+  { 228, 165,  24,  26, image_play,         EVENT_CLICK,  onFileManagerPlay      }, // 24 x 24 --> 24 x 26 for DrawPress()
+  { 260, 165,  24,  26, image_prev,         EVENT_CLICK,  onFileManagerPrev      }, // 24 x 24 --> 24 x 26 for DrawPress()
+  { 292, 165,  24,  26, image_next,         EVENT_CLICK,  onFileManagerNext      }, // 24 x 24 --> 24 x 26 for DrawPress()
+  { 273, 205,  30,  32, image_trashbox,     EVENT_CLICK,  onFileManagerApply     }, // 30 x 30 --> 30 x 32 for DrawPress()
+  { 207, 205,  30,  32, NULL,               EVENT_ALL,    onFileManagerClose     }, // 30 x 30 --> 30 x 32 for DrawPress()
   {   0,   0,   0,   0, NULL,               EVENT_WATCH,  onFileManagerWatch     }, // special callback executed every cycle
 };
 
@@ -894,6 +900,8 @@ static std::vector<FileInfo_t> files;
 static int n_files;
 static int scroll_pos, scroll_max, bar_height;
 static bool file_selected;
+static uint8_t mlx_status; // 0: stop, 1: playing, 2: end of file
+static MLXViewer mlx_viewer;
 
 static void ScrollView(const Widget_t *widget, int scroll_pos) {
 #if   defined (LOVYANGFX_HPP_)
@@ -949,6 +957,13 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
   sprite_view.pushSprite(widget->x, widget->y);
   sprite_view.deleteSprite();
   GFX_EXEC(endWrite());
+}
+
+static void UpdatePlay(const Widget_t *widget) {
+  onFileManagerRewind(widget + 0, doInit);
+  onFileManagerPlay  (widget + 1, doInit);
+  onFileManagerPrev  (widget + 2, doInit);
+  onFileManagerNext  (widget + 3, doInit);
 }
 
 static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
@@ -1020,11 +1035,14 @@ static void onFileManagerScrollBox(const Widget_t *widget, const Touch_t &touch)
     if (files[selected].isSelected) {
       const char *path = files[selected].path.c_str();
       if (strcmp(strrchr(path, '.'), ".bmp") == 0) {
-        DrawThumb(thumbnail, files[selected].path.c_str());
+        DrawThumb(thumbnail, path);
       } else if (strcmp(strrchr(path, '.'), ".raw") == 0) {
-        DrawVideo(thumbnail, files[selected].path.c_str());
+        mlx_viewer.open(thumbnail, path);
+        UpdatePlay(widget + 3);
       }
     } else {
+      mlx_viewer.close();
+      UpdatePlay(widget + 3);
       GFX_EXEC(fillRect(thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h, BLACK));
     }
   }
@@ -1081,9 +1099,13 @@ static void onFileManagerRewind(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
-    DrawButton(widget);
+    DrawButton(widget, mlx_viewer.isOpened() ? 1 : 0);
   } else {
     DrawPress(widget, touch.event);
+    if (touch.event == EVENT_UP) {
+      mlx_status = 0;
+      mlx_viewer.rewind();
+    }
   }
 }
 
@@ -1091,19 +1113,44 @@ static void onFileManagerPlay(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
-    DrawButton(widget);
+    DrawButton(widget, mlx_viewer.isOpened() ? 1 : 0);
   } else {
     DrawPress(widget, touch.event);
+    if (touch.event == EVENT_UP) {
+      mlx_status = 2;
+    }
   }
 }
 
-static void onFileManagerFast(const Widget_t *widget, const Touch_t &touch) {
+static void onFileManagerPrev(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
-    DrawButton(widget);
+    DrawButton(widget, mlx_viewer.isOpened() ? 1 : 0);
   } else {
     DrawPress(widget, touch.event);
+    if (touch.event == EVENT_UP) {
+      if (!mlx_viewer.prev()) {
+        mlx_status = 0;
+        UpdatePlay(widget - 2);
+      }
+    }
+  }
+}
+
+static void onFileManagerNext(const Widget_t *widget, const Touch_t &touch) {
+  DBG_FUNC(printf("%s\n", __func__));
+
+  if (touch.event == EVENT_INIT) {
+    DrawButton(widget, mlx_viewer.isOpened() ? 1 : 0);
+  } else {
+    DrawPress(widget, touch.event);
+    if (touch.event == EVENT_UP) {
+      if (!mlx_viewer.next()) {
+        mlx_status = 0;
+        UpdatePlay(widget - 3);
+      }
+    }
   }
 }
 
@@ -1136,6 +1183,9 @@ static void onFileManagerApply(const Widget_t *widget, const Touch_t &touch) {
 static void onFileManagerWatch(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
+  if (mlx_status == 2) {
+    static uint32_t prevTime;
+  }
 }
 
 /*--------------------------------------------------------------------------------

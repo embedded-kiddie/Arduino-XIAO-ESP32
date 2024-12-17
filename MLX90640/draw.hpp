@@ -403,8 +403,122 @@ static void DrawThumb(const Widget_t *widget, const char *path) {
 }
 
 /*--------------------------------------------------------------------------------
- * Draw an image from a raw file
+ * Render images from a raw file
  *--------------------------------------------------------------------------------*/
-static void DrawVideo (const Widget_t *widget, const char *path) {
+class MLXViewer {
+ private:
+  String path;
+  const Widget_t *widget;
+  uint32_t frameNo;
+  uint32_t frameCount;
+  const uint32_t frameSize = (MLX90640_COLS * MLX90640_ROWS * sizeof(float));
 
-}
+ public:
+  MLXViewer() { path = ""; }
+
+ private:
+  bool read(int n) {
+    File file = SD.open(path, FILE_READ);
+    if (file) {
+      file.seek(n * frameSize);
+      uint32_t len = file.read(src[0], frameSize);
+      file.close();
+      if (len == frameSize) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void render(void) {
+    DBG_EXEC(printf("frameNo: %d\n", frameNo));
+    if (read(frameNo)) {
+      const int dst_rows = widget->h;
+      const int dst_cols = widget->w;
+      const uint16_t *hm = heatmap[mlx_cnf.color_scheme];
+
+      // measure min/max temperature
+      measure_temperature(src[0]);
+
+#if ENA_INTERPOLATION
+      interpolate_image(src[0], MLX90640_ROWS, MLX90640_COLS, dst, dst_rows, dst_cols);
+      float *drw = dst;
+#else
+      float *drw = src[0];
+      const int box_size = dst_cols / MLX90640_COLS;
+#endif
+
+#if defined (LOVYANGFX_HPP_) || defined (_TFT_eSPIH_)
+      GFX_EXEC(startWrite());
+      sprite_draw.setPsram(true);
+      sprite_draw.createSprite(dst_cols, dst_rows);
+
+      for (int h = 0; h < dst_rows; h++) {
+        for (int w = 0; w < dst_cols; w++) {
+          long t = (long)drw[h * dst_cols + w];
+          int colorIndex = map(t, (long)tmin.v, (long)tmax.v, 0, N_HEATMAP - 1);
+#if ENA_INTERPOLATION
+          sprite_draw.drawPixel(dst_cols - 1 - w, h, hm[colorIndex]);
+#else
+          sprite_draw.fillRect(dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, hm[colorIndex]);
+#endif
+        }
+      }
+
+      sprite_draw.pushSprite(widget->x, widget->y);
+      sprite_draw.deleteSprite();
+      GFX_EXEC(endWrite());
+#endif  // LOVYANGFX_HPP_ or _TFT_eSPIH_
+    }
+  }
+
+ public:
+  bool open(const Widget_t *_widget, const char *_path) {
+    //if (sdcard_open()) { // already opened in onFileManagerScreen()
+      widget = _widget;
+      path = String(_path);
+
+      File file = SD.open(path, FILE_READ);
+      if (file) {
+        frameNo = 0;
+        frameCount = file.size() / frameSize;
+        file.close();
+        DBG_EXEC(printf("count: %d\n", frameCount));
+        render();
+        return true;
+      } else {
+        DBG_EXEC(printf("%s: open error\n", path));
+      }
+    //}
+    return false;
+  }
+
+  void close(void) {
+    path = "";
+  }
+
+  bool isOpened(void) {
+    return path.length() != 0;
+  }
+
+  void rewind(void) {
+    frameNo = 0;
+    render();
+  }
+
+  bool next(void) {
+    if (frameNo < frameCount - 1) {
+      frameNo++;
+    }
+    render();
+    return (frameNo < frameCount - 1);
+  }
+
+  bool prev(void) {
+    if (frameNo > 0) {
+      frameNo--;
+    }
+    render();
+    return (frameNo > 0);
+  }
+};
