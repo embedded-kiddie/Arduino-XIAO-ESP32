@@ -900,7 +900,7 @@ static std::vector<FileInfo_t> files;
 static int n_files;
 static int scroll_pos, scroll_max, bar_height;
 static bool file_selected;
-static uint8_t mlx_status; // 0: stop, 1: playing, 2: end of file
+static bool mlx_status; // false: stop, true: playing
 static MLXViewer mlx_viewer;
 
 static void ScrollView(const Widget_t *widget, int scroll_pos) {
@@ -1103,7 +1103,7 @@ static void onFileManagerRewind(const Widget_t *widget, const Touch_t &touch) {
   } else {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_UP) {
-      mlx_status = 0;
+      mlx_status = false;
       mlx_viewer.rewind();
       UpdatePlay(widget - 0);
     }
@@ -1114,11 +1114,12 @@ static void onFileManagerPlay(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
-    DrawButton(widget, mlx_viewer.isOpened() ? (mlx_viewer.isEnd() ? 0 : 1) : 0);
+    DrawButton(widget, mlx_viewer.isOpened() ? (mlx_viewer.isEnd() ? 0 : (mlx_status ? 2 : 1)) : 0);
   } else {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_UP) {
-      mlx_status = 2;
+      mlx_status = !mlx_status;
+      UpdatePlay(widget - 1);
     }
   }
 }
@@ -1131,7 +1132,7 @@ static void onFileManagerPrev(const Widget_t *widget, const Touch_t &touch) {
   } else {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_UP) {
-      mlx_status = 0;
+      mlx_status = false;
       mlx_viewer.prev();
       UpdatePlay(widget - 2);
     }
@@ -1146,7 +1147,7 @@ static void onFileManagerNext(const Widget_t *widget, const Touch_t &touch) {
   } else {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_UP) {
-      mlx_status = 0;
+      mlx_status = false;
       mlx_viewer.next();
       UpdatePlay(widget - 3);
     }
@@ -1182,8 +1183,18 @@ static void onFileManagerApply(const Widget_t *widget, const Touch_t &touch) {
 static void onFileManagerWatch(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
-  if (mlx_status == 2) {
+#define PLAY_PERIOD ((1000 / 16) + 1) // 16[FPS] 
+
+  if (mlx_status) {
+    uint32_t currentTime = millis();
     static uint32_t prevTime;
+    if (currentTime - prevTime > PLAY_PERIOD) {
+      prevTime = currentTime;
+      if (!mlx_viewer.next()) {
+        mlx_status = false;
+      }
+      UpdatePlay(widget - 6);
+    }
   }
 }
 
