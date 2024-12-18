@@ -959,7 +959,7 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
   GFX_EXEC(endWrite());
 }
 
-static void UpdatePlay(const Widget_t *widget) {
+static void UpdateViewer(const Widget_t *widget) {
   onFileManagerRewind(widget + 0, doInit);
   onFileManagerPlay  (widget + 1, doInit);
   onFileManagerPrev  (widget + 2, doInit);
@@ -1035,16 +1035,19 @@ static void onFileManagerScrollBox(const Widget_t *widget, const Touch_t &touch)
     if (files[selected].isSelected) {
       const char *path = files[selected].path.c_str();
       if (strcmp(strrchr(path, '.'), ".bmp") == 0) {
+        mlx_viewer.close();
         DrawThumb(thumbnail, path);
-      } else if (strcmp(strrchr(path, '.'), ".raw") == 0) {
-        mlx_viewer.open(thumbnail, path);
-        UpdatePlay(widget + 3);
       }
-    } else {
+      else if (strcmp(strrchr(path, '.'), ".raw") == 0) {
+        mlx_viewer.open(thumbnail, path);
+      }
+    }
+    else {
       mlx_viewer.close();
-      UpdatePlay(widget + 3);
       GFX_EXEC(fillRect(thumbnail->x, thumbnail->y, thumbnail->w, thumbnail->h, BLACK));
     }
+
+    UpdateViewer(widget + 3);
   }
 }
 
@@ -1105,7 +1108,7 @@ static void onFileManagerRewind(const Widget_t *widget, const Touch_t &touch) {
     if (touch.event == EVENT_UP) {
       mlx_status = false;
       mlx_viewer.rewind();
-      UpdatePlay(widget - 0);
+      UpdateViewer(widget - 0);
     }
   }
 }
@@ -1119,7 +1122,7 @@ static void onFileManagerPlay(const Widget_t *widget, const Touch_t &touch) {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_UP) {
       mlx_status = !mlx_status;
-      UpdatePlay(widget - 1);
+      UpdateViewer(widget - 1);
     }
   }
 }
@@ -1134,7 +1137,7 @@ static void onFileManagerPrev(const Widget_t *widget, const Touch_t &touch) {
     if (touch.event == EVENT_UP) {
       mlx_status = false;
       mlx_viewer.prev();
-      UpdatePlay(widget - 2);
+      UpdateViewer(widget - 2);
     }
   }
 }
@@ -1149,7 +1152,7 @@ static void onFileManagerNext(const Widget_t *widget, const Touch_t &touch) {
     if (touch.event == EVENT_UP) {
       mlx_status = false;
       mlx_viewer.next();
-      UpdatePlay(widget - 3);
+      UpdateViewer(widget - 3);
     }
   }
 }
@@ -1193,7 +1196,7 @@ static void onFileManagerWatch(const Widget_t *widget, const Touch_t &touch) {
       if (!mlx_viewer.next()) {
         mlx_status = false;
       }
-      UpdatePlay(widget - 6);
+      UpdateViewer(widget - 6);
     }
   }
 }
