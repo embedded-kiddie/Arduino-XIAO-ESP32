@@ -168,9 +168,11 @@ void gfx_setup(void) {
 #if ENA_INTERPOLATION
 #define INTERPOLATE_SCALE 8
 #define BOX_SIZE          1
+#define REFRESH_RATE      (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ : MLX90640_16_HZ)
 #else
 #define INTERPOLATE_SCALE 1
 #define BOX_SIZE          8
+#define REFRESH_RATE      (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ : MLX90640_16_HZ)
 #endif
 
 /*--------------------------------------------------------------------------------
@@ -240,10 +242,9 @@ typedef struct MLXConfig {
     );
   }
 
-  // Setup MLX90640 refresh rate (optimized for LovyanGFX and TFT_eSPI)
+  // Setup refresh_rate according to INTERPOLATE_SCALE and BOX_SIZE
   void setup(void) {
-    refresh_rate = (ENA_MULTITASKING && ENA_TRANSACTION ? MLX90640_32_HZ /*6*/ : MLX90640_16_HZ /*5*/);
-    sampling_period = (refresh_rate == MLX90640_32_HZ ? 1.0f / 16.0f : 1.0f / 8.0f);
+    sampling_period = 2.0f / pow(2.0f, (float)(refresh_rate - 1));
   }
 } MLXConfig_t;
 
@@ -256,7 +257,7 @@ typedef struct MLXCapture {
 static constexpr MLXConfig_t mlx_ini = {
   .interpolation  = INTERPOLATE_SCALE,
   .box_size       = BOX_SIZE,
-  .refresh_rate   = 0,
+  .refresh_rate   = REFRESH_RATE,
   .color_scheme   = 0,
   .marker_mode    = 0,
   .range_auto     = false,
@@ -297,7 +298,6 @@ static void mlx_refresh(void) {
   // configure refresh rate
   mlx_cnf.setup();
   mlx.setRefreshRate((mlx90640_refreshrate_t)mlx_cnf.refresh_rate);
-//DBG_EXEC(printf("refresh rate: %d\n", mlx_cnf.refresh_rate));
 
   // initialize lowpass filter
   reset_filter();

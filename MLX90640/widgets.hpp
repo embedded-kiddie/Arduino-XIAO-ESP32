@@ -1186,12 +1186,10 @@ static void onFileManagerApply(const Widget_t *widget, const Touch_t &touch) {
 static void onFileManagerWatch(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
-#define PLAY_PERIOD ((1000 / 16) + 1) // 16[FPS] 
-
   if (mlx_status) {
     uint32_t currentTime = millis();
     static uint32_t prevTime;
-    if (currentTime - prevTime > PLAY_PERIOD) {
+    if (currentTime - prevTime > (uint32_t)(mlx_cnf.sampling_period * 1000.0f)) {
       prevTime = currentTime;
       if (!mlx_viewer.next()) {
         mlx_status = false;
