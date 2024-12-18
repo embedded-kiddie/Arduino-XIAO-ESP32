@@ -1014,7 +1014,7 @@ static void onFileManagerCheckAll(const Widget_t *widget, const Touch_t &touch) 
       file.isSelected = file_selected;
     }
     ScrollView(widget + 1, scroll_pos);
-    onFileManagerApply(widget + 7, doInit);
+    onFileManagerApply(widget + 8, doInit);
   }
 
   DrawCheck(widget, file_selected);
@@ -1029,7 +1029,7 @@ static void onFileManagerScrollBox(const Widget_t *widget, const Touch_t &touch)
     files[selected].isSelected = !files[selected].isSelected;
 
     ScrollView(widget, scroll_pos);
-    onFileManagerApply(widget + 6, doInit);
+    onFileManagerApply(widget + 7, doInit);
 
     const Widget_t *thumbnail = widget + 2; 
     if (files[selected].isSelected) {
@@ -1105,6 +1105,7 @@ static void onFileManagerRewind(const Widget_t *widget, const Touch_t &touch) {
     if (touch.event == EVENT_UP) {
       mlx_status = 0;
       mlx_viewer.rewind();
+      UpdatePlay(widget - 0);
     }
   }
 }
@@ -1113,7 +1114,7 @@ static void onFileManagerPlay(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
-    DrawButton(widget, mlx_viewer.isOpened() ? 1 : 0);
+    DrawButton(widget, mlx_viewer.isOpened() ? (mlx_viewer.isEnd() ? 0 : 1) : 0);
   } else {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_UP) {
@@ -1126,14 +1127,13 @@ static void onFileManagerPrev(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
-    DrawButton(widget, mlx_viewer.isOpened() ? 1 : 0);
+    DrawButton(widget, mlx_viewer.isOpened() ? (mlx_viewer.isTop() ? 0 : 1) : 0);
   } else {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_UP) {
-      if (!mlx_viewer.prev()) {
-        mlx_status = 0;
-        UpdatePlay(widget - 2);
-      }
+      mlx_status = 0;
+      mlx_viewer.prev();
+      UpdatePlay(widget - 2);
     }
   }
 }
@@ -1142,14 +1142,13 @@ static void onFileManagerNext(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   if (touch.event == EVENT_INIT) {
-    DrawButton(widget, mlx_viewer.isOpened() ? 1 : 0);
+    DrawButton(widget, mlx_viewer.isOpened() ? (mlx_viewer.isEnd() ? 0 : 1) : 0);
   } else {
     DrawPress(widget, touch.event);
     if (touch.event == EVENT_UP) {
-      if (!mlx_viewer.next()) {
-        mlx_status = 0;
-        UpdatePlay(widget - 3);
-      }
+      mlx_status = 0;
+      mlx_viewer.next();
+      UpdatePlay(widget - 3);
     }
   }
 }

@@ -433,7 +433,6 @@ class MLXViewer {
   }
 
   void render(void) {
-    DBG_EXEC(printf("frameNo: %d\n", frameNo));
     if (read(frameNo)) {
       const int dst_rows = widget->h;
       const int dst_cols = widget->w;
@@ -485,7 +484,7 @@ class MLXViewer {
         frameNo = 0;
         frameCount = file.size() / frameSize;
         file.close();
-        DBG_EXEC(printf("count: %d\n", frameCount));
+        DBG_EXEC(printf("frameCount: %d\n", frameCount));
         render();
         return true;
       } else {
@@ -497,30 +496,53 @@ class MLXViewer {
 
   void close(void) {
     path = "";
+    frameNo = 0;
+    frameCount = 0;
   }
 
   bool isOpened(void) {
-    return path.length() != 0;
+    return (path.length() != 0);
   }
 
-  void rewind(void) {
-    frameNo = 0;
-    render();
+  bool isTop(void) {
+    return frameNo == 0;
+  }
+
+  bool isEnd(void) {
+    return frameNo == frameCount - 1;
+  }
+
+  bool rewind(void) {
+    if (isOpened()) {
+      frameNo = 0;
+      render();
+      return true;
+    } else {
+      return false;
+    }
   }
 
   bool next(void) {
-    if (frameNo < frameCount - 1) {
-      frameNo++;
+    if (isOpened()) {
+      if (frameNo < frameCount - 1) {
+        frameNo++;
+        render();
+      }
+      return (frameNo < frameCount -1);
+    } else {
+      return false;
     }
-    render();
-    return (frameNo < frameCount - 1);
   }
 
   bool prev(void) {
-    if (frameNo > 0) {
-      frameNo--;
+    if (isOpened()) {
+      if (frameNo > 0) {
+        frameNo--;
+        render();
+      }
+      return (frameNo > 0);
+    } else {
+      return false;
     }
-    render();
-    return (frameNo > 0);
   }
 };
