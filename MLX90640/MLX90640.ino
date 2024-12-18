@@ -532,8 +532,8 @@ void setup() {
   Wire.setClock(1000000); // 400 KHz (Sm) or 1 MHz (Fm+)
 
   // Set MLX90640 operating mode
-  mlx.setMode(MLX90640_CHESS);
-  mlx.setResolution(MLX90640_ADC_18BIT);  // 16BIT, 17BIT, 18BIT or 19BIT
+  mlx.setMode(MLX90640_CHESS); // or MLX90640_INTERLEAVED
+  mlx.setResolution(MLX90640_ADC_18BIT);  // 16BIT, 17BIT, 18BIT (default) or 19BIT
   mlx_refresh();
 
   // Start tasks

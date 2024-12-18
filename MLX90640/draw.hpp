@@ -461,7 +461,7 @@ class MLXViewer {
 #if ENA_INTERPOLATION
           sprite_draw.drawPixel(dst_cols - 1 - w, h, hm[colorIndex]);
 #else
-          sprite_draw.fillRect(dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, hm[colorIndex]);
+          sprite_draw.fillRect((dst_cols - 1 - w) * box_size, h * box_size, box_size, box_size, hm[colorIndex]);
 #endif
         }
       }
