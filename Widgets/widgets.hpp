@@ -1097,9 +1097,6 @@ static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
   else {
     gfx_printf(245, 13, "failed");
   }
-
-  // Reset selection
-  keep_selected = false;
 }
 
 static void onFileManagerCheckAll(const Widget_t *widget, const Touch_t &touch) {
@@ -1154,7 +1151,11 @@ static void onFileManagerScrollBar(const Widget_t *widget, const Touch_t &touch)
   static int drag_pos;
 
   if (touch.event == EVENT_INIT) {
-    scroll_pos = drag_pos = 0;
+    drag_pos = 0;
+    if (!keep_selected) {
+      scroll_pos = 0;
+    }
+
     if (n_files > VIEW_ITEMS) {
       scroll_max = widget->h * (n_files - VIEW_ITEMS) / n_files + 1; // '1' for round up
       bar_height = widget->h - scroll_max;
@@ -1274,6 +1275,9 @@ static void onFileManagerApply(const Widget_t *widget, const Touch_t &touch) {
   }
 
   if (touch.event == EVENT_INIT) {
+    // Reset selection
+    keep_selected = false;
+
     DrawButton(widget, selected ? 1 : 0);
   } else {
     DrawPress(widget, touch.event);
