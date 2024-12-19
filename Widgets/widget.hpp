@@ -23,6 +23,7 @@ typedef enum {
   STATE_RESOLUTION,
   STATE_THERMOGRAPH,
   STATE_FILE_MANAGER,
+  STATE_FILE_CONFIRM,
   STATE_CAPTURE_MODE,
   STATE_CALIBRATION,
   STATE_ADJUST_OFFSET,
@@ -100,6 +101,11 @@ static bool widget_get(State_t screen, Widget_t const **widget, int *n) {
     case STATE_FILE_MANAGER:
       *widget = widget_file_manager;
       *n = N_WIDGETS(widget_file_manager);
+      return true;
+
+    case STATE_FILE_CONFIRM:
+      *widget = widget_file_confirm;
+      *n = N_WIDGETS(widget_file_confirm);
       return true;
 
     case STATE_CAPTURE_MODE:
@@ -229,6 +235,7 @@ State_t widget_control(void) {
     case STATE_CONFIGURATION:
     case STATE_RESOLUTION:
     case STATE_FILE_MANAGER:
+    case STATE_FILE_CONFIRM:
     case STATE_CAPTURE_MODE:
     case STATE_CALIBRATION:
     case STATE_ADJUST_OFFSET:

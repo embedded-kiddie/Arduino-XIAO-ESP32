@@ -30,6 +30,7 @@ static constexpr Image_t image_configuration[]      = { { screen_configuration, 
 static constexpr Image_t image_resolution[]         = { { screen_resolution,    sizeof(screen_resolution   ) }, }; // 320 x 240
 static constexpr Image_t image_thermograph[]        = { { screen_thermograph,   sizeof(screen_thermograph  ) }, }; // 320 x 240
 static constexpr Image_t image_file_manager[]       = { { screen_file_manager,  sizeof(screen_file_manager ) }, }; // 320 x 240
+static constexpr Image_t image_file_confirm[]       = { { screen_file_confirm,  sizeof(screen_file_confirm ) }, }; // 316 x  82
 static constexpr Image_t image_capture_mode[]       = { { screen_capture_mode,  sizeof(screen_capture_mode ) }, }; // 320 x 240
 static constexpr Image_t image_calibration[]        = { { screen_calibration,   sizeof(screen_calibration  ) }, }; // 320 x 240
 static constexpr Image_t image_adjust_offset[]      = { { screen_adjust_offset, sizeof(screen_adjust_offset) }, }; // 270 x  60
@@ -278,6 +279,17 @@ static constexpr Widget_t widget_file_manager[] = {
   { 273, 205,  30,  32, image_trashbox,     EVENT_CLICK,  onFileManagerApply     }, // 30 x 30 --> 30 x 32 for DrawPress()
   { 207, 205,  30,  32, NULL,               EVENT_ALL,    onFileManagerClose     }, // 30 x 30 --> 30 x 32 for DrawPress()
   {   0,   0,   0,   0, NULL,               EVENT_WATCH,  onFileManagerWatch     }, // special callback executed every cycle
+};
+
+// Screen - Confirmation by File Manager
+static void onFileConfirmScreen(const Widget_t *widget, const Touch_t &touch);
+static void onFileConfirmClose (const Widget_t *widget, const Touch_t &touch);
+static void onFileConfirmApply (const Widget_t *widget, const Touch_t &touch);
+
+static constexpr Widget_t widget_file_confirm[] = {
+  {   1, 157, 316, 82, image_file_confirm, EVENT_NONE,   onFileConfirmScreen },
+  {  42, 202,  82, 26, NULL,               EVENT_CLICK,  onFileConfirmClose  },
+  { 190, 202,  82, 26, NULL,               EVENT_CLICK,  onFileConfirmApply  },
 };
 
 // Screen - Calibration
@@ -935,7 +947,7 @@ static void onCaptureModeApply(const Widget_t *widget, const Touch_t &touch) {
 static std::vector<FileInfo_t> files;
 static int n_files;
 static int scroll_pos, scroll_max, bar_height;
-static bool file_selected;
+static bool file_selected, keep_selected;
 static bool mlx_status; // false: stop, true: playing
 static MLXViewer mlx_viewer;
 
@@ -1021,12 +1033,14 @@ static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
       gfx_printf(245, 37, "%4.1fGB", (float)free  / 1000.0);
     }
 
-    files.clear();
-    GetFileList(SD, "/", 1, files);
-    n_files = files.size();
-    std::sort(files.begin() + 1, files.end(), [](FileInfo_t &a, FileInfo_t &b) {
-      return a.path.compare(b.path) > 0 ? true : false;
-    });
+    if (!keep_selected) {
+      files.clear();
+      GetFileList(SD, "/", 1, files);
+      n_files = files.size();
+      std::sort(files.begin() + 1, files.end(), [](FileInfo_t &a, FileInfo_t &b) {
+        return a.path.compare(b.path) > 0 ? true : false;
+      });
+    }
 /*
     DBG_FUNC({
       for (const auto& file : files) {
@@ -1042,6 +1056,9 @@ static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
   else {
     gfx_printf(245, 13, "failed");
   }
+
+  // Reset selection
+  keep_selected = false;
 }
 
 static void onFileManagerCheckAll(const Widget_t *widget, const Touch_t &touch) {
@@ -1056,7 +1073,7 @@ static void onFileManagerCheckAll(const Widget_t *widget, const Touch_t &touch) 
     onFileManagerApply(widget + 8, doInit);
   }
 
-  DrawCheck(widget, file_selected);
+  DrawCheck(widget, file_selected ? 1 : 0);
 }
 
 static void onFileManagerScrollBox(const Widget_t *widget, const Touch_t &touch) {
@@ -1207,18 +1224,23 @@ static void onFileManagerClose(const Widget_t *widget, const Touch_t &touch) {
 static void onFileManagerApply(const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
-  if (touch.event == EVENT_INIT) {
-    for (auto& file : files) {
-      if (file.isSelected) {
-        DrawButton(widget, 1);
-        return;
-      }
+  bool selected = false;
+  for (auto& file : files) {
+    if (file.isSelected) {
+      selected = true;
+      break;
     }
-    DrawButton(widget, 0);
+  }
+
+  if (touch.event == EVENT_INIT) {
+    DrawButton(widget, selected ? 1 : 0);
   } else {
     DrawPress(widget, touch.event);
 
-    // ToDo: remove selected files
+    // Show dialog to confirm to delete files
+    if (touch.event == EVENT_UP && selected) {
+      widget_state(STATE_FILE_CONFIRM);
+    }
   }
 }
 
@@ -1235,6 +1257,43 @@ static void onFileManagerWatch(const Widget_t *widget, const Touch_t &touch) {
       }
       UpdateViewer(widget - 6);
     }
+  }
+}
+
+/*--------------------------------------------------------------------------------
+ * Callback functions - Confirmation by File Manager 
+ *--------------------------------------------------------------------------------*/
+static void onFileConfirmScreen(const Widget_t *widget, const Touch_t &touch) {
+  DBG_FUNC(printf("%s\n", __func__));
+
+  if (touch.event == EVENT_INIT) {
+    DrawScreen(widget);
+  }
+}
+
+static void onFileConfirmClose(const Widget_t *widget, const Touch_t &touch) {
+  DBG_FUNC(printf("%s\n", __func__));
+
+  if (touch.event != EVENT_INIT) {
+    // Back to the file manager screen
+    keep_selected = true;
+    widget_state(STATE_FILE_MANAGER);
+  }
+}
+
+static void onFileConfirmApply(const Widget_t *widget, const Touch_t &touch) {
+  DBG_FUNC(printf("%s\n", __func__));
+
+  if (touch.event != EVENT_INIT) {
+    for (auto& file : files) {
+      if (file.isSelected) {
+        // DBG_EXEC(printf("%s\n", file.path.c_str()));
+        DeleteFile(SD, file.path.c_str());
+      }
+    }
+
+    // Back to the file manager screen
+    widget_state(STATE_FILE_MANAGER);
   }
 }
 
