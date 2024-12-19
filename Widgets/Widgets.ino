@@ -168,7 +168,8 @@ typedef struct MLXConfig {
   bool operator >= (const MLXConfig &RHS) {
     return (
       (interpolation != RHS.interpolation) ||
-      (box_size      != RHS.box_size     )
+      (box_size      != RHS.box_size     ) ||
+      (refresh_rate  != RHS.refresh_rate )
     );
   }
   bool operator != (const MLXConfig &RHS) {
@@ -211,8 +212,7 @@ static MLXCapture_t mlx_cap = {
 };
 
 /*--------------------------------------------------------------------------------
- * Low pass filter
- * x: input, T: sampling time [sec]
+ * Low pass filter (x: input, T: sampling time [sec])
  *--------------------------------------------------------------------------------*/
 #define TIME_CONSTANT   3.0f // [sec]
 typedef struct {

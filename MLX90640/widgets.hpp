@@ -190,13 +190,15 @@ static constexpr Widget_t widget_configuration[] = {
 static void onResolutionScreen  (const Widget_t *widget, const Touch_t &touch);
 static void onResolutionSlider1 (const Widget_t *widget, const Touch_t &touch);
 static void onResolutionSlider2 (const Widget_t *widget, const Touch_t &touch);
+static void onResolutionSlider3 (const Widget_t *widget, const Touch_t &touch);
 static void onResolutionClose   (const Widget_t *widget, const Touch_t &touch);
 static void onResolutionApply   (const Widget_t *widget, const Touch_t &touch);
 
 static constexpr Widget_t widget_resolution[] = {
   {   0,   0, 320, 240, image_resolution, EVENT_NONE,  onResolutionScreen  },
-  { 138,  45, 160,  26, image_slider1,    EVENT_DRAG,  onResolutionSlider1 },
-  { 138, 105, 160,  26, image_slider1,    EVENT_DRAG,  onResolutionSlider2 },
+  { 138,  30, 160,  26, image_slider1,    EVENT_DRAG,  onResolutionSlider1 },
+  { 138,  80, 160,  26, image_slider1,    EVENT_DRAG,  onResolutionSlider2 },
+  { 138, 166, 160,  26, image_slider1,    EVENT_DRAG,  onResolutionSlider3 },
   {  60, 206,  30,  30, NULL,             EVENT_ALL,   onResolutionClose   },
   { 230, 206,  30,  30, image_icon_apply, EVENT_CLICK, onResolutionApply   },
 };
@@ -585,7 +587,7 @@ static void onResolutionSlider1(const Widget_t *widget, const Touch_t &touch) {
   }
 
   // Enable apply if somethig is changed
-  onResolutionApply(widget + 3, doInit);
+  onResolutionApply(widget + 4, doInit);
 }
 
 static void onResolutionSlider2(const Widget_t *widget, const Touch_t &touch) {
@@ -619,6 +621,36 @@ static void onResolutionSlider2(const Widget_t *widget, const Touch_t &touch) {
     cnf_copy.interpolation = INTERPOLATE_SCALE / cnf_copy.box_size;
     onResolutionSlider1(widget - 1, doInit);
   }
+
+  // Enable apply if somethig is changed
+  onResolutionApply(widget + 3, doInit);
+}
+
+static void onResolutionSlider3 (const Widget_t *widget, const Touch_t &touch) {
+  DBG_FUNC(printf("%s\n", __func__));
+
+  const int16_t scale[] = {2, 3, 4, 5, 6}; // MLX90640_2_HZ - MLX90640_32_HZ
+  const int n = sizeof(scale) / sizeof(scale[0]);
+  Touch_t t = touch;
+  int16_t pos[n];
+
+  // Calculate the position inside the widget (scale --> pos)
+  MakeSliderPos(widget, scale, n, pos);
+
+  if (touch.event == EVENT_INIT) {
+    // Here it's assumed that the knob width is equal to its height.
+    t.x = widget->x + widget->h / 2;
+    for (int i = 0; i < n; i++) {
+      if (scale[i] == cnf_copy.refresh_rate) {
+        t.x += pos[i];
+        break;
+      }
+    }
+  }
+
+  // update the knob position and the configuration
+  int i = UpdateSliderPos(widget, t, pos, n);
+  cnf_copy.refresh_rate = scale[i];
 
   // Enable apply if somethig is changed
   onResolutionApply(widget + 2, doInit);
