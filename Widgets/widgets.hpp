@@ -969,6 +969,10 @@ static void onCaptureModeApply(const Widget_t *widget, const Touch_t &touch) {
 /*--------------------------------------------------------------------------------
  * Callback functions - File Manager
  *--------------------------------------------------------------------------------*/
+#include <vector>
+#include <string>
+#include <algorithm>
+
 static std::vector<FileInfo_t> files;
 static int n_files;
 static int scroll_pos, scroll_max, bar_height;
@@ -1061,6 +1065,9 @@ static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
     files.clear();
     GetFileList(SD, "/", 1, files);
     n_files = files.size();
+    std::sort(files.begin(), files.end(), [](FileInfo_t &a, FileInfo_t &b) {
+      return a.path.compare(b.path) > 0 ? true : false;
+    });
 /*
     DBG_FUNC({
       for (const auto& file : files) {
