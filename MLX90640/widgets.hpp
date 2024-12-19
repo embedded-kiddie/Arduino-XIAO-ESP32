@@ -1024,7 +1024,7 @@ static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
     files.clear();
     GetFileList(SD, "/", 1, files);
     n_files = files.size();
-    std::sort(files.begin(), files.end(), [](FileInfo_t &a, FileInfo_t &b) {
+    std::sort(files.begin() + 1, files.end(), [](FileInfo_t &a, FileInfo_t &b) {
       return a.path.compare(b.path) > 0 ? true : false;
     });
 /*
