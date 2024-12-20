@@ -51,11 +51,11 @@ typedef struct Touch {
  * Touch panel calibration configuration
  *--------------------------------------------------------------------------------*/
 typedef struct TouchConfig {
-  // Member Variables
+  // Member variables
   uint16_t    cal[8];
   int8_t      offset[2];
 
-  // Comparison Operator
+  // Comparison operator
   bool operator >= (TouchConfig &RHS) {
     return !bcmp(cal, RHS.cal, sizeof(cal));
   }
@@ -96,6 +96,9 @@ extern uint16_t lcd_height;
  * Setup touch manager
  *--------------------------------------------------------------------------------*/
 bool touch_setup(void) {
+  // Load calibration parameters from FLASH
+  touch_load(&tch_cnf);
+
 #if   defined (_XPT2046_Touchscreen_h_)
 
   if (ts.begin()) {
@@ -274,28 +277,79 @@ void touch_calibrate(TouchConfig_t *config) {
  * https://docs.espressif.com/projects/arduino-esp32/en/latest/tutorials/preferences.html
  * https://github.com/espressif/arduino-esp32/tree/master/libraries/Preferences
  *--------------------------------------------------------------------------------*/
-bool touch_save(TouchConfig_t *config) {
-#if   defined (_XPT2046_Touchscreen_h_)
+#include <Preferences.h>
 
-#elif defined (LOVYANGFX_HPP_)
+#define RW_MODE   false
+#define RO_MODE   true
+#define INIT_KEY  "initialized"
 
-#elif defined (_TFT_eSPIH_)
-
+#if     defined   (_XPT2046_Touchscreen_h_)
+#define PREF_KEY  "XPT2046"
+#elif   defined   (LOVYANGFX_HPP_)
+#define PREF_KEY  "LovyanGFX"
+#elif   defined   (_TFT_eSPIH_)
+#define PREF_KEY  "TFT_eSPI"
 #endif
 
-  delay(1000);
+bool touch_save(TouchConfig_t *config) {
+  Preferences touchPref;
+
+  if (touchPref.begin(PREF_KEY, RW_MODE) == false) {
+    DBG_EXEC(printf("Preferences: begin(%s) failed.\n", PREF_KEY));
+    return false;
+  }
+
+  if (touchPref.putBytes("cal", static_cast<const void*>(config->cal), sizeof(config->cal)) != sizeof(config->cal)) {
+    DBG_EXEC(printf("Preferences: putBytes(cal) failed.\n"));
+    touchPref.end();
+    return false;
+  }
+
+  if (touchPref.putBytes("offset", static_cast<const void*>(config->offset), sizeof(config->offset)) != sizeof(config->offset)) {
+    DBG_EXEC(printf("Preferences: putBytes(offset) failed.\n"));
+    touchPref.end();
+    return false;
+  }
+
+  if (touchPref.putBool(INIT_KEY, true) != sizeof(true)) {
+    DBG_EXEC(printf("Preferences: putBool(%s) failed.\n", INIT_KEY));
+    touchPref.end();
+    return false;
+  }
+
+  touchPref.end();
   return true;
 }
 
 bool touch_load(TouchConfig_t *config) {
-#if   defined (_XPT2046_Touchscreen_h_)
+  Preferences touchPref;
+  TouchConfig_t c;
 
-#elif defined (LOVYANGFX_HPP_)
+  if (touchPref.begin(PREF_KEY, RO_MODE) == false) {
+    DBG_EXEC(printf("Preferences: %s does not exist.\n", PREF_KEY));
+    return false;
+  }
 
-#elif defined (_TFT_eSPIH_)
+  // Check if it already exists
+  if (touchPref.isKey(INIT_KEY) == false) {
+    DBG_EXEC(printf("Preferences: %s does not exist.\n", INIT_KEY));
+    touchPref.end();
+    return false;
+  }
 
-#endif
+  if (touchPref.getBytes("cal", static_cast<void*>(&c.cal), sizeof(c.cal)) != sizeof(c.cal)) {
+    DBG_EXEC(printf("Preferences: getBytes(cal) failed.\n"));
+    touchPref.end();
+    return false;
+  }
 
-  delay(1000);
+  if (touchPref.getBytes("offset", static_cast<void*>(&c.offset), sizeof(c.offset)) != sizeof(c.offset)) {
+    DBG_EXEC(printf("Preferences: getBytes(offset) failed.\n"));
+    touchPref.end();
+    return false;
+  }
+
+  *config = c;
+  touchPref.end();
   return true;
 }
