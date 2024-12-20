@@ -995,15 +995,16 @@ static MLXViewer mlx_viewer;
 static void ScrollView(const Widget_t *widget, int scroll_pos) {
 #if   defined (LOVYANGFX_HPP_)
 
-  /*static*/ LGFX_Sprite sprite_view(&lcd);
+  static LGFX_Sprite sprite_view(&lcd);
   sprite_view.setPsram(true);
 
 #elif defined (_TFT_eSPIH_)
 
-  /*static*/ TFT_eSprite sprite_view(&tft);
+  static TFT_eSprite sprite_view(&tft);
 
 #endif
 
+  GFX_EXEC(startWrite());
   sprite_view.setTextSize(2);
   sprite_view.setTextWrap(false);
   sprite_view.setTextColor(WHITE, BLACK);
@@ -1042,7 +1043,6 @@ static void ScrollView(const Widget_t *widget, int scroll_pos) {
     sprite_view.print(p ? p + 1 : p);
   }
 
-  GFX_EXEC(startWrite());
   sprite_view.pushSprite(widget->x, widget->y);
   sprite_view.deleteSprite();
   GFX_EXEC(endWrite());
