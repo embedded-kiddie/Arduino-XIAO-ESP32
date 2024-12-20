@@ -418,6 +418,8 @@ void sdcard_setup(void) {
   // Initialize SD card interface
   SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, SD_CS);
 #endif
+
+  sdcard_open();
 }
 
 bool sdcard_open(void) {
@@ -436,10 +438,10 @@ bool sdcard_open(void) {
 }
 
 int sdcard_fileno(void) {
-  if (!sdcard_open()) {
+/*if (!sdcard_open()) {
     return 0;
   }
-
+*/
   return GetFileNo(SD);
 }
 
@@ -455,11 +457,11 @@ void sdcard_size(uint32_t *total, uint32_t *free) {
 
 bool sdcard_save(void) {
   DBG_EXEC(uint32_t start = millis());
-
+/*
   if (!sdcard_open()) {
     return false;
   }
-
+*/
   int no = GetFileNo(SD);
   char path[BUF_SIZE];
   sprintf(path, "%s/mlx%04d.bmp", MLX90640_DIR, no);
