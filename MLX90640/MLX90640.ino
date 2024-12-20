@@ -524,7 +524,7 @@ void setup() {
     DBG_EXEC(printf("MLX90640 not found!\n"));
   } else {
     DBG_EXEC(printf("MLX90640 found.\n"));
-    DBG_EXEC(printf("Serial number: %X%X%X\n", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]));
+    DBG_EXEC(printf("Serial number: %04X%04X%04X\n", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]));
   }
 
   // I2C bus clock for MLX90640

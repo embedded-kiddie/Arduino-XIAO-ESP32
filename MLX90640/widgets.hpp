@@ -1545,6 +1545,7 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   DrawScreen(widget);
+  gfx_printf(0, 120, "MLX90640 S/N: %04X%04X%04X", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]);
 }
 
 static void onInformationClose  (const Widget_t *widget, const Touch_t &touch) {

@@ -97,7 +97,9 @@ extern uint16_t lcd_height;
  *--------------------------------------------------------------------------------*/
 bool touch_setup(void) {
   // Load calibration parameters from FLASH
-  touch_load(&tch_cnf);
+  if (touch_load(&tch_cnf) == false) {
+    touch_calibrate(&tch_cnf);
+  }
 
 #if   defined (_XPT2046_Touchscreen_h_)
 
