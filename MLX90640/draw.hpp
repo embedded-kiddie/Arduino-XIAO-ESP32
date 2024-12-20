@@ -451,7 +451,9 @@ class MLXViewer {
 
 #if defined (LOVYANGFX_HPP_) || defined (_TFT_eSPIH_)
       GFX_EXEC(startWrite());
+#if defined (LOVYANGFX_HPP_)
       sprite_draw.setPsram(true);
+#endif
       sprite_draw.createSprite(dst_cols, dst_rows);
 
       for (int h = 0; h < dst_rows; h++) {
