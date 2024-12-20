@@ -99,6 +99,7 @@ bool touch_setup(void) {
   // Load calibration parameters from FLASH
   if (touch_load(&tch_cnf) == false) {
     touch_calibrate(&tch_cnf);
+    touch_save(&tch_cnf);
   }
 
 #if   defined (_XPT2046_Touchscreen_h_)
