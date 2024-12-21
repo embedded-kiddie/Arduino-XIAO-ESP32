@@ -477,7 +477,7 @@ class MLXViewer {
 
  public:
   bool open(const Widget_t *_widget, const char *_path) {
-    //if (sdcard_open()) { // already opened in onFileManagerScreen()
+    if (sdcard_open()) { // already opened in onFileManagerScreen()
       widget = _widget;
       path = String(_path);
 
@@ -492,7 +492,7 @@ class MLXViewer {
       } else {
         DBG_EXEC(printf("%s: open error\n", path));
       }
-    //}
+    }
     return false;
   }
 

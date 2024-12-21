@@ -1062,7 +1062,7 @@ static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
 
   file_selected = false;
 
-//if (sdcard_open()) {
+  if (sdcard_open()) {
     uint32_t total, free;
     sdcard_size(&total, &free);
     GFX_EXEC(setTextSize(2));
@@ -1092,11 +1092,11 @@ static void onFileManagerScreen(const Widget_t *widget, const Touch_t &touch) {
       files[9].isSelected = true;
       files[n_files-1].isSelected = true;
     });//*/
-//}
+  }
 
-/*else {
+  else {
     gfx_printf(245, 13, "failed");
-  }*/
+  }
 }
 
 static void onFileManagerCheckAll(const Widget_t *widget, const Touch_t &touch) {

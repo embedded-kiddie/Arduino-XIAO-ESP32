@@ -423,25 +423,37 @@ void sdcard_setup(void) {
 }
 
 bool sdcard_open(void) {
+  static int8_t isOpened;
   uint8_t retry = 0;
 
-  while (!SD.begin(SD_CONFIG)) {
-    if (++retry >= 2) {
-      DBG_EXEC(printf("Card mount failed.\n"));
-      return false;
-    }
-    delay(1000);
-  }
+  switch (isOpened) {
+    case 1:
+      return true;
 
-  DBG_EXEC(printf("The card was mounted successfully.\n"));
-  return true;
+    case 0:
+      while (!SD.begin(SD_CONFIG)) {
+        if (++retry >= 2) {
+          DBG_EXEC(printf("Card mount failed.\n"));
+          isOpened = -1;
+          return false;
+        }
+        delay(100);
+      }
+      DBG_EXEC(printf("The card was mounted successfully.\n"));
+      isOpened = 1;
+      return true;
+
+    case -1:
+    default:
+      return false;
+  }
 }
 
 int sdcard_fileno(void) {
-/*if (!sdcard_open()) {
+  if (!sdcard_open()) {
     return 0;
   }
-*/
+
   return GetFileNo(SD);
 }
 
@@ -457,11 +469,11 @@ void sdcard_size(uint32_t *total, uint32_t *free) {
 
 bool sdcard_save(void) {
   DBG_EXEC(uint32_t start = millis());
-/*
+
   if (!sdcard_open()) {
     return false;
   }
-*/
+
   int no = GetFileNo(SD);
   char path[BUF_SIZE];
   sprintf(path, "%s/mlx%04d.bmp", MLX90640_DIR, no);
