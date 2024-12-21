@@ -431,17 +431,15 @@ bool sdcard_open(void) {
       return true;
 
     case 0:
-      while (!SD.begin(SD_CONFIG)) {
-        if (++retry >= 2) {
-          DBG_EXEC(printf("Card mount failed.\n"));
-          isOpened = -1;
-          return false;
-        }
-        delay(100);
+      if (SD.begin(SD_CONFIG)) {
+        DBG_EXEC(printf("The card was mounted successfully.\n"));
+        isOpened = 1;
+        return true;
+      } else {
+        DBG_EXEC(printf("Card mount failed.\n"));
+        isOpened = -1;
+        return false;
       }
-      DBG_EXEC(printf("The card was mounted successfully.\n"));
-      isOpened = 1;
-      return true;
 
     case -1:
     default:
