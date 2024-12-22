@@ -21,7 +21,7 @@ It comes with a graphical user interface to properly configure the MLX90640 for 
 
 ### Display Frame Rate and Accuracy
 
-The MLX90640 creates a single image by combining two sub-pages exposed at separate exposures, each of which is set by the refresh rate. So if you use the `getFrame()` method of the [Adafruit_MLX90640 library][12] to set the refresh rate to `MLX90640_32_HZ` (= `6`), the actual frame rate you will see will be half that, 16 FPS.
+The MLX90640 creates a single image by combining two sub-pages exposed at separate exposures, each of which is set by the refresh rate. So if you use the `getFrame()` method of the [Adafruit_MLX90640 library][12] to set the refresh rate to `MLX90640_32_HZ` (= `6`), the actual frame rate you see will be half that, 16 FPS.
 
 - From [Melexis MLX90640 datasheet][2]:  
   ![MLX90640 exposure](images/MLX90640-refresh-rate.jpg)
