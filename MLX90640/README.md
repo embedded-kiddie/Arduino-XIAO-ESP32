@@ -89,7 +89,7 @@ The recorded raw data can be played back either on the camera itself or using [M
 
 ## Timing diagram
 
-It utilizes multi-core with FreeRTOS.
+It utilizes multi-core with FreeRTOS and double-buffering for thermal images.
 
 - [Timing diagram (Drawio)](https://drive.google.com/file/d/1W-xelIn-PvofRw0Ya43I02ksVurOTiDk/view?usp=sharing)  
   ![Timing diagram](images/TimingDiagram.png)
