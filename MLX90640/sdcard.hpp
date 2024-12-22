@@ -525,8 +525,6 @@ bool sdcard_record(uint8_t *adrs, size_t size, char *filename) {
   File file = SD.open(filename, FILE_APPEND);
   int len = file.write(adrs, sizeof(float) * MLX90640_ROWS * MLX90640_COLS);
   file.close();
-
 //DBG_EXEC(printf("Saved %d bytes, Elapsed time: %d msec\n", len, millis() - start)); // 3072 byte, 17[msec] - 45[msec]
-
   return true;
 }
