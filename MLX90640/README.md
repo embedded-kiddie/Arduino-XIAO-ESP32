@@ -33,7 +33,7 @@ A higher refresh rate will allow you to capture images that are more tolerant of
 
 Therefore, it is necessary to set an appropriate frame rate according to the object being observed.
 
-- A frame rate of 16 FPS (refresh rate 32 Hz) is noisier than 1 FPS:  
+- Display frame rate of 16 FPS (refresh rate 32 Hz) is noisier than 1 FPS:  
   ![1 FPS vs 16 FPS](images/MLX90640-noise-comparison.jpg)
 
 ### Offline raw data viewer
