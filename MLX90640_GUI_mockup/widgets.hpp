@@ -1586,7 +1586,55 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
   DBG_FUNC(printf("%s\n", __func__));
 
   DrawScreen(widget);
-//gfx_printf(0, 120, "MLX90640 S/N: %04X%04X%04X", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]);
+
+  const uint16_t y = 0;
+  const uint16_t h = FONT_HEIGHT + 4;
+//gfx_printf(0, y, "MLX90640 S/N: %04X%04X%04X", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]);
+
+  // https://github.com/espressif/arduino-esp32/blob/master/cores/esp32/Esp.h
+  char buf[BUF_SIZE];
+  sprintf(buf, "%s", ESP.getSdkVersion());
+  gfx_printf(0, y + h * 1, "MCU model   : %s",  ESP.getChipModel());
+  gfx_printf(0, y + h * 2, "ESP-IDF ver : %s",  strtok(buf, "-"));
+  gfx_printf(0, y + h * 3, "Total heap  : %7d", ESP.getHeapSize());
+  gfx_printf(0, y + h * 4, "Free  heap  : %7d", ESP.getFreeHeap());
+  gfx_printf(0, y + h * 5, "Total PSRAM : %7d", ESP.getPsramSize());
+  gfx_printf(0, y + h * 6, "Free  PSRAM : %7d", ESP.getFreePsram());
+  gfx_printf(0, y + h * 7, "Sketch size : %7d", ESP.getSketchSize());
+  gfx_printf(0, y + h * 8, "Sketch free : %7d", ESP.getFreeSketchSpace());
+
+  /*
+    https://en.cppreference.com/w/cpp/compiler_support
+    https://forum.arduino.cc/t/which-version-of-c-is-currently-supported/1285868/13
+    https://docs.espressif.com/projects/esp-idf/en/v5.3.1/esp32/api-guides/cplusplus.html
+    https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html#:~:text=__cplusplus,gnu%2B%2B26.
+    199711 ➜ C++98 or C++03 standards.
+    201103 ➜ C++11 standard.
+    201402 ➜ C++14 standard.
+    201703 ➜ C++17 standard.
+    202002 ➜ C++20 standard.
+    202302 ➜ C++23 standard.
+  */
+  struct {
+    uint32_t ver;
+    char*    std; 
+  } cpp[] = {
+    {199711, "C++03"},
+    {201103, "C++11"},
+    {201402, "C++14"},
+    {201703, "C++17"},
+    {202002, "C++20"},
+    {202302, "C++23"},
+    {203000, "C++xx"},
+  };
+
+//DBG_EXEC(printf("__cplusplus: %d\n", __cplusplus)); // 201703
+  for (int i = 0; i < sizeof(cpp) / sizeof(cpp[0]) - 1; i++) {
+    if (cpp[i].ver <= __cplusplus && __cplusplus < cpp[i+1].ver) {
+      gfx_printf(0, y + h * 9, "Compiler ver: %s", cpp[i].std);
+      break;
+    }
+  }
 }
 
 static void onInformationClose  (const Widget_t *widget, const Touch_t &touch) {

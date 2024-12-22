@@ -545,12 +545,6 @@ void setup() {
 
 void loop() {
 #if ENA_MULTITASKING
-#if defined (ESP32) && false
-  DBG_EXEC(printf("Total heap: %d\n", ESP.getHeapSize()));
-  DBG_EXEC(printf("Free  heap: %d\n", ESP.getFreeHeap()));
-  DBG_EXEC(printf("Total PSRAM: %d\n",ESP.getPsramSize()));
-  DBG_EXEC(printf("Free  PSRAM: %d\n",ESP.getFreePsram()));
-#endif
   delay(1000);
 #else
   uint32_t inputStart = millis();

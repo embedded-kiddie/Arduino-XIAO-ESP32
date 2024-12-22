@@ -342,26 +342,6 @@ void setup() {
   touch_setup();
   sdcard_setup();
   widget_setup();
-
-#if defined (ESP32)
-  DBG_EXEC(printf("Total heap: %d\n", ESP.getHeapSize()));
-  DBG_EXEC(printf("Free  heap: %d\n", ESP.getFreeHeap()));
-  DBG_EXEC(printf("Total PSRAM: %d\n",ESP.getPsramSize()));
-  DBG_EXEC(printf("Free  PSRAM: %d\n",ESP.getFreePsram()));
-#endif
-  /*
-    https://en.cppreference.com/w/cpp/compiler_support
-    https://forum.arduino.cc/t/which-version-of-c-is-currently-supported/1285868/13
-    https://docs.espressif.com/projects/esp-idf/en/v5.3.1/esp32/api-guides/cplusplus.html
-    https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html#:~:text=__cplusplus,gnu%2B%2B26.
-    199711 ➜ C++98 or C++03 standards.
-    201103 ➜ C++11 standard.
-    201402 ➜ C++14 standard.
-    201703 ➜ C++17 standard.
-    202002 ➜ C++20 standard.
-    202302 ➜ C++23 standard.
-  */
-  DBG_EXEC(printf("__cplusplus: %d\n", __cplusplus)); // 202100 (may be C++20 for Intel C++ ?)
 }
 
 void loop() {
