@@ -2,7 +2,7 @@
 
 ## Features
 
-### GUI menu
+### Menu GUI
 
 It comes with a graphical user interface to properly configure the MLX90640 for different scenarios.
 
