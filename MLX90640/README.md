@@ -94,7 +94,7 @@ It utilizes multi-core with FreeRTOS.
 
 ## Demo
 
-- GUI mockup  
+- [MLX90640 GUI mockup][19]  
   [![GUI mockup for a thermography camera using MLX90640](images/GUI-mockup.jpg)](https://youtu.be/9El-2NYCDNU "GUI mockup for a thermography camera using MLX90640 - YouTube")
 
 [1]: https://www.melexis.com/en/product/MLX90640/Far-Infrared-Thermal-Sensor-Array "Far Infrared Thermal Sensor Array (32x24 RES) I Melexis"
@@ -132,3 +132,5 @@ It utilizes multi-core with FreeRTOS.
 [17]: https://github.com/greiman/SdFat "greiman/SdFat: Arduino FAT16/FAT32 exFAT Library"
 
 [18]: https://github.com/embedded-kiddie/MLX90640Viewer "embedded-kiddie/MLX90640Viewer: MLX90640 Raw Filer Viewer"
+
+[19]: https://github.com/embedded-kiddie/Arduino-XIAO-ESP32/tree/main/MLX90640_GUI_mockup "Arduino-XIAO-ESP32/MLX90640_GUI_mockup at main · embedded-kiddie/Arduino-XIAO-ESP32"
