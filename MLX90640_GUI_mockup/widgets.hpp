@@ -1600,8 +1600,8 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
   gfx_printf(x, y + h * 4, "Free  heap  : %7d", ESP.getFreeHeap());
   gfx_printf(x, y + h * 5, "Total PSRAM : %7d", ESP.getPsramSize());
   gfx_printf(x, y + h * 6, "Free  PSRAM : %7d", ESP.getFreePsram());
-  gfx_printf(x, y + h * 7, "Sketch size : %7d", ESP.getSketchSize());
-  gfx_printf(x, y + h * 8, "Sketch free : %7d", ESP.getFreeSketchSpace());
+  gfx_printf(x, y + h * 7, "Sketch space: %7d", ESP.getFreeSketchSpace());
+  gfx_printf(x, y + h * 8, "Sketch size : %7d", ESP.getSketchSize());
 
   /*
     https://en.cppreference.com/w/cpp/compiler_support

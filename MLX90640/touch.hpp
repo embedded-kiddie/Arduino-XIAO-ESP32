@@ -209,9 +209,7 @@ bool touch_event(Touch_t &touch) {
   // Capture screen
   else if (Serial.available()) {
     Serial.readStringUntil('\n');
-    Serial.println("saving screenshot...");
     sdcard_save();
-    Serial.println("done.");
   }
 #endif
 

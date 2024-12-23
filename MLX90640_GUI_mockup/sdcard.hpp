@@ -327,6 +327,8 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
   if (!file) {
     DBG_EXEC(printf("SD: open %s failed.\n", path));
     return false;
+  } else {
+    DBG_EXEC(printf("saving %s\n", path));
   }
 
   int h = GFX_EXEC(height());
@@ -406,7 +408,7 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
   }
 
   file.close();
-  DBG_EXEC(printf("saved successfully.\n"));
+  DBG_EXEC(printf("done.\n"));
   return true;
 }
 
