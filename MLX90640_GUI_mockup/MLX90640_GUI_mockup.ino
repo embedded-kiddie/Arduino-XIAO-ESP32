@@ -43,7 +43,7 @@ LGFX_Sprite lcd_sprite(&lcd);
 
 void gfx_setup(void) {
   GFX_EXEC(init());
-//GFX_EXEC(initDMA()); // DMA disable with use SPIRAM
+  GFX_EXEC(initDMA()); // DMA disable with use SPIRAM
   GFX_EXEC(clear(0));
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
