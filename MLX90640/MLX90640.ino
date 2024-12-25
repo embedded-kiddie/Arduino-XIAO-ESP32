@@ -22,68 +22,7 @@
 uint16_t lcd_width;
 uint16_t lcd_height;
 
-#if 0
-/*---------------------------------------------------
- * Adafruit GFX Library
- * https://github.com/adafruit/Adafruit-GFX-Library
- *---------------------------------------------------*/
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
-
-Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
-
-#define SCREEN_ROTATION 1
-#define GFX_EXEC(x) tft.x
-#define GFX_FAST(x) tft.x
-
-void gfx_setup(void) {
-  GFX_EXEC(init(TFT_WIDTH, TFT_HEIGHT, SPI_MODE));
-  GFX_EXEC(invertDisplay(false));
-  GFX_EXEC(setTextColor(WHITE, BLACK));
-  GFX_EXEC(setRotation(SCREEN_ROTATION));
-
-#if defined (ARDUINO_XIAO_ESP32S3)
-  GFX_EXEC(setSPISpeed(SPI_FREQUENCY)); // or SPISettings() ?
-#endif
-
-  lcd_width  = GFX_EXEC(width());
-  lcd_height = GFX_EXEC(height());
-}
-
-#elif 0
-/*---------------------------------------------------
- * Arduino GFX Library
- * https://github.com/moononournation/Arduino_GFX
- *---------------------------------------------------*/
-#include <Arduino_GFX_Library.h>
-
-Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI, TFT_MISO);
-Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
-
-#define SCREEN_ROTATION 3
-#define GFX_EXEC(x) gfx->x
-#define GFX_FAST(x) gfx->x
-
-void gfx_setup(void) {
-  // Init Display
-#if defined (ARDUINO_XIAO_ESP32S3)
-  if (!GFX_EXEC(begin(SPI_FREQUENCY))) /* specify data bus speed */
-#else
-  if (!GFX_EXEC(begin())
-#endif
-  {
-    DBG_EXEC(printf("gfx->begin() failed!\n"));
-  }
-
-  SPI.setDataMode(SPI_MODE);
-  GFX_EXEC(invertDisplay(true));
-  GFX_EXEC(setTextColor(WHITE, BLACK));
-  GFX_EXEC(setRotation(SCREEN_ROTATION));
-  lcd_width  = GFX_EXEC(width());
-  lcd_height = GFX_EXEC(height());
-}
-
-#elif 1
+#if 1
 /*---------------------------------------------------
  * LovyanGFX Library
  * https://github.com/lovyan03/LovyanGFX
@@ -104,6 +43,7 @@ LGFX_Sprite lcd_sprite(&lcd);
 
 void gfx_setup(void) {
   GFX_EXEC(init());
+//GFX_EXEC(initDMA()); // DMA disable with use SPIRAM
   GFX_EXEC(clear(0));
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
@@ -137,6 +77,7 @@ void gfx_setup(void) {
   GFX_EXEC(fillScreen(0));
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
+//GFX_EXEC(initDMA(true)); // Incompatible with CONFIG_SPIRAM_SUPPORT in User_Setup.h
   lcd_width  = GFX_EXEC(width());
   lcd_height = GFX_EXEC(height());
 }

@@ -276,32 +276,6 @@ inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
   b = (color<<3)&0x00F8;
 }
 
-#if defined (_ADAFRUIT_GFX_H)
-
-/* create snapshot of 3.5" TFT and save to file in bitmap format
- * https://forum.arduino.cc/t/create-snapshot-of-3-5-tft-and-save-to-file-in-bitmap-format/391367/7
-*/
-static uint16_t readPixA(int x, int y) { // get pixel color code in rgb565 format
-    digitalWrite(TFT_CS, LOW);
-
-    GFX_EXEC(startWrite());    // needed for low-level methods. CS active
-    GFX_EXEC(setAddrWindow(x, y, 1, 1));
-    GFX_EXEC(writeCommand(0x2E)); // memory read command. sets DC (ILI9341: LCD_RAMRD, ST7789: ST7789_RAMRD)
-
-    uint8_t r, g, b;
-    r = GFX_EXEC(spiRead()); // discard dummy read
-    r = GFX_EXEC(spiRead());
-    g = GFX_EXEC(spiRead());
-    b = GFX_EXEC(spiRead());
-    GFX_EXEC(endWrite());   // needed for low-level methods. CS idle
-
-    digitalWrite(TFT_CS, HIGH);
-
-    return RGB565(r, g, b); // defined in colors.h
-}
-
-#endif // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
-
 /*--------------------------------------------------------------------------------
  * Save LCD screenshot as a 24bits bitmap file
  *--------------------------------------------------------------------------------*/
@@ -368,8 +342,6 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
       yield(); // Prevent the watchdog from firing
     }
 
-#if defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
-
 //  GFX_EXEC(startWrite());
     GFX_EXEC(readRect(0, y, w, 1, rgb));
 //  GFX_EXEC(endWrite());
@@ -382,29 +354,6 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
       file.close();
       return false;
     };
-
-#else // defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
-
-    for (int x = 0; x < w; x++) {
-
-#if   defined (_ARDUINO_GFX_LIBRARIES_H_)
-
-      rgb = 0; // does not support reading
-
-#elif defined (_ADAFRUIT_GFX_H)
-
-      rgb = readPixA(x, y);
-
-#endif
-
-      // write the data in BMP reverse order
-      color565toRGB(rgb, r, g, b);
-      file.write(b);
-      file.write(g);
-      file.write(r);
-    }
-  
-#endif // defined (LOVYANGFX_HPP_) || defined(_TFT_eSPIH_)
   }
 
   file.close();

@@ -449,7 +449,6 @@ class MLXViewer {
       const int box_size = dst_cols / MLX90640_COLS;
 #endif
 
-#if defined (LOVYANGFX_HPP_) || defined (_TFT_eSPIH_)
       GFX_EXEC(startWrite());
 #if defined (LOVYANGFX_HPP_)
       sprite_draw.setPsram(true);
@@ -471,7 +470,6 @@ class MLXViewer {
       sprite_draw.pushSprite(widget->x, widget->y);
       sprite_draw.deleteSprite();
       GFX_EXEC(endWrite());
-#endif  // LOVYANGFX_HPP_ or _TFT_eSPIH_
     }
   }
 

@@ -36,17 +36,8 @@ void gfx_printf(uint16_t x, uint16_t y, const char* fmt, ...) {
   len = vsnprintf(buf, sizeof(buf), fmt, arg_ptr);
   va_end(arg_ptr);
 
-#if defined (_ADAFRUIT_GFX_H) || defined (_ARDUINO_GFX_LIBRARIES_H_)
-
-  GFX_EXEC(setCursor(x, y));
-  GFX_EXEC(print(buf));
-
-#else // LovyanGFX or TFT_eSPI
-
   // use setTextColor(foreground_color, background_color) and setTextDatum(textdatum_t::...)
   GFX_EXEC(drawString(buf, x, y));
-
-#endif // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
 }
 
 #endif // GFX_EXEC

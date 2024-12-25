@@ -1,18 +1,6 @@
 /*================================================================================
  * Touch event manager
  *================================================================================*/
-#if defined (_ADAFRUIT_GFX_H) || defined (_ARDUINO_GFX_LIBRARIES_H_)
-
-#include <SPI.h>
-#include <XPT2046_Touchscreen.h>
-#include "spi_assign.h"
-
-// Use no interrupts when using the SD library
-//XPT2046_Touchscreen ts(TOUCH_CS);  // Param 2 - NULL - No interrupts
-//XPT2046_Touchscreen ts(TOUCH_CS, 255);  // Param 2 - 255 - No interrupts
-XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);  // Param 2 - Touch IRQ Pin - interrupt enabled polling
-
-#endif // _ADAFRUIT_GFX_H || _ARDUINO_GFX_LIBRARIES_H_
 
 /*--------------------------------------------------------------------------------
  * Event definition

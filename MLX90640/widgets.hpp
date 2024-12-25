@@ -1557,8 +1557,9 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
   // https://github.com/espressif/arduino-esp32/blob/master/cores/esp32/Esp.h
   char buf[BUF_SIZE];
   sprintf(buf, "%s", ESP.getSdkVersion());
+  char *ESP_getSdkVersion = strtok(buf, "-");
   gfx_printf(x, y + h * 1, "MCU model   : %s",  ESP.getChipModel());
-  gfx_printf(x, y + h * 2, "ESP-IDF ver : %s",  strtok(buf, "-"));
+  gfx_printf(x, y + h * 2, "ESP-IDF ver : %s",  ESP_getSdkVersion);
   gfx_printf(x, y + h * 3, "Total heap  : %7d", ESP.getHeapSize());
   gfx_printf(x, y + h * 4, "Free  heap  : %7d", ESP.getFreeHeap());
   gfx_printf(x, y + h * 5, "Total PSRAM : %7d", ESP.getPsramSize());
@@ -1566,6 +1567,16 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
   gfx_printf(x, y + h * 7, "Sketch space: %7d", ESP.getFreeSketchSpace());
   gfx_printf(x, y + h * 8, "Sketch size : %7d", ESP.getSketchSize());
 
+  DBG_EXEC({
+    printf("MCU model   : %s\n",  ESP.getChipModel());
+    printf("ESP-IDF ver : %s\n",  ESP_getSdkVersion);
+    printf("Total heap  : %7d\n", ESP.getHeapSize());
+    printf("Free  heap  : %7d\n", ESP.getFreeHeap());
+    printf("Total PSRAM : %7d\n", ESP.getPsramSize());
+    printf("Free  PSRAM : %7d\n", ESP.getFreePsram());
+    printf("Sketch space: %7d\n", ESP.getFreeSketchSpace());
+    printf("Sketch size : %7d\n", ESP.getSketchSize());
+  });
   /*
     https://en.cppreference.com/w/cpp/compiler_support
     https://forum.arduino.cc/t/which-version-of-c-is-currently-supported/1285868/13
@@ -1591,7 +1602,7 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
     {203000, "C++xx"},
   };
 
-//DBG_EXEC(printf("__cplusplus: %d\n", __cplusplus)); // 201703
+  DBG_EXEC(printf("__cplusplus: %d\n", __cplusplus)); // 201703
   for (int i = 0; i < sizeof(cpp) / sizeof(cpp[0]) - 1; i++) {
     if (cpp[i].ver <= __cplusplus && __cplusplus < cpp[i+1].ver) {
       gfx_printf(x, y + h * 9, "Compiler ver: %s", cpp[i].std);
