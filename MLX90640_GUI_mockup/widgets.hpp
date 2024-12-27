@@ -1597,24 +1597,27 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
 
   // https://github.com/espressif/arduino-esp32/blob/master/cores/esp32/Esp.h
   // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/misc_system_api.html
-  gfx_printf(x, y + h * 1, "MCU model   : %s",  ESP.getChipModel());
+  gfx_printf(x, y + h * 1, "MCU model   : %s r%d", ESP.getChipModel(), ESP.getChipRevision());
   gfx_printf(x, y + h * 2, "ESP-IDF ver : %d.%d.%d\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH);
-  gfx_printf(x, y + h * 3, "Total heap  : %7d", ESP.getHeapSize());
-  gfx_printf(x, y + h * 4, "Free  heap  : %7d", ESP.getFreeHeap());
-  gfx_printf(x, y + h * 5, "Total PSRAM : %7d", ESP.getPsramSize());
-  gfx_printf(x, y + h * 6, "Free  PSRAM : %7d", ESP.getFreePsram());
-  gfx_printf(x, y + h * 7, "Sketch space: %7d", ESP.getFreeSketchSpace());
+  gfx_printf(x, y + h * 3, "Heap total  : %7d", ESP.getHeapSize());
+  gfx_printf(x, y + h * 4, "Heap lowest : %7d", ESP.getMinFreeHeap());
+  gfx_printf(x, y + h * 5, "PSRAM total : %7d", ESP.getPsramSize());
+  gfx_printf(x, y + h * 6, "PSRAM lowest: %7d", ESP.getMinFreePsram());
+  gfx_printf(x, y + h * 7, "Sketch free : %7d", ESP.getFreeSketchSpace());
   gfx_printf(x, y + h * 8, "Sketch size : %7d", ESP.getSketchSize());
 
   DBG_EXEC({
-    printf("MCU model   : %s\n",  ESP.getChipModel());
+    printf("MLX90640 S/N: %04X%04X%04X\n", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]);
+    printf("MCU model   : %s r%d\n", ESP.getChipModel(), ESP.getChipRevision());
     printf("ESP-IDF ver : %d.%d.%d\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH);
-    printf("Total heap  : %7d\n", ESP.getHeapSize());
-    printf("Free  heap  : %7d\n", ESP.getFreeHeap());
-    printf("Total PSRAM : %7d\n", ESP.getPsramSize());
-    printf("Free  PSRAM : %7d\n", ESP.getFreePsram());
-    printf("Sketch space: %7d\n", ESP.getFreeSketchSpace());
+    printf("Heap total  : %7d\n", ESP.getHeapSize());
+    printf("Heap lowest : %7d\n", ESP.getMinFreeHeap());
+    printf("PSRAM total : %7d\n", ESP.getPsramSize());
+    printf("PSRAM lowest: %7d\n", ESP.getMinFreePsram());
+    printf("Sketch free : %7d\n", ESP.getFreeSketchSpace());
     printf("Sketch size : %7d\n", ESP.getSketchSize());
+
+    // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/mem_alloc.html
     printf("lifetime min heap  : %7d\n", esp_get_minimum_free_heap_size());
     printf("free_internal_heap : %7d\n", esp_get_free_internal_heap_size());
     printf("MALLOC_CAP_INTERNAL: %7d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL));
@@ -1639,7 +1642,7 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
     202002 ➜ C++20 standard.
     202302 ➜ C++23 standard.
   */
-  struct {
+  const struct {
     uint32_t ver;
     char*    std; 
   } cpp[] = {
