@@ -41,6 +41,11 @@
 #include "spi_assign.h"
 
 /*--------------------------------------------------------------------------------
+ * SPI frequency for SD
+ *--------------------------------------------------------------------------------*/
+#define SPI_SD_FREQUENCY  50000000
+
+/*--------------------------------------------------------------------------------
  * Uncomment and set up if you want to use custom pins for the SPI communication
  *--------------------------------------------------------------------------------*/
 // #define REASSIGN_PINS
@@ -76,9 +81,9 @@
 // SHARED_SPI makes SD very slow, while DEDICATED_SPI causes GFX libraries to stop working.
 #ifdef _TFT_eSPIH_
 // https://github.com/greiman/SdFat/issues/462
-#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SD_SCK_MHZ(10), &GFX_EXEC(getSPIinstance())) // 1MHz also NG
+#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SPI_SD_FREQUENCY, &GFX_EXEC(getSPIinstance()))
 #else
-#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SD_SCK_MHZ(10))
+#define SD_CONFIG SdSpiConfig(SD_CS, SHARED_SPI /* DEDICATED_SPI */, SPI_SD_FREQUENCY)
 #endif
 typedef FsFile  File;
 #define FS_TYPE SdFs
@@ -476,6 +481,7 @@ bool sdcard_record(uint8_t *adrs, size_t size, char *filename) {
   File file = SD.open(filename, FILE_APPEND);
   int len = file.write(adrs, sizeof(float) * MLX90640_ROWS * MLX90640_COLS);
   file.close();
-//DBG_EXEC(printf("Saved %d bytes, Elapsed time: %d msec\n", len, millis() - start)); // 3072 byte, 17[msec] - 45[msec]
+
+//DBG_EXEC(printf("Saved %d bytes, Elapsed time: %d msec\n", len, millis() - start)); // 3072 byte, 13[msec] - 40[msec]
   return true;
 }
