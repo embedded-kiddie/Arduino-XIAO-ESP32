@@ -36,7 +36,16 @@ Therefore, it is necessary to set an appropriate frame rate according to the obj
 - Display frame rate of 16 FPS (refresh rate 32 Hz) is noisier than 1 FPS:  
   ![1 FPS vs 16 FPS](images/MLX90640-noise-comparison.jpg)
 
-### Offline raw data viewer
+### Image viewer
+
+#### File explorer
+
+Thumbnails and video playback are available.
+
+- File explorer  
+  ![File explorer](images/thumbnail-playback.gif)
+
+#### MLX90640Viewer
 
 The recorded raw data can be played back either on the camera itself or using [MLX90640Viewer][18] on a PC.
 
