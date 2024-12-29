@@ -1,15 +1,42 @@
 #include <Arduino.h>
 #include <math.h>
 
+#if   0
+/*--------------------------------------------------------------------------------
+ * Rainbow
+ *--------------------------------------------------------------------------------*/
+float calcR(float x) {
+  float y = 255.0f;
+  if ( 1.0f <= x && x <  5.0f) { y = -18.0f * x + 90.0f; } else
+  if ( 5.0f <= x && x < 15.0f) { y =   0.0f; } else
+  if (15.0f <= x && x < 20.0f) { y =  51.0f * x - 765.0f; }
+  return constrain(y, 0.0f, 255.0f);
+}
+float calcG(float x) {
+  float y = 0.0f;
+  if ( 5.0f <= x && x < 10.0f) { y =  51.0f * x -  255.0f; } else
+  if (10.0f <= x && x < 20.0f) { y = 255.0f; } else
+  if (20.0f <= x && x < 25.1f) { y = -51.0f * x + 1275.0f; }
+  return constrain(y, 0.0f, 255.0f);
+}
+float calcB(float x) {
+  float y = 0.0f;
+  if ( 1.0f <= x && x <  5.0f) { y =  34.0f * x +  85.0f; } else
+  if ( 5.0f <= x && x < 10.0f) { y = 255.0f; } else
+  if (10.0f <= x && x < 15.0f) { y = -51.0f * x + 765.0f; }
+  return constrain(y, 0.0f, 255.0f);
+}
+#else
 /*--------------------------------------------------------------------------------
  * Inferno
  *--------------------------------------------------------------------------------*/
-#define N_POINTS  25
 float calcR(float x) { float y =   -0.0186f * pow(x, 3.0f) + 0.3123f * pow(x, 2.0f) + 11.9230f * x + 36.6580f; return y > 0.0 ? y : 0.0f; }
 float calcG(float x) { float y =    0.0042f * pow(x, 3.0f) + 0.2183f * pow(x, 2.0f) +  1.0843f * x +  8.0676f; return y > 0.0 ? y : 0.0f; }
 float calcB(float x) { float y =    0.0743f * pow(x, 3.0f) - 2.7407f * pow(x, 2.0f) + 23.1360f * x + 61.5370f; return y > 0.0 ? y : 0.0f; }
 //float calcB(float x) { float y = -3.221e-5f * pow(x, 6.0f) + 0.0026f * pow(x, 5.0f) -  0.0780f * pow(x, 4.0f) + 1.0976f * pow(x, 3.0f) - 8.2067f * pow(x, 2.0f) + 30.074f * x + 68.001f; return y > 0.0 ? y : 0.0f; }
+#endif
 
+#define N_POINTS  25
 #define N_GRADATION 256
 #define RGB565(r, g, b) ((((r) & 0xF8) << 8) | (((g) & 0xFC) << 3) | ((b) >> 3))
 
@@ -47,7 +74,7 @@ void setup() {
     B = (uint16_t)(b + 0.5f);
 #if 1
     RGB = RGB565(R, G, B);
-    printf("0x%4X,", RGB);
+    printf("0x%04X,", RGB);
 
     if (i % 16 == 0) {
       printf("\n");

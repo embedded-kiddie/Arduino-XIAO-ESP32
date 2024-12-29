@@ -1616,10 +1616,12 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
     printf("PSRAM lowest: %7d\n", ESP.getMinFreePsram());
     printf("Sketch free : %7d\n", ESP.getFreeSketchSpace());
     printf("Sketch size : %7d\n", ESP.getSketchSize());
+    printf("Task 1 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[0]));
+    printf("Task 2 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[1]));
 
     // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/mem_alloc.html
-    printf("lifetime min heap  : %7d\n", esp_get_minimum_free_heap_size());
-    printf("free_internal_heap : %7d\n", esp_get_free_internal_heap_size());
+    printf("Min heap since boot: %7d\n", esp_get_minimum_free_heap_size());
+    printf("Free internal heap : %7d\n", esp_get_free_internal_heap_size());
     printf("MALLOC_CAP_INTERNAL: %7d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL));
     printf("MALLOC_CAP_DMA     : %7d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_DMA));
 
