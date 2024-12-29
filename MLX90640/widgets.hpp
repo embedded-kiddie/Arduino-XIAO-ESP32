@@ -1551,46 +1551,8 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
   DrawScreen(widget);
 
   const uint16_t x = 5, y = 5;
-  const uint16_t h = FONT_HEIGHT + 4;
+  const uint16_t h = FONT_HEIGHT + 2;
   gfx_printf(x, y, "MLX90640 S/N: %04X%04X%04X", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]);
-
-  // https://github.com/espressif/arduino-esp32/blob/master/cores/esp32/Esp.h
-  // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/misc_system_api.html
-  gfx_printf(x, y + h * 1, "MCU model   : %s R%d", ESP.getChipModel(), ESP.getChipRevision());
-  gfx_printf(x, y + h * 2, "ESP-IDF ver : %d.%d.%d\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH);
-  gfx_printf(x, y + h * 3, "Heap total  : %7d", ESP.getHeapSize());
-  gfx_printf(x, y + h * 4, "Heap lowest : %7d", ESP.getMinFreeHeap());
-  gfx_printf(x, y + h * 5, "PSRAM total : %7d", ESP.getPsramSize());
-  gfx_printf(x, y + h * 6, "PSRAM lowest: %7d", ESP.getMinFreePsram());
-  gfx_printf(x, y + h * 7, "Sketch free : %7d", ESP.getFreeSketchSpace());
-  gfx_printf(x, y + h * 8, "Sketch size : %7d", ESP.getSketchSize());
-
-  DBG_EXEC({
-    printf("MLX90640 S/N: %04X%04X%04X\n", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]);
-    printf("MCU model   : %s R%d\n", ESP.getChipModel(), ESP.getChipRevision());
-    printf("ESP-IDF ver : %d.%d.%d\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH);
-    printf("Heap total  : %7d\n", ESP.getHeapSize());
-    printf("Heap lowest : %7d\n", ESP.getMinFreeHeap());
-    printf("PSRAM total : %7d\n", ESP.getPsramSize());
-    printf("PSRAM lowest: %7d\n", ESP.getMinFreePsram());
-    printf("Sketch free : %7d\n", ESP.getFreeSketchSpace());
-    printf("Sketch size : %7d\n", ESP.getSketchSize());
-    printf("Task 1 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[0]));
-    printf("Task 2 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[1]));
-
-    // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/mem_alloc.html
-    printf("Min heap since boot: %7d\n", esp_get_minimum_free_heap_size());
-    printf("Free internal heap : %7d\n", esp_get_free_internal_heap_size());
-    printf("MALLOC_CAP_INTERNAL: %7d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL));
-    printf("MALLOC_CAP_DMA     : %7d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_DMA));
-
-#if defined (LOVYANGFX_HPP_)
-    GFX_FAST(createSprite(256, 192));
-    printf("Sprite buffer adrs : 0x%X\n", lcd_sprite.getBuffer());
-    printf("Sprite buffer len  : %d\n", lcd_sprite.bufferLength());
-    GFX_FAST(deleteSprite());
-#endif
-  });
   /*
     https://en.cppreference.com/w/cpp/compiler_support
     https://forum.arduino.cc/t/which-version-of-c-is-currently-supported/1285868/13
@@ -1615,14 +1577,53 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
     {202302, "C++23"},
     {203000, "C++xx"},
   };
-
-  DBG_EXEC(printf("__cplusplus: %d\n", __cplusplus)); // 201703
+  char *std = NULL;
   for (int i = 0; i < sizeof(cpp) / sizeof(cpp[0]) - 1; i++) {
     if (cpp[i].ver <= __cplusplus && __cplusplus < cpp[i+1].ver) {
-      gfx_printf(x, y + h * 9, "Compiler ver: %s", cpp[i].std);
+      std = cpp[i].std;
       break;
     }
   }
+
+  // https://github.com/espressif/arduino-esp32/blob/master/cores/esp32/Esp.h
+  // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/misc_system_api.html
+  gfx_printf(x, y + h *  1, "MCU model   : %s R%d", ESP.getChipModel(), ESP.getChipRevision());
+  gfx_printf(x, y + h *  2, "ESP-IDF ver : %d.%d.%d %s\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH, std);
+  gfx_printf(x, y + h *  3, "Task 1 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[0]));
+  gfx_printf(x, y + h *  4, "Task 2 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[1]));
+  gfx_printf(x, y + h *  5, "Heap total  : %7d", ESP.getHeapSize());
+  gfx_printf(x, y + h *  6, "Heap lowest : %7d", ESP.getMinFreeHeap());
+  gfx_printf(x, y + h *  7, "PSRAM total : %7d", ESP.getPsramSize());
+  gfx_printf(x, y + h *  8, "PSRAM lowest: %7d", ESP.getMinFreePsram());
+  gfx_printf(x, y + h *  9, "Sketch free : %7d", ESP.getFreeSketchSpace());
+  gfx_printf(x, y + h * 10, "Sketch size : %7d", ESP.getSketchSize());
+
+  DBG_EXEC({
+    printf("MLX90640 S/N: %04X%04X%04X\n", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]);
+    printf("MCU model   : %s R%d\n", ESP.getChipModel(), ESP.getChipRevision());
+    printf("ESP-IDF ver : %d.%d.%d %s\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH, std);
+    printf("Task 1 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[0]));
+    printf("Task 2 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[1]));
+    printf("Heap total  : %7d\n", ESP.getHeapSize());
+    printf("Heap lowest : %7d\n", ESP.getMinFreeHeap());
+    printf("PSRAM total : %7d\n", ESP.getPsramSize());
+    printf("PSRAM lowest: %7d\n", ESP.getMinFreePsram());
+    printf("Sketch free : %7d\n", ESP.getFreeSketchSpace());
+    printf("Sketch size : %7d\n", ESP.getSketchSize());
+
+    // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/mem_alloc.html
+    printf("Min heap since boot: %7d\n", esp_get_minimum_free_heap_size());
+    printf("Free internal heap : %7d\n", esp_get_free_internal_heap_size());
+    printf("MALLOC_CAP_INTERNAL: %7d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL));
+    printf("MALLOC_CAP_DMA     : %7d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_DMA));
+#if defined (LOVYANGFX_HPP_)
+    GFX_FAST(createSprite(256, 192));
+    printf("Sprite buffer adrs : 0x%X\n", lcd_sprite.getBuffer());
+    printf("Sprite buffer len  : %d\n", lcd_sprite.bufferLength());
+    GFX_FAST(deleteSprite());
+#endif
+    printf("__cplusplus: %d\n", __cplusplus); // 201703
+  });
 }
 
 static void onInformationClose  (const Widget_t *widget, const Touch_t &touch) {
