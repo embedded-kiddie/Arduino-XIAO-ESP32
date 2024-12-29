@@ -1597,7 +1597,7 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
 
   // https://github.com/espressif/arduino-esp32/blob/master/cores/esp32/Esp.h
   // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/misc_system_api.html
-  gfx_printf(x, y + h * 1, "MCU model   : %s r%d", ESP.getChipModel(), ESP.getChipRevision());
+  gfx_printf(x, y + h * 1, "MCU model   : %s R%d", ESP.getChipModel(), ESP.getChipRevision());
   gfx_printf(x, y + h * 2, "ESP-IDF ver : %d.%d.%d\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH);
   gfx_printf(x, y + h * 3, "Heap total  : %7d", ESP.getHeapSize());
   gfx_printf(x, y + h * 4, "Heap lowest : %7d", ESP.getMinFreeHeap());
@@ -1608,7 +1608,7 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
 
   DBG_EXEC({
     printf("MLX90640 S/N: %04X%04X%04X\n", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]);
-    printf("MCU model   : %s r%d\n", ESP.getChipModel(), ESP.getChipRevision());
+    printf("MCU model   : %s R%d\n", ESP.getChipModel(), ESP.getChipRevision());
     printf("ESP-IDF ver : %d.%d.%d\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH);
     printf("Heap total  : %7d\n", ESP.getHeapSize());
     printf("Heap lowest : %7d\n", ESP.getMinFreeHeap());

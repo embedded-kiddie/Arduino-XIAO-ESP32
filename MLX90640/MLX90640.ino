@@ -9,7 +9,7 @@
 #include "spi_assign.h"
 #include "colors.h"
 
-#define DEBUG       false
+#define DEBUG       true
 #if     DEBUG
 #define DBG_EXEC(x) x
 #else
