@@ -1618,10 +1618,10 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
     {202302, "C++23"},
     {203000, "C++xx"},
   };
-  char *std = NULL;
+  char *cpp_ver = "";
   for (int i = 0; i < sizeof(cpp) / sizeof(cpp[0]) - 1; i++) {
     if (cpp[i].ver <= __cplusplus && __cplusplus < cpp[i+1].ver) {
-      std = cpp[i].std;
+      cpp_ver = cpp[i].std;
       break;
     }
   }
@@ -1629,7 +1629,7 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
   // https://github.com/espressif/arduino-esp32/blob/master/cores/esp32/Esp.h
   // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/misc_system_api.html
   gfx_printf(x, y + h *  1, "MCU model   : %s R%d", ESP.getChipModel(), ESP.getChipRevision());
-  gfx_printf(x, y + h *  2, "ESP-IDF ver : %d.%d.%d %s\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH, std);
+  gfx_printf(x, y + h *  2, "ESP-IDF ver : %d.%d.%d %s\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH, cpp_ver);
   gfx_printf(x, y + h *  3, "Task 1 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[0]));
   gfx_printf(x, y + h *  4, "Task 2 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[1]));
   gfx_printf(x, y + h *  5, "Heap total  : %7d", ESP.getHeapSize());
@@ -1642,7 +1642,7 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
   DBG_EXEC({
     printf("MLX90640 S/N: %04X%04X%04X\n", mlx.serialNumber[0], mlx.serialNumber[1], mlx.serialNumber[2]);
     printf("MCU model   : %s R%d\n", ESP.getChipModel(), ESP.getChipRevision());
-    printf("ESP-IDF ver : %d.%d.%d %s\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH, std);
+    printf("ESP-IDF ver : %d.%d.%d %s\n", ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR, ESP_IDF_VERSION_PATCH, cpp_ver);
     printf("Task 1 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[0]));
     printf("Task 2 stack: %7d\n", uxTaskGetStackHighWaterMark(taskHandle[1]));
     printf("Heap total  : %7d\n", ESP.getHeapSize());
