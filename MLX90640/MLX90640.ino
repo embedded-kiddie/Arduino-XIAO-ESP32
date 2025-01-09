@@ -29,7 +29,7 @@ uint16_t lcd_height;
  *---------------------------------------------------*/
 // LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
 // #include <SD.h>
-#include "SdFat.h"
+#include "SdFat.h" // version 2.2.3 is required (DrawThumb() doesn't work in version 2.3.0)
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
 
 // require `PSRAM: "OPT PSRAM"` in tool menu

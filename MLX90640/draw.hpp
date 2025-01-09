@@ -387,7 +387,7 @@ static void DrawPress(const Widget_t *widget, Event_t event /* = EVENT_INIT */) 
 static void DrawThumb(const Widget_t *widget, const char *path) {
   GFX_EXEC(fillRect(widget->x, widget->y, widget->w, widget->h, BLACK));
 
-#if defined (LOVYANGFX_HPP_) && (defined (_SD_H_) || defined (SdFat_h))
+#if defined (LOVYANGFX_HPP_) && (defined (_SD_H_) || defined (SdFat_h) || defined (SD_FAT_VERSION) /* from version 2.3.0 */)
 
   GFX_EXEC(drawBmpFile(
     SD,
@@ -398,7 +398,7 @@ static void DrawThumb(const Widget_t *widget, const char *path) {
   ));
 
 #else
-#warning TFT_eSPI support required
+#warning DrawThumb() support required
 #endif
 }
 
