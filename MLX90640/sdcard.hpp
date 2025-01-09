@@ -57,7 +57,7 @@
 #define USE_SDFAT       true  // TFT_eSPI can not work with SdFat
 
 // LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
-#if     defined (SdFat_h)
+#if     defined (SD_FAT_VERSION)
 #undef  USE_SDFAT
 #define USE_SDFAT       true
 #elif   defined (_SD_H_)
