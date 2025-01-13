@@ -77,7 +77,7 @@ void gfx_setup(void) {
   GFX_EXEC(fillScreen(0));
   GFX_EXEC(setTextColor(WHITE, BLACK));
   GFX_EXEC(setRotation(SCREEN_ROTATION));
-//GFX_EXEC(initDMA(true)); // Incompatible with CONFIG_SPIRAM_SUPPORT in User_Setup.h
+  GFX_EXEC(initDMA(true)); // DMA does not work on PSRAM. See CONFIG_SPIRAM_SUPPORT in User_Setup.h
   lcd_width  = GFX_EXEC(width());
   lcd_height = GFX_EXEC(height());
 }
@@ -454,7 +454,7 @@ void setup() {
   if (psramInit()) {
     DBG_EXEC(printf("\nThe PSRAM is correctly initialized.\n"));
   } else {
-    DBG_EXEC(printf("\nPSRAM does not work.\n"));
+    DBG_EXEC(printf("\nPSRAM does not work. Please check 'PSRAM' in IDE menu 'Tools'. \n"));
   }
 
   // Initialize LCD display with touch and SD card

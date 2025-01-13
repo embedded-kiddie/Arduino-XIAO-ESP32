@@ -84,7 +84,9 @@ The recorded raw data can be played back either on the camera itself or using [M
 - [espressif/arduino-esp32/libraries/SD][16]
 - [SdFat (by Bill Greiman)][17] 2.2.3
 
-**Note:** The TFT_eSPI version has an issue where images cannot be recorded to the SD card.
+### **Note:**
+  - SdFat version 2.3.0 causes a compilation error.
+  - The TFT_eSPI version has an issue where images cannot be recorded to the SD card.
 
 ## Block diagram
 
