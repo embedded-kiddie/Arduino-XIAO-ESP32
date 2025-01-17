@@ -1611,11 +1611,14 @@ static void onInformationScreen (const Widget_t *widget, const Touch_t &touch) {
     printf("Sketch free : %7d\n", ESP.getFreeSketchSpace());
     printf("Sketch size : %7d\n", ESP.getSketchSize());
 
+    // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html
     // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/mem_alloc.html
     printf("Min heap since boot: %7d\n", esp_get_minimum_free_heap_size());
     printf("Free internal heap : %7d\n", esp_get_free_internal_heap_size());
-    printf("MALLOC_CAP_INTERNAL: %7d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL));
-    printf("MALLOC_CAP_DMA     : %7d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_DMA));
+    printf("Min MALLOC_CAP_INTERNAL: %7d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL));
+    printf("Min MALLOC_CAP_DMA     : %7d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_DMA));
+    printf("Max MALLOC_CAP_INTERNAL: %7d\n", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+    printf("Max MALLOC_CAP_DMA     : %7d\n", heap_caps_get_largest_free_block(MALLOC_CAP_DMA));
 #if defined (LOVYANGFX_HPP_)
     GFX_FAST(createSprite(256, 192));
     printf("Sprite buffer adrs : 0x%X\n", lcd_sprite.getBuffer());
