@@ -82,15 +82,15 @@ static void DrawPNG(const uint8_t *img, size_t size, uint16_t x, uint16_t y, PNG
  *--------------------------------------------------------------------------------*/
 #if defined (__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 
-#define SWAP(type, a, b)  { type tmp = a; a = b; b = tmp; }
+#define SWAP_ENDIAN(type, a, b)  { type tmp = a; a = b; b = tmp; }
 
 // Alternatives to std::byteswap (C++23)
 // big-endian (PNG) --> little-endian (ESP32)
 uint32_t swap_endian(uint32_t v) {
   uint8_t r[4];
   *(uint32_t*)r = v;
-  SWAP(uint8_t, r[0], r[3]);
-  SWAP(uint8_t, r[1], r[2]);
+  SWAP_ENDIAN(uint8_t, r[0], r[3]);
+  SWAP_ENDIAN(uint8_t, r[1], r[2]);
   return *(uint32_t*)r;
 }
 
@@ -421,7 +421,7 @@ class MLXViewer {
     File file = SD.open(path, FILE_READ);
     if (file) {
       file.seek(n * frameSize);
-      uint32_t len = file.read(src[0], frameSize);
+      uint32_t len = file.read((uint8_t*)src[0], frameSize);
       file.close();
       if (len == frameSize) {
         return true;

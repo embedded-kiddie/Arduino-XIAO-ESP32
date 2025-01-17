@@ -110,6 +110,20 @@ It achieves parallel processing by utilizing multi-cores with FreeRTOS and doubl
 - [MLX90640 GUI mockup][19]  
   [![GUI mockup for a thermography camera using MLX90640](images/GUI-mockup.jpg)](https://youtu.be/9El-2NYCDNU "GUI mockup for a thermography camera using MLX90640 - YouTube")
 
+## Issues (Jan 17, 2025)
+
+There are compatibility issues with the graphics library and the SD card library.
+
+### LovyanGFX
+
+- [ ] Initializing the GFX at first, initializing the SD card will fail.
+- [ ] SdFat version 2.3.0 fails to compile on drawBmpFile(), so 2.2.3 is required, but Espressif's standard SD library is faster and more stable.
+
+### TFT_eSPI
+
+- [ ] Due to SPI bus assignments, the GFX must be initialized before the SD card is initialized.
+- [ ] Both Standard SD library by Espressif and SdFat will fail to initialize SD card.
+
 [1]: https://www.melexis.com/en/product/MLX90640/Far-Infrared-Thermal-Sensor-Array "Far Infrared Thermal Sensor Array (32x24 RES) I Melexis"
 
 [2]: https://www.melexis.com/en/documents/documentation/datasheets/datasheet-mlx90640 "Datasheet for MLX90640 I Melexis"

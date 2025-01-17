@@ -9,7 +9,7 @@
 #include "spi_assign.h"
 #include "colors.h"
 
-#define DEBUG       false
+#define DEBUG       true
 #if     DEBUG
 #define DBG_EXEC(x) x
 #else
@@ -22,14 +22,14 @@
 uint16_t lcd_width;
 uint16_t lcd_height;
 
-#if 1
+#if 0
 /*---------------------------------------------------
  * LovyanGFX Library
  * https://github.com/lovyan03/LovyanGFX
  *---------------------------------------------------*/
 // LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
-// #include <SD.h>
-#include "SdFat.h" // version 2.2.3 is required (drawBmpFile() causes a compilation error in version 2.3.0)
+// #include "SdFat.h" // version 2.2.3 is required (drawBmpFile() causes a compilation error in version 2.3.0)
+#include <SD.h>
 #include "LGFX_XIAO_ESP32S3_ST7789.hpp"
 
 // require `PSRAM: "OPT PSRAM"` in tool menu
@@ -58,7 +58,7 @@ void gfx_setup(void) {
  * https://github.com/Bodmer/TFT_eSPI
  *---------------------------------------------------*/
 // Neither standard SD nor SdFat works when writing! (reading is OK)
-// #include <SD.h>
+// #include <SD.h> // fatal error in File Manager Screen when initializing sdcard_set() before gfx_setup()
 #include "SdFat.h"
 #include "TFT_eSPI.h"
 
@@ -96,11 +96,7 @@ void gfx_setup(void) {
 /*--------------------------------------------------------------------------------
  * Step 4: Select whether to enable transaction or not
  *--------------------------------------------------------------------------------*/
-#if defined (LOVYANGFX_HPP_) || defined (_TFT_eSPIH_)
 #define ENA_TRANSACTION   true
-#else
-#define ENA_TRANSACTION   false // 'true' stops display
-#endif
 
 /*--------------------------------------------------------------------------------
  * Step 5: Configure the output image resolution
@@ -449,7 +445,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
  *--------------------------------------------------------------------------------*/
 void setup() {
   DBG_EXEC(Serial.begin(115200));
-  DBG_EXEC(delay(1000));
+  DBG_EXEC(while (!Serial || millis() < 1000));
 
   if (psramInit()) {
     DBG_EXEC(printf("\nThe PSRAM is correctly initialized.\n"));
@@ -458,10 +454,17 @@ void setup() {
   }
 
   // Initialize LCD display with touch and SD card
+#if defined (LOVYANGFX_HPP_)
+  sdcard_setup();
+  gfx_setup();
+  touch_setup();
+  widget_setup();
+#else // _TFT_eSPIH_
   gfx_setup();
   touch_setup();
   sdcard_setup();
   widget_setup();
+#endif
 
   // Initialize interpolation
   interpolate_setup(mlx_cnf.interpolation);

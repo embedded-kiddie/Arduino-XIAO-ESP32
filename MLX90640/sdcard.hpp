@@ -57,7 +57,7 @@
 #define USE_SDFAT       true  // TFT_eSPI can not work with SdFat
 
 // LovyanGFX requires SD library header file before including <LovyanGFX.hpp>
-#if     defined (SD_FAT_VERSION)
+#if     defined (SD_FAT_VERSION) // SdFat version
 #undef  USE_SDFAT
 #define USE_SDFAT       true
 #elif   defined (_SD_H_)
@@ -96,9 +96,9 @@ SdFs SD;
 #include "SPI.h"
 #define FS_TYPE  fs::SDFS
 #ifdef _TFT_eSPIH_
-#define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()), SPI_READ_FREQUENCY
+#define SD_CONFIG SD_CS, GFX_EXEC(getSPIinstance()), SPI_SD_FREQUENCY
 #else
-#define SD_CONFIG SD_CS, SPI, SPI_READ_FREQUENCY
+#define SD_CONFIG SD_CS, SPI, SPI_SD_FREQUENCY
 #endif
 
 #endif // USE_SDFAT
@@ -271,9 +271,8 @@ void DeleteFile(FS_TYPE &fs, const char *path) {
 }
 
 /*--------------------------------------------------------------------------------
- * LCD screen capture to save image to SD card
+ * Converts 565 format 16 bit color to RGB
  *--------------------------------------------------------------------------------*/
-// Converts 565 format 16 bit color to RGB
 inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) __attribute__((always_inline));
 inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
   r = (color>>8)&0x00F8;
@@ -285,21 +284,24 @@ inline void color565toRGB(uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
  * Save LCD screenshot as a 24bits bitmap file
  *--------------------------------------------------------------------------------*/
 static bool SaveBMP24(FS_TYPE &fs, const char *path) {
+  int h = GFX_EXEC(height());
+  int w = GFX_EXEC(width());
 
 #if   defined (LOVYANGFX_HPP_)
 
-  lgfx::rgb888_t rgb[TFT_WIDTH > TFT_HEIGHT ? TFT_WIDTH : TFT_HEIGHT];
+  lgfx::rgb888_t rgb[w];
 
-#elif defined (_TFT_eSPIH_)
+#else // _TFT_eSPIH_
 
-  uint16_t rgb[TFT_WIDTH > TFT_HEIGHT ? TFT_WIDTH : TFT_HEIGHT]; // check ReadWrite_Test
+  uint8_t rgb[w * 3]; // check ReadWrite_Test
 
+#if defined (TFT_RGB_ORDER) && (TFT_RGB_ORDER == TFT_BGR)
+#define SWAP_RGB(type, a, b)  { type tmp = a; a = b; b = tmp; }
 #else
-
-  uint16_t rgb;
-  uint8_t r, g, b;
-
+#define SWAP_RGB(type, a, b)
 #endif
+
+#endif // LovyanGFX or TFT_eSPI
 
   File file = fs.open(path, FILE_WRITE);
 
@@ -309,9 +311,6 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
   } else {
     DBG_EXEC(printf("saving %s\n", path));
   }
-
-  int h = GFX_EXEC(height());
-  int w = GFX_EXEC(width());
 
   unsigned char bmFlHdr[14] = {
     'B', 'M', 0, 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 0
@@ -347,12 +346,24 @@ static bool SaveBMP24(FS_TYPE &fs, const char *path) {
       yield(); // Prevent the watchdog from firing
     }
 
-//  GFX_EXEC(startWrite());
+#if defined (LOVYANGFX_HPP_)
+
     GFX_EXEC(readRect(0, y, w, 1, rgb));
-//  GFX_EXEC(endWrite());
+
+#else // TFT_eSPI
+
+    GFX_EXEC(readRectRGB(0, y, w, 1, (uint8_t*)rgb));
+    for (int i = 0; i < sizeof(rgb); i += 3) {
+      SWAP_RGB(uint8_t, rgb[i+1], rgb[i+2]);
+      rgb[i  ] <<= 1;
+      rgb[i+1] <<= 1;
+      rgb[i+2] <<= 1;
+    }
+
+#endif // LovyanGFX or TFT_eSPI
 
     // SD: 2966 msec, SdFat: 2753 msec
-    int len = file.write((uint8_t*)rgb, w * sizeof(rgb[0]));
+    int len = file.write((uint8_t*)rgb, sizeof(rgb));
 
     if (file.getWriteError() != 0) {
       DBG_EXEC(printf("SD write error: len: %d\n", len)); // getWriteError() returns 1
