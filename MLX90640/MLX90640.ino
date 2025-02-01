@@ -58,8 +58,8 @@ void gfx_setup(void) {
  * https://github.com/Bodmer/TFT_eSPI
  *---------------------------------------------------*/
 // Neither standard SD nor SdFat works when writing! (reading is OK)
-// #include <SD.h> // fatal error in File Manager Screen when initializing sdcard_set() before gfx_setup()
-#include "SdFat.h"
+#include <SD.h> // fatal error in File Manager Screen when initializing sdcard_set() before gfx_setup()
+//#include "SdFat.h"
 #include "TFT_eSPI.h"
 
 // require `CONFIG_SPIRAM_SUPPORT` in User_Setup.h
@@ -445,7 +445,7 @@ void ProcessOutput(uint8_t bank, uint32_t inputStart, uint32_t inputFinish) {
  *--------------------------------------------------------------------------------*/
 void setup() {
   DBG_EXEC(Serial.begin(115200));
-  DBG_EXEC(while (!Serial || millis() < 1000));
+  DBG_EXEC(while (!Serial && millis() < 1000));
 
   if (psramInit()) {
     DBG_EXEC(printf("\nThe PSRAM is correctly initialized.\n"));

@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <math.h>
 
-#if   0
+#if   1
 /*--------------------------------------------------------------------------------
  * Rainbow
  *--------------------------------------------------------------------------------*/
@@ -36,8 +36,8 @@ float calcB(float x) { float y =    0.0743f * pow(x, 3.0f) - 2.7407f * pow(x, 2.
 //float calcB(float x) { float y = -3.221e-5f * pow(x, 6.0f) + 0.0026f * pow(x, 5.0f) -  0.0780f * pow(x, 4.0f) + 1.0976f * pow(x, 3.0f) - 8.2067f * pow(x, 2.0f) + 30.074f * x + 68.001f; return y > 0.0 ? y : 0.0f; }
 #endif
 
-#define N_POINTS  25
-#define N_GRADATION 256
+#define N_POINTS    25    // The number of samples in the original RGB data
+#define N_GRADATION 512   // The number of color gradients to generate
 #define RGB565(r, g, b) ((((r) & 0xF8) << 8) | (((g) & 0xFC) << 3) | ((b) >> 3))
 
 int printf(const char* fmt, ...) {
